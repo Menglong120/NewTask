@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+
+<%- include('../partials/head') %>
+
+  <body>
+    <div id="page-loader" aria-label="Loading">
+      <div class="spinner"></div>
+  </div>
+
+    <!-- Page Wrapper -->
+    <div class="layout-wrapper layout-content-navbar" id="main-content">
+      <div class="layout-container">
+
+        <!-- Sidebar -->
+        <%- include('../partials/sidebar-superadmin')  %>
+          <!-- End of Sidebar -->
+
+          <!-- Content Wrapper -->
+          <div class="layout-page">
+
+            <!-- Main Content -->
+
+            <!-- Topbar -->
+            <%- include('../partials/topbar-createproject-superadmin') %>
+              <!-- End of Topbar -->
+              <div>
+                
+                <h4 class="mb-0 mt-5 text-gray-800 px-4">All Projects</h4>
+                <div class=" pb-1 px-3 row">
+                  <div class="container px-0 mt-4">
+                    <!-- Filter Section -->
+                    <div class="filter-section">
+                      <div class="row g-3 px-4">
+                        <!-- Search -->
+                        <div class="col-md-4">
+                          <label class="form-label fw-semibold">Search</label>
+                          <div class="position-relative">
+                            <input type="search" 
+                                  id="projectSearchInput" 
+                                  class="form-control ps-3" 
+                                  placeholder="Search name projects..." 
+                                  aria-label="Search projects">
+                            <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-gray-500">
+                              <i class="bi bi-search"></i>
+                            </span>
+                          </div>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="col-md-3">
+                          <label class="form-label fw-semibold">Status</label>
+                          <select id="statusFilter" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="To Start">To Start</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Done">Done</option>
+                            <option value="Close">Close</option>
+                          </select>
+                        </div>
+
+                        <!-- Progress Filter -->
+                        <div class="col-md-3">
+                          <label class="form-label fw-semibold">Progress</label>
+                          <select id="progressFilter" class="form-select">
+                            <option value="">All Progress</option>
+                            <option value="0">Not Started (0%)</option>
+                            <option value="1-25">Started (1-25%)</option>
+                            <option value="26-50">Quarter Done (26-50%)</option>
+                            <option value="51-75">Half Done (51-75%)</option>
+                            <option value="76-99">Almost Done (76-99%)</option>
+                            <option value="100">Completed (100%)</option>
+                          </select>
+                        </div>
+
+                        <!-- Due Date Filter -->
+                        <div class="col-md-2">
+                          <label class="form-label fw-semibold">Due Date</label>
+                          <select id="dueDateFilter" class="form-select">
+                            <option value="">All Dates</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="today">Due Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                          </select>
+                        </div>
+
+                        <!-- Clear Button -->
+                        <div class="col-md-12 d-flex justify-content-between align-items-center">
+                          <div id="activeFilters"></div>
+                          <button id="clearFilters" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-x-circle"></i> Clear All Filters
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>  
+                </div>
+                <div class="project-superadmin mt-n3">
+                  <div class="row mx-3 " id="showAllproject">
+
+                    <div class="col-lg-4 col-md-6 col-12 g-4">
+                      <div class="card card-project">
+                          <div class="bg-white rounded-2">
+                              <div class="row card-header d-flex py-3 justify-content-between align-items-center">
+                                  <div class="col-8 placeholder-glow">
+                                    <span class="placeholder py-3 mb-2 col-8 rounded-2"></span>
+                                  </div>
+                                  <div class="col-4 placeholder-glow d-flex justify-content-end">
+                                    <span class="placeholder mb-2 col-1 rounded-2"></span>
+                                  </div>
+                              </div>
+                              <div class="mx-0 row card-body bg-white pt-1">
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder mb-4 col-5 rounded-2"></span>
+                                  </div>
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder mb-4 col-12 rounded-2"></span>
+                                  </div>
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder col-12 rounded-2"></span>
+                                  </div>
+                              </div>
+                              <div class="mx-0 row card-footer bg-white border-0 pt-0 d-flex justify-content-between align-items-center">
+                                  <div class="col-6 placeholder-glow">
+                                    <span class="placeholder mb-2 col-5 rounded-circle" style="width: 30px; height: 30px;"></span>
+                                  </div>
+                                  <div class="col-6 d-flex justify-content-end placeholder-glow">
+                                    <span class="placeholder mb-2 col-8 rounded-2"></span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12 g-4">
+                      <div class="card card-project">
+                          <div class="bg-white rounded-2">
+                              <div class="row card-header d-flex py-3 justify-content-between align-items-center">
+                                  <div class="col-8 placeholder-glow">
+                                    <span class="placeholder py-3 mb-2 col-8 rounded-2"></span>
+                                  </div>
+                                  <div class="col-4 placeholder-glow d-flex justify-content-end">
+                                    <span class="placeholder mb-2 col-1 rounded-2"></span>
+                                  </div>
+                              </div>
+                              <div class="mx-0 row card-body bg-white pt-1">
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder mb-4 col-5 rounded-2"></span>
+                                  </div>
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder mb-4 col-12 rounded-2"></span>
+                                  </div>
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder col-12 rounded-2"></span>
+                                  </div>
+                              </div>
+                              <div class="mx-0 row card-footer bg-white border-0 pt-0 d-flex justify-content-between align-items-center">
+                                  <div class="col-6 placeholder-glow">
+                                    <span class="placeholder mb-2 col-5 rounded-circle" style="width: 30px; height: 30px;"></span>
+                                  </div>
+                                  <div class="col-6 d-flex justify-content-end placeholder-glow">
+                                    <span class="placeholder mb-2 col-8 rounded-2"></span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-12 g-4">
+                      <div class="card card-project">
+                          <div class="bg-white rounded-2">
+                              <div class="row card-header d-flex py-3 justify-content-between align-items-center">
+                                  <div class="col-8 placeholder-glow">
+                                    <span class="placeholder py-3 mb-2 col-8 rounded-2"></span>
+                                  </div>
+                                  <div class="col-4 placeholder-glow d-flex justify-content-end">
+                                    <span class="placeholder mb-2 col-1 rounded-2"></span>
+                                  </div>
+                              </div>
+                              <div class="mx-0 row card-body bg-white pt-1">
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder mb-4 col-5 rounded-2"></span>
+                                  </div>
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder mb-4 col-12 rounded-2"></span>
+                                  </div>
+                                  <div class="col-12 placeholder-glow">
+                                    <span class="placeholder col-12 rounded-2"></span>
+                                  </div>
+                              </div>
+                              <div class="mx-0 row card-footer bg-white border-0 pt-0 d-flex justify-content-between align-items-center">
+                                  <div class="col-6 placeholder-glow">
+                                    <span class="placeholder mb-2 col-5 rounded-circle" style="width: 30px; height: 30px;"></span>
+                                  </div>
+                                  <div class="col-6 d-flex justify-content-end placeholder-glow">
+                                    <span class="placeholder mb-2 col-8 rounded-2"></span>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                <div class="content-backdrop fade"></div>
+              </div>
+          </div>
+
+      </div>
+
+
+      <!-- End of Main Content -->
+
+      <div class="modal fade" id="createProject" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content ">
+            <div class="modal-header border-0">
+              <h4 class="modal-title text-dark" id="exampleModalLabel">Add
+                Project</h4>
+                <button type="button" class="btn-close closebtn"  data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <form id="createnewProject">
+                <div class="row g-2 mb-3">
+                  <div class="col-12">
+                    <div class="row">
+                      <div class="col-5 px-3">
+                      <label class="text-black fw-bold mb-1" for="projectName">Project Name <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" placeholder="Input Project Name" id="proName">
+                      <div class="invalid-feedback " id="invalid-proName">Please fill in your password!</div>
+                    </div>
+                  <div class="col-4">
+                    <label class="text-black fw-bold mb-1" for="projectStatus">Select Status <span class="text-danger">*</span></label>
+                    <select class="form-select border-0 select2 select-project" id="select-status"
+                      placeholder="Select Row" autocomplete="off">
+
+                    </select>
+                    <div class="invalid-feedback " id="invalid-selectProject">Select Status!</div>
+                  </div>
+                  <div class="col-3">
+                    <label class="text-black fw-bold mb-1" for="projectdes">Estimated End Date <span class="text-danger">*</span></label>
+                         <input type="date" class="form-control custom-date" id="est-date">
+                    <div class="invalid-feedback " id="invalid-est">Estimated Status!</div>
+                  </div>
+                </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                       <label class="text-black fw-bold mb-1" for="projectdes">Project Description</label>
+                        <textarea class="form-control" id="Project-message" placeholder="Description"></textarea>
+                </div>
+
+                <div class="col-12 px-0">
+                  <label class="text-black fw-bold mb-1" for="selectmember">Select Member</label>
+                  <select class="form-select border-0 select2 select-project" id="add-Member" multiple="multiple"
+                    autocomplete="off">
+
+                  </select>
+                </div>
+
+                <div class="invalid-feedback " id="invalid-addMember">Please Select Member!</div>
+              </form>
+            </div>
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary d-flex align-items-center" id="btn-create-project" onclick="createProject()">
+                <div id="btn-create-project-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <span id="btn-create-project-text">Add Project</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal should be placed outside of the dropdown -->
+      <div class="modal fade" id="exampleModalEdit" tabindex="-1" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+          <div class="modal-content ">
+            <div class="modal-header border-0">
+              <h4 class="modal-title text-dark" id="exampleModalLabel">Edit
+                Project</h4>
+              <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close">
+                <!-- <i class="fa-solid fa-xmark"></i> -->
+              </button>
+            </div>
+            <div class="modal-body">
+              <form>
+                <div class="row g-2">
+                  <div class="col-9 mb-3">
+                    <div class="col px-0">
+                      <label class="text-black fw-bold mb-1" for="projectName">Project Name <span class="text-danger">*</span></label>
+                      <input type="text" id="editProname" class="form-control" placeholder="Website kot">
+                      <div class="invalid-feedback " id="invalid-editproName">Please fill in your Project Name!</div>
+                    </div>
+                  </div>
+                  <div class="col-3">
+                    <label class="text-black fw-bold mb-1" for="projectdes">Estimated End Date <span class="text-danger">*</span></label>
+                         <input type="date" class="form-control custom-date" id="updateEst-date">
+                    <div class="invalid-feedback " id="invalid-UpdateEst">Estimated Status!</div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="text-black fw-bold mb-1" for="projectdes">Project Description</label>
+                  <textarea class="form-control" id="Editmessage" placeholder="Description"></textarea>
+                </div>
+                <!-- <select  class="form-select border-0 select2 select-project" id="editMember" multiple="multiple" autocomplete="off">
+
+                </select> -->
+                <div class="invalid-feedback " id="invalid-editMember">Please fill in your password!</div>
+              </form>
+            </div>
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btn-update-project" onclick="editProjects()">
+                <div id="btn-update-project-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <span id="btn-update-project-text">Update</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="exampleModalEditStatus" tabindex="-1" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+          <div class="modal-content ">
+            <div class="modal-header border-0">
+              <h4 class="modal-title text-dark" id="exampleModalLabel">Edit Project Status</h4>
+              <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close">
+                <!-- <i class="fa-solid fa-xmark"></i> -->
+              </button>
+            </div>
+            <div class="modal-body">
+              <form>
+                <div class="row">
+                  <div class="col-12">
+                    <label class="text-black fw-bold mb-1" for="projectName">Select Status</label>
+                    <select class="form-select border-0 select2 select-project" id="editStatus">
+
+                    </select>
+                  </div>
+                </div>
+                <div class="invalid-feedback " id="invalid-editMember">Please fill in your password!</div>
+              </form>
+            </div>
+            <div class="modal-footer border-0">
+              <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btn-update-project" onclick="saveEditProjectStatus()">
+                <div id="btn-update-project-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <span id="btn-update-project-text">Update</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+
+    </div>
+    <!-- End of Content Wrapper -->
+
+
+    <!-- Bootstrap core JavaScript-->
+     <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
+    <script src="/vendor/libs/jquery/jquery.js"></script>
+    <script src="/vendor/libs/popper/popper.js"></script>
+    <script src="/vendor/js/bootstrap.js"></script>
+    <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/vendor/select2/select2.min.js"></script>
+    <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+    <script src="/vendor/js/menu.js"></script>
+
+    <script src="/js/backNavigationHandler.js"></script>
+    <script src="/js/spinner.js"></script>
+
+    <script src="/js/fetchApi.js"></script>
+    <script src="/js/btnLoading.js"></script>
+    <script src="/js/projected/fetchProject.js"></script>
+    <script src="/js/validation.js"></script>
+    <script src="/js/sidebar/sidebar-project.js"></script>
+    <script src="/js/category/fetch.js"></script>
+    <script src="/js/requestPassword/fetchRequest.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/topbar/topbar-superadmin.js"></script>
+    <script src="/js/logout/logout.js"></script>
+    <script src="/js/default_js/setProjectSetting.js"></script>
+    <script src="/js/allproject.js"></script>
+    
+    <script src="/js/activity/fetchActivity.js"></script>
+
+    <script src="/js/default_js/main.js"></script>
+
+    <script>
+      $(document).ready(function () {
+        $("#select-status").select2({
+          width: "100%",
+          minimumResultsForSearch: Infinity,
+          dropdownParent: $("#createProject")
+        });
+      });
+      $(document).ready(function () {
+        $("#editStatus").select2({
+          width: "100%",
+          minimumResultsForSearch: Infinity,
+          dropdownParent: $("#exampleModalEditStatus")
+        });
+      });
+      $(document).ready(function () {
+        $('#add-Member').select2({
+          width: "100%",
+          allowClear: true,
+          placeholder: "Select an option",
+          dropdownParent: $("#createProject")  
+        });
+      });
+
+      $(document).ready(function () {
+      // Status filter
+      $("#statusFilter").select2({
+        width: "100%",
+        minimumResultsForSearch: Infinity // hide search box
+      });
+
+      // Progress filter
+      $("#progressFilter").select2({
+        width: "100%",
+        minimumResultsForSearch: Infinity
+      });
+
+      // Due date filter
+      $("#dueDateFilter").select2({
+        width: "100%",
+        minimumResultsForSearch: Infinity
+      });
+    });
+
+    </script>
+    
+
+
+  </body>
+
+</html>

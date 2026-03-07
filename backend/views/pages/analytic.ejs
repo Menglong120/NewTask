@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+  <%- include('../partials/head')  %>
+  <style>
+    #chart2 {
+      max-width: 450px;
+    }
+    #chart4 {
+      max-width: 370px;
+    }
+  </style>
+
+<body id="page-top">
+  <div id="page-loader" aria-label="Loading">
+    <div class="spinner"></div>
+</div>
+
+  <!-- Layout wrapper -->
+  <div class="layout-wrapper layout-content-navbar" id="main-content">
+    <div class="layout-container">
+      <!-- Menu -->
+
+     <%- include('../partials/sidebar-superadmin')  %>
+      <!-- / Menu -->
+
+      <!-- Layout container -->
+      <div class="layout-page">
+        <!-- Navbar -->
+
+        <%- include('../partials/topbar-superadmin')  %>
+
+        <!-- Begin Page Content -->
+        <div class="container-fluid superadmin-dashboard">
+          <h4 class="mt-5 text-gray-800">Analytics</h4>
+          <div class="px-4 bg-white pb-2"
+            style="margin-top: 50px; box-shadow: 0 0 0.375rem 0.25rem rgba(161, 172, 184, 0.15); border-radius: 8px;">
+            <!-- Page Heading -->
+            <div class="container-fluid px-0">
+              <div class="row mb-4 g-4">
+                <div class="col-lg-3 col-md-6">
+                  <div class="card">
+                    <div class="card-header card-total" style="background-color: #9e7eff;">
+                      <div class="dash-icon mt-1">
+                       <i class='bx bx-layer'></i>
+                      </div>
+                      <div class="dash-txt text-center">
+                        <p class="fs-3 m-0" id="totalIssue">1000</p>
+                        <p class="m-0">Total Issue</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                  <div class="card">
+                    <div class="card-header card-total" style="background-color: #95CAE3;">
+                      <div class="dash-icon mt-1">
+                        <i class='bx bx-layer-plus' ></i>
+                      </div>
+                      <div class="dash-txt text-center">
+                        <p class="fs-3 m-0" id="totalSubIssue">1000</p>
+                        <p class="m-0">Total Sub-Issue</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                  <div class="card">
+                    <div class="card-header card-total" style="background-color: #D9B747;">
+                      <div class="dash-icon mt-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="fill: #803ED9;"><circle cx="6" cy="4" r="2"></circle><path d="M9 7H3a1 1 0 0 0-1 1v7h2v7h4v-7h2V8a1 1 0 0 0-1-1z"></path><circle cx="17" cy="4" r="2"></circle><path d="M20.21 7.73a1 1 0 0 0-1-.73h-4.5a1 1 0 0 0-1 .73L12 14h2l-1 4h2v4h4v-4h2l-1-4h2z"></path></svg>
+                      </div>
+                      <div class="dash-txt text-center">
+                        <p class="fs-3 m-0" id="totalMember">1000</p>
+                        <p class="m-0">Total Members</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                  <div class="card">
+                    <div class="card-header card-total" style="background-color: #92D445;">
+                      <div class="dash-icon mt-1">
+                        <i class='bx bx-book-bookmark'></i>
+                      </div>
+                      <div class="dash-txt text-center">
+                        <p class="fs-3 m-0" id="totalResource">1000</p>
+                        <p class="m-0">Total Resource</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                 <div class="col-lg-12 col-md-12">
+                  <div class="card">
+                    <div class="card-header px-3 ">
+                      <h6 style="font-weight: 800;">Memebers perfomance</h6>
+                      <div class="col-3">
+                        <input type="search" 
+                                  id="memberProject"
+                                  class="form-control ps-3" 
+                                  placeholder="Search..." 
+                                  aria-label="Search projects">
+                            <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-gray-500">
+                              <i class="bi bi-search"></i>
+                            </span>
+                      </div>
+                      <div class="mt-3 table-container">
+                      <table class="table tbl-user">
+                        <thead>
+                          <tr class="bg-primary text-center">
+                            <th class="text-white">Name</th>
+                            <th class="text-white">Role</th>
+                            <th class="text-white">Category</th>
+                            <th class="text-white">Issue</th>
+                            <th class="text-white">Start Date</th>
+                            <th class="text-white">Due Date</th>
+                            <th class="text-white">Progress</th>
+                            <th class="text-white">Status Issue</th>
+                          </tr>
+                        </thead>
+                        <tbody id="showMemberPer"></tbody>
+                      </table>
+                    </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 col-md-12">
+                  <div class="card">
+                    <div class="card-header" style="height: 376px;">
+                      <h6 style="font-weight: 800;">Project Status</h6>
+                      <div id="chart2" class="m-auto"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 col-md-12">
+                  <div class="card">
+                    <div class="card-header" style="height: 376px;">
+                      <h6 style="font-weight: 800;">Project by complexity</h6>
+                      <div id="chart"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- <div class="col-lg-5 col-md-12">
+                  <div class="card">
+                    <div class="card-header recent-scroll" style="height: 330px; overflow-y: auto;">
+                      <h6 style="font-weight: 800;">Category by complexity</h6>
+                      <div id="chart4" class="m-auto"></div>
+                    </div>
+                  </div>
+                </div> -->
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 style="font-weight: 800;">Issue created and completed</h6>
+                      <div id="chart3"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-header">
+                      <h6 style="font-weight: 800;">Member Details</h6>
+                      <div class="members-scroll d-flex gap-5 overflow-auto" id="memberDetail">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="content-backdrop fade"></div>
+      </div>
+      <!-- /.container-fluid -->
+    </div>
+    <!-- End of Main Content -->
+
+  </div>
+  <!-- End of Content Wrapper -->
+
+  </div>
+
+  </div>
+  </div>
+
+  <!-- Core JS -->
+  <!-- build:js assets/vendor/js/core.js -->
+  <script src="/vendor/libs/jquery/jquery.js"></script>
+  <script src="/vendor/libs/popper/popper.js"></script>
+  <script src="/vendor/js/bootstrap.js"></script>
+  <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+  <script src="/vendor/select2/select2.min.js"></script>
+  <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+  <script src="/vendor/libs/apex-charts/apexcharts.js"></script>
+  <script src="/vendor/js/menu.js"></script>
+
+  <script src="/js/backNavigationHandler.js"></script>
+  <script src="/js/spinner.js"></script>
+  <script src="/js/btnLoading.js"></script>
+  <script src="/js/fetchApi.js"></script>
+  <script src="/js/activity/fetchActivity.js"></script>
+  <script src="/js/projected/fetchProject.js"></script>
+  <script src="/js/sidebar/sidebar-project.js"></script>
+  <script src="/js/category/fetch.js"></script>
+  <script src="/js/requestPassword/fetchRequest.js"></script>
+  <script src="/js/profile/fetchProfile.js"></script>
+  <script src="/js/topbar/topbar-superadmin.js"></script>
+  <script src="/js/logout/logout.js"></script>
+  <script src="/js/analytic.js"></script>
+  <!-- endbuild -->
+
+  <!-- Vendors JS -->
+  <script src="/vendor/libs/apex-charts/apexcharts.js"></script>
+
+  <!-- Main JS -->
+  <script src="/js/default_js/main.js"></script>
+
+  <!-- Page JS -->
+  <script src="/js/default_js/dashboards-analytics.js"></script>
+
+  <!-- Place this tag in your head or just before your close body tag. -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+
+</body>
+
+</html>

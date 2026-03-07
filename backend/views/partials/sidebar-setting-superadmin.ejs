@@ -1,0 +1,86 @@
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+  <div class="app-brand demo">
+    
+      
+      <span class=" fs-4 demo menu-text fw-bolder ms-2 d-flex justify-center align-items-center">
+        <a href="/pages/home" class="app-brand-link" onclick="staticSideBack()">
+          <svg class="me-2" fill="#2174b8" width="35px" height="35px" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><title>ionicons-v5-a</title><path d="M48,256c0,114.87,93.13,208,208,208s208-93.13,208-208S370.87,48,256,48,48,141.13,48,256Zm224-80.09L208.42,240H358v32H208.42L272,336.09,249.3,358.63,147.46,256,249.3,153.37Z"></path></g></svg>
+        </a>
+        Setting
+      </span>
+
+    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+      <i class="bx bx-chevron-left bx-sm align-middle"></i>
+    </a>
+  </div>
+
+  <div class="menu-inner-shadow"></div>
+
+  <ul class="menu-inner py-1" id="showAllProject">
+
+    <li class="menu-header small text-uppercase">
+      <span class="menu-header-text">Your Account</span>
+    </li>
+    <li class="menu-item">
+    <li class="menu-item <%= currentPage === 'setting' ? 'active' : '' %> ">
+      <a href="/pages/setting" class="menu-link">
+        <i class="menu-icon tf-icons bx bx-home-circle"></i>
+        <div>Profile</div>
+      </a>
+    </li>
+    <li class="menu-item <%= currentPage === 'changpassword' ? 'active' : '' %>">
+      <a href="/pages/changpassword" class="menu-link">
+        <i class='menu-icon tf-icons bx bx-briefcase'></i>
+        <div>Security</div>
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="#" class="menu-link" onclick="logout()">
+        <i class='menu-icon tf-icons bx bx-power-off'></i>
+        <div>Log Out</div>
+      </a>
+    </li>
+    </li>
+
+  </ul>
+</aside>
+
+
+<script>
+  function staticSideBack(){
+    sessionStorage.setItem('side_page_active', `side-1`);
+
+    const current_project_id = localStorage.getItem('projectID');
+    if(current_project_id !== null){
+        localStorage.removeItem('projectID');
+    }
+    const current_cate_id = localStorage.getItem('categoryID');
+    if(current_cate_id !== null){
+        localStorage.removeItem('categoryID');
+    }
+    const active = sessionStorage.getItem(`project_active`);
+    if(active !== null) {
+        sessionStorage.removeItem('project_active');
+    }
+    const active_id = sessionStorage.getItem('project_active_id');
+    if(active_id !== null) {
+        sessionStorage.removeItem('project_active_id');
+    }
+    const cate_active = sessionStorage.getItem('cate_active');
+    if(cate_active !== null){
+        sessionStorage.removeItem('cate_active');
+    }
+    const cate_active_id = sessionStorage.getItem('cate_active_id');
+    if(cate_active_id !== null){
+        sessionStorage.removeItem('cate_active_id')
+    }
+    const cate_item_active = sessionStorage.getItem('cate_item_active');
+    if(cate_item_active !== null) {
+        sessionStorage.removeItem('cate_item_active');
+    }
+    const cate_item_active_id = sessionStorage.getItem('cate_item_active_id');
+    if(cate_item_active_id !== null) {
+        sessionStorage.removeItem('cate_item_active_id');
+    }
+  }
+</script>

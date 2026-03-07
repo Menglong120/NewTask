@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter);
+  --color-primary: #696cff;
+  --color-background: #0a0a0a;
+}
+
+:root {
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --primary: #696cff;
+}
+
+@layer base {
+  body {
+    @apply bg-[#0a0a0a] text-white;
+  }
+}
+
+/* Custom styles for ApexCharts tooltips */
+.apexcharts-tooltip {
+  @apply !rounded-xl !border-none !shadow-lg;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-gray-300 hover:bg-gray-400;
+}

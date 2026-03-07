@@ -1,0 +1,118 @@
+<nav
+class="layout-navbar container-fluid navbar navbar-expand navbar-detached align-items-center bg-navbar-theme position-sticky" style="top: 20px; z-index: 1060;"
+id="layout-navbar"
+>
+<div class="layout-menu-toggle navbar-nav align-items-xl-center me-3 me-xl-0 d-xl-none">
+  <a class="nav-item nav-link px-0 me-xl-4" href="javascript:void(0)">
+    <i class="bx bx-menu bx-sm"></i>
+  </a>
+</div>
+
+<div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
+  <!-- Search -->
+  <div class="navbar-nav d-flex flex-column align-items-start">
+    <div class="nav-item d-flex align-items-center">
+      <i class="bx bx-search fs-4 lh-0"></i>
+      <input
+        type="text"
+        class="form-control border-0 shadow-none"
+        placeholder="Search Projects..."
+        id="topSearchInput"
+        onkeyup="topBarSearchInput()"
+        aria-label="Search Projects..."
+      />
+    </div>
+    <div>
+      <ul class="dropdown-menu w-auto" style="max-height: 250px !important; min-width: 220px;" id="searchProjectResults">
+        
+      </ul>
+    </div>
+  </div>
+  <!-- /Search -->
+
+  <!-- Create Account Button -->
+  <div class="ms-auto">
+    <button type="button" class="btn btn-primary px-4 py-1 text-white d-flex align-items-center addMemberUser d-none"
+       data-bs-toggle="modal" style="border-radius: 8px; font-size: 14px;" onclick="createProjectOpen()">
+      <i class="fa-solid fa-plus me-2 mr-3"></i>
+      <a href="javascript:void(0)" class="text-white">Add Project</a>
+    </button>
+  </div>
+
+  <ul class="navbar-nav flex-row align-items-center ms-3">        
+    <div class="dropdownNotification">
+      <div class="dropdown  custom-dropdown">
+        <a href="#" data-bs-toggle="dropdown" class="dropdown-link" aria-haspopup="true" aria-expanded="false">
+          <i class='bx bx-bell fs-3 pe-2 mt-2'></i> 
+          <span class="number"></span>
+        </a>
+
+        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+          <div class="title-wrap d-flex align-items-center sticky top-0 py-2">
+            <h5 class="title mb-0 mt-1 ">Notifications <i class='bx bx-bell pe-2'></i> </h5>
+          </div>
+
+          <ul class="custom-notifications px-2" id="notifactionShow">
+
+            <li>
+              <a href="#" class="d-flex">
+                <div class="img mr-3">
+                  <img src="/img/default-user.jpg" alt="Image" class="img-fluid">
+                </div>
+                <div class="text">
+                  <strong>Devin Richards</strong><p class="mb-0"> mentioned you in her comment on Invoices 2 days ago</p>
+                </div>
+              </a>
+            </li>
+
+          </ul>
+          <p class="text-center m-0 py-2 sticky"><a href="/pages/notifaction" class="small">View All</a></p>
+        </div>
+      </div>
+    </div>
+    <!-- User -->
+    <li class="nav-item navbar-dropdown dropdown-user dropdown">
+      <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
+        <div class="avatar avatar-online" id="navProfile">
+          <img src="#" alt class="w-px-40 h-auto rounded-circle" />
+        </div>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" href="#">
+            <div class="d-flex">
+              <div class="flex-shrink-0 me-3">
+                <div class="avatar avatar-online" id="dropdownProfile">
+                  <img src="#" alt class="w-px-40 h-auto rounded-circle" />
+                </div>
+              </div>
+              <div class="flex-grow-1" id="showName">
+               
+              </div>
+            </div>
+          </a>
+        </li>
+        <li>
+          <div class="dropdown-divider"></div>
+        </li>
+        <li>
+          <a class="dropdown-item" href="/pages/setting">
+            <i class="bx bx-user me-2"></i>
+            <span class="align-middle">My Profile</span>
+          </a>
+        </li>
+        <li>
+          <div class="dropdown-divider"></div>
+        </li>
+        <li>
+          <a class="dropdown-item" href="#" onclick="logout()">
+            <i class="bx bx-power-off me-2"></i>
+            <span class="align-middle">Log Out</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+    <!--/ User -->
+  </ul>
+</div>
+</nav>

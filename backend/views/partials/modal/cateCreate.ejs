@@ -1,0 +1,39 @@
+
+
+<div class="modal fade" id="sideCategory" data-bs-backdrop="static" aria-hidden="true"
+    aria-labelledby="sideCategoryLabel" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title mt-0" id="sideCategoryLabel">Create Category</h4>
+                <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex">
+                    <div class="w-100">
+                        <div class="input-group">
+                            <span class="input-group-text bg-primary"><i class='tf-icons bx bx-customize text-white' ></i> </span>
+                            <input type="text" class="form-control" id="inputSideCate"
+                                placeholder="Input Category" oninput="onInputRequireString('inputSideCate', 'invalid-Side-Category', 255, 
+                                {require: 'Please fill in your category!', needdata: 'Category name must be more than 1 character!', overdata: 'Category name cannot over than 255 character!'})" />
+                        </div>
+                        <div class="invalid-feedback " id="invalid-Side-Category">
+                            Please fill in your category!
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer p-0 mt-3">
+                    <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal"
+                        aria-label="Close">Close</button>
+                    <button onclick="createSideCate()" type="button" class="btn btn-primary" id="btn-side-create-category"
+                        data-target="#createSideCate">
+                        <div id="btn-side-create-category-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span id="btn-side-create-category-text">Create Category</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

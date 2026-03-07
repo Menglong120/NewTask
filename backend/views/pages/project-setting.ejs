@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+
+<%- include('../partials/head') %>
+
+  <body>
+    <div id="page-loader" aria-label="Loading">
+      <div class="spinner"></div>
+  </div>
+
+    <!-- Page Wrapper -->
+    <div class="layout-wrapper layout-content-navbar" id="main-content">
+      <div class="layout-container">
+      <!-- Sidebar -->
+      <%- include('../partials/sidebar-superadmin')  %>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div class="layout-page">
+
+          <!-- Main Content -->
+          <%- include('../partials/topbar-superadmin') %>
+          
+          <!-- Topbar -->
+          <div class="content-wrapper">
+              <!-- End of Topbar -->
+              <!-- Begin Page Content -->
+              <div class="container-fluid table_users_setting mt-5">
+
+                <!-- Page Heading -->
+                <h5 class=" mb-2 pb-2 text-gray-800">Setting</h5>
+
+                <!-- Table users -->
+                <div class="nav-tabs-container">
+                  <ul class="nav nav-pills mb-3 d-flex flex-nowrap" id="pills-tab" role="tablist">
+                    <li class="nav-item nav-link-btn" role="presentation">
+                      <button class="nav-link w-100 border-0 btn-outline active" id="pills-profile-tab" data-bs-toggle="pill"
+                        data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile"
+                        aria-selected="false">
+                        <i class='bx bxs-user-detail pe-1 fs-4'></i>
+                        Members
+                      </button>
+                    </li>
+                    <li class="nav-item nav-link-btn" role="presentation">
+                      <button class="nav-link w-100 border-0 btn-outline" id="pills-home-tab" data-bs-toggle="pill"
+                        data-bs-target="#pills-statusissue" type="button" role="tab" aria-controls="pills-home"
+                        aria-selected="true">
+                        <i class='bx bx-loader-alt pe-1'></i>
+                        Status (Issue)
+                      </button>
+                    </li>
+                    <li class="nav-item nav-link-btn" role="presentation">
+                      <button class="nav-link w-100 border-0 btn-outline" id="addLabel-tab" data-bs-toggle="pill"
+                        data-bs-target="#addLabel" type="button" role="tab" aria-controls="pills-disabled"
+                        aria-selected="false">
+                        <i class='bx bx-label pe-1'></i>
+                        Labels
+                      </button>
+                    </li>
+                    <li class="nav-item nav-link-btn" role="presentation">
+                      <button class="nav-link w-100 border-0 btn-outline" id="pills-disabled-tab" data-bs-toggle="pill"
+                        data-bs-target="#pills-disabled_priority" type="button" role="tab" aria-controls="pills-disabled"
+                        aria-selected="false">
+                        <i class='bx bx-flag pe-1'></i> Priority
+                      </button>
+                    </li>
+                    <li class="nav-item nav-link-btn" role="presentation">
+                      <button class="nav-link w-100 border-0 btn-outline" id="pills-disabled-tracker" data-bs-toggle="pill"
+                        data-bs-target="#pills-tracker" type="button" role="tab" aria-controls="pills-disabled"
+                        aria-selected="false">
+                        <i class='bx bx-target-lock pe-1'></i> Tracker
+                      </button>
+                    </li>
+                    <li class="nav-item nav-link-btn" role="presentation">
+                      <button class="nav-link w-100 border-0 btn-outline" id="pills-disabled-category" data-bs-toggle="pill"
+                        data-bs-target="#pills-Category" type="button" role="tab" aria-controls="pills-disabled"
+                        aria-selected="false">
+                        <i class='tf-icons bx bx-customize pe-1'></i> Category
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+                
+                <div class="tab-content setting-project p-0" id="pills-tabContent">
+                  <!-- status    -->
+                  <!-- member -->
+                  <div class="tab-pane fade active show" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab"
+                    tabindex="0">
+                    <!-- card table  -->
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="search-container">
+                          <h4 class="card-title">Members</h4>
+                          <div class="d-flex gap-2">
+                            <div class="search-box-table">
+                              <input type="text" id="searchInput" class="form-control" placeholder="Search...."
+                                onkeyup="searchAllmember('searchInput')">
+                            </div>
+                           <div class="btnAdd">
+                            <button style="height: 38px;" type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#addMember" data-bs-whatever="@getbootstrap" onclick="addMemberModalOpen()">
+                            <i class="fas fa-plus"></i> Add member</button>
+                           </div>
+                            <!-- Add member  -->
+                            <div class="modal fade" id="addMember" tabindex="-1" aria-labelledby="exampleModalLabel">
+                              <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content ">
+                                  <div class="modal-header border-0 m-0 pb-0">
+                                    <h4 class="fw-bold modal-title text-dark" id="exampleModalLabel">Add
+                                      members</h4>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                                      <!-- <i class="fa-solid fa-xmark"></i> -->
+                                    </button>
+                                  </div>
+                                  <div class="modal-body m-0 py-0">
+                                    <p class="mt-2">Add members to work on project.</p>
+                                    <form>
+                                      <div id="form-container">
+                                          <div class="row g-2 mb-2">
+                                              <div class="col-8">
+                                                  <select class="form-select name-add select2" name="select-name">
+                                                      <option value="">Select Row</option>
+                                                      <option value="1">Option 1</option>
+                                                      <option value="2">Option 2</option>
+                                                      <option value="3">Option 3</option>
+                                                  </select>
+                                                  <div class="invalid-feedback invalid-select">
+                                                    Please fill in your password!
+                                                   </div>
+                                                 
+                                              </div>
+                                              <div class="col-4">
+                                                <div class="d-flex">
+                                                  <input type="text" class="form-control role-input" disabled>
+                                                  <div>
+                                                      <button type="button" class="border-0 bg-transparent fs-5 ps-2 text-danger pt-1 remove-btn">
+                                                          <i class='bx bx-user-x'></i>
+                                                      </button>
+                                                  </div>
+                                              </div>
+                                               </div>
+                                          </div>
+                                      </div>
+                                  </form>
+                                  </div>
+                                  <div class="modal-footer border-0 d-flex justify-content-between mt-3">
+                                    <div class="">
+                                      <button type="button" onclick="addmore()" class=" btn border-0 px-0">
+                                        <i class='bx bx-user-plus' ></i>
+                                        Add more
+                                      </button>
+                                    </div>
+                                    <div class="pe-2 d-flex">
+                                      <button type="button" class=" btn btn-secondary me-1" data-bs-dismiss="modal"
+                                        onclick="closeclear()">
+                                        Cancel
+                                      </button>
+                                      <button type="button" class=" btn btn-primary d-flex align-items-center" id="btn-add-member-project" onclick="addNewMember()">
+                                        <div id="btn-add-member-project-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                          <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span id="btn-add-member-project-text">Add Member</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="table-responsive">
+                          <table class="table tbl-user">
+                            <thead>
+                              <tr>
+                                <th class="id_table">NO</th>
+                                <th>Profile</th>
+                                <th>Full Name</th>
+                                <th>User Name</th>
+                                <th>Email</th>
+                                <th>Account type</th>
+                                <th>Joined date</th>
+                                <th class="active_table text-center"><i class='bx bx-slider-alt'></i>
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody id="showmember">
+
+
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div class="entriesInfo">Showing 1 to 10 of 20 entries</div>
+                          <nav>
+                            <ul class="pagination mb-0" id="pagination">
+
+                            </ul>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- general  -->
+                  <div class="tab-pane fade custom_border tab_status_setting " id="pills-statusissue"
+                    role="tabpanel" aria-labelledby="pills-statusissue-tab" tabindex="0">
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="search-container">
+                          <h4 class="card-title">Status Issue</h4>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                              data-bs-target="#addStatusIssue" data-bs-whatever="@getbootstrap"><i class="fas fa-plus"></i>
+                              Add Status</button>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="addStatusIssue" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Create Status (Issue)</h5>
+                                <button type="button" class="btn-close closebtn"  data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                      <i class='bx bx-loader-alt pe-1 icon'></i>
+                                        <input class="title_input rounded-0 form-control" type="text" id="inputStautsissue" placeholder="Input Status" oninput="onInputRequireString('inputStautsissue','invalid-statusissue',255,
+                                          {
+                                            require: 'Please fill in your Status!',
+                                            needdata: 'Issue name need to be more than 1 characters!',
+                                            overdata: 'Status name cannot over than 255 character!'
+                                          })">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-statusissue">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                                <button type="button" class="btn btn-primary" id="btn-add-status-issue" onclick="createstautsissue()">
+                                  <div id="btn-add-status-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-add-status-issue-text">Add Status</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="editStatusissue" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Edit Status (Project)</h5>
+                                <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                        <i class='bx bx-loader-alt pe-1 icon' ></i>
+                                        <input id="editstatusissue" class="title_input form-control" type="text"placeholder="Input Status" oninput="onInputRequireString('editstatusissue','invalid-statuseditissue',255,
+                                          {
+                                            require: 'Please fill in your Status!', 
+                                            needdata: 'Issue name need to be more than 1 characters!',
+                                            overdata: 'Status name cannot over than 255 character!'
+                                          })">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-statuseditissue">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                                <button onclick="updatestatusissues()" type="button" class="btn btn-primary d-flex align-items-center" id="btn-update-status-issue">
+                                  <div id="btn-update-status-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-update-status-issue-text">Update</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="table-responsive">
+                          <form action="">
+                            <div class="add_status d-none">
+                             
+                            </div>
+                            <!-- defual  -->
+                            <div id="showstatusissue">
+
+                            </div>
+                          </form>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- label  -->
+                  <div class="custom_border tab-pane fade" id="addLabel" role="tabpanel"
+                    aria-labelledby="pills-disabled-tab" tabindex="0">
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="search-container">
+                          <h4 class="card-title">Label Issue</h4>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                              data-bs-target="#addLabel-open" data-bs-whatever="@getbootstrap"><i class="fas fa-plus"></i>
+                              Add Label</button>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="addLabel-open" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Create Label</h5>
+                                <button type="button" class="btn-close closebtn"  data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                      <i class='bx bx-label pe-1 icon' ></i>
+                                        <input class="title_input form-control" type="text" id="inputLabel" placeholder="Input Label" oninput="onInputRequireString('inputLabel', 'invalid-Label', 255, 
+                                        {
+                                          require: 'Please fill in your Label!', 
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Label name cannot over than 255 character!'
+                                        })"
+                                         style="border-radius: 0px 5px 5px 0px;">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-Label">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                                <button type="button" class="btn btn-primary" id="btn-add-label-issue" onclick="createLabel()">
+                                  <div id="btn-add-label-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-add-label-issue-text">Add Label</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="editLabel-open" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Edit Label</h5>
+                                <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close" ></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input tab_status_setting">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                      <i class='bx bx-label pe-1 icon'></i>
+                                        <input id="editlabel" class="title_input form-control" type="text" placeholder="Input Label" oninput="onInputRequireString('editlabel', 'invalid-editLabel', 255, 
+                                        {
+                                          require: 'Please fill in your Label!', 
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Label name cannot over than 255 character!'
+                                        })">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-editLabel">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                                <button onclick="updateLabels()" type="button" class="btn btn-primary d-flex align-items-center" id="btn-update-label-issue">
+                                  <div id="btn-update-label-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-update-label-issue-text">Update</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="table-responsive">
+                          <form action="">
+                            <div class="add_status d-none">
+                             
+                            </div>
+                            <!-- defual  -->
+                            <div id="showLabel">
+
+                            </div>
+                          </form>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- prioty  -->
+                  <div class="tab-pane custom_border fade" id="pills-disabled_priority" role="tabpanel"
+                    aria-labelledby="pills-disabled-tab" tabindex="0">
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="search-container">
+                          <h4 class="card-title">Prority Issue</h4>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                              data-bs-target="#addprority" data-bs-whatever="@getbootstrap"><i class="fas fa-plus"></i>
+                              Add Prority</button>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="addprority" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Create Prority</h5>
+                                <button type="button" class="btn-close closebtn"  data-bs-dismiss="modal" aria-label="Close" ></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input tab_status_setting">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                      <i class='bx bx-flag pe-1 icon' ></i>
+                                        <input class="title_input rounded-0 form-control" type="text" id="inputprority" placeholder="Input Prority" oninput="onInputRequireString('inputprority', 'invalid-prority', 255, 
+                                        {
+                                          require: 'Please fill in your Priority!',
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Prority name cannot over than 255 character!'
+                                        })">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-prority">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                                <button type="button" class="btn btn-primary d-flex align-items-center" onclick="createprority()" id="btn-add-priority-issue">
+                                  <div id="btn-add-priority-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-add-priority-issue-text">Add Priority</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="editPrority" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Edit Prority</h5>
+                                <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input tab_status_setting">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                      <i class='bx bx-flag pe-1 icon' ></i>
+                                        <input id="editprority" class="title_input form-control" type="text" placeholder="Input Prority" oninput="onInputRequireString('editprority', 'invalid-editprority', 255, 
+                                        {
+                                          require: 'Please fill in your Priority!',
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Prority name cannot over than 255 character!'
+                                        })" >
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-editprority">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                                <button onclick="updateProritys()" type="button" class="btn btn-primary d-flex align-items-center" id="btn-update-priority-issue">
+                                  <div id="btn-update-priority-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-update-priority-issue-text">Update</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="table-responsive">
+                          <form action="">
+                            <div class="add_status d-none">
+                             
+                            </div>
+                            <!-- defual  -->
+                            <div id="showPrority">
+
+                            </div>
+                          </form>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- tracker -->
+                  <div class="tab-pane custom_border fade" id="pills-tracker" role="tabpanel"
+                    aria-labelledby="pills-disabled-tracker" tabindex="0">
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="search-container">
+                          <h4 class="card-title">Tracker Issue</h4>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                              data-bs-target="#addTracker-open" data-bs-whatever="@getbootstrap"><i class="fas fa-plus"></i>
+                              Add Tracker</button>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="addTracker-open" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Create Tracker</h5>
+                                <button type="button" class="btn-close closebtn"  data-bs-dismiss="modal" aria-label="Close" ></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input tab_status_setting">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                        <i class='bx bx-target-lock pe-1 icon' ></i> 
+                                        <input class="title_input rounded-0 form-control" type="text" id="inputracker" placeholder="Input Tracker" placeholder="Input Tracker" oninput="onInputRequireString('inputracker', 'invalid-tracker', 255, 
+                                        {
+                                          require: 'Please fill in your Tracker!',
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Tracker name cannot over than 255 character!'
+                                        })">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-tracker">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                                <button type="button" class="btn btn-primary d-flex align-items-center" onclick="createTracker()" id="btn-add-tracker-issue">
+                                  <div id="btn-add-tracker-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-add-tracker-issue-text">Add Tracker</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="editTracker-open" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Edit Tracker</h5>
+                                <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input tab_status_setting">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                        <i class='bx bx-target-lock pe-1 icon' ></i>
+                                        <input id="editTracker" class="title_input form-control" type="text" placeholder="Input Trakcer" oninput="onInputRequireString('editTracker', 'invalid-edittracker', 255, 
+                                        {
+                                          require: 'Please fill in your Tracker!',
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Tracker name cannot over than 255 character!'
+                                        })">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-edittracker">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                                <button onclick="updateTrackers()" type="button" class="btn btn-primary d-flex align-items-center" id="btn-update-tracker-issue">
+                                  <div id="btn-update-tracker-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-update-tracker-issue-text">Update</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="table-responsive">
+                          <form action="">
+                            <div class="add_status d-none">
+                             
+                            </div>
+                            <!-- defual  -->
+                            <div id="showTracker">
+
+                            </div>
+                          </form>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- category -->
+
+                  <div class="tab-pane custom_border fade" id="pills-Category" role="tabpanel"
+                  aria-labelledby="pills-disabled-category" tabindex="0">
+                  <div class="card">
+                    <div class="card-body">
+                      <div class="search-container">
+                        <h4 class="card-title">Category Project</h4>
+                        <div class="d-flex gap-2">
+                          <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#addCategory-open" data-bs-whatever="@getbootstrap"><i class="fas fa-plus"></i>
+                            Add Category</button>
+                        </div>
+                      </div>
+
+                      <div class="modal fade" id="addCategory-open" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="exampleModalCenterTitle">Create Category</h5>
+                              <button type="button" class="btn-close closebtn"  data-bs-dismiss="modal" aria-label="Close" ></button>
+                            </div>
+                            <div class="modal-body">
+                              <div class="d-flex status_title_input tab_status_setting">
+                                <div class="w-100">
+                                  <div class="col px-0 input-container" >
+                                      <i class='tf-icons bx bx-customize pe-1 icon' ></i> 
+                                      <input class="title_input rounded-0 form-control" type="text" id="inputCate" placeholder="Input Category" oninput="onInputRequireString('inputCate', 'invalid-Category', 255, 
+                                        {
+                                          require: 'Please fill in your Category!',
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Category name cannot over than 255 character!'
+                                        })">
+                                    </div>
+                                    <div class="invalid-feedback " id="invalid-Category">
+                                      Please fill in your password!
+                                    </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                              <button type="button" class="btn btn-primary d-flex align-items-center" onclick="createCategory()" id="btn-add-category-issue">
+                                <div id="btn-add-category-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                  <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span id="btn-add-category-issue-text">Add Category</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="modal fade" id="editCate-open" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="editCategory">Edit Category</h5>
+                              <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close" ></button>
+                            </div>
+                            <div class="modal-body">
+                              <div class="d-flex status_title_input tab_status_setting">
+                                <div class="w-100">
+                                  <div class="col px-0 input-container" >
+                                      <i class='tf-icons bx bx-customize pe-1 icon' ></i>
+                                      <input id="editCate" class="title_input form-control" type="text" placeholder="Input Category" oninput="onInputRequireString('editCate', 'invalid-editCate', 255, 
+                                       {
+                                        require: 'Please fill in your Category!', 
+                                        needdata: 'Issue name need to be more than 1 characters!',
+                                        overdata: 'Category name cannot over than 255 character!'
+                                        })">
+                                    </div>
+                                    <div class="invalid-feedback " id="invalid-editCate">
+                                      Please fill in your password!
+                                    </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                              <button onclick="updateCates()" type="button" class="btn btn-primary d-flex align-items-center" id="btn-update-category-issue">
+                                <div id="btn-update-category-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                  <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span id="btn-update-category-issue-text">Update</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="table-responsive">
+                        <form action="">
+                          <div class="add_status d-none">
+                           
+                          </div>
+                          <!-- defual  -->
+                          <div id="showTCategory">
+
+                          </div>
+                        </form>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                </div>
+              </div>
+              <!-- /.container-fluid -->
+              <div class="content-backdrop fade"></div>
+            </div>
+          </div>
+          <!-- End of Main Content -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+      </div>
+
+    </div>
+
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="/vendor/libs/jquery/jquery.js"></script>
+    <script src="/vendor/libs/popper/popper.js"></script>
+    <script src="/vendor/js/bootstrap.js"></script>
+    <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/vendor/select2/select2.min.js"></script>
+    <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+    <script src="/vendor/js/menu.js"></script>
+   
+    <script src="/js/backNavigationHandler.js"></script>
+    <script src="/js/spinner.js"></script>
+
+    <!-- Sidebar  -->
+    <script src="/js/fetchApi.js"></script>
+    <script src="/js/validation.js"></script>
+    <script src="/js/btnLoading.js"></script>
+    <script src="/js/projected/fetchProject.js"></script>
+    <script src="/js/sidebar/sidebar-project.js"></script>
+    <script src="/js/category/fetch.js"></script>
+    <script src="/js/requestPassword/fetchRequest.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/topbar/topbar-superadmin.js"></script>
+    <script src="/js/logout/logout.js"></script>
+    <!-- / Sidebar -->
+
+    <script src="/js/project-setting/memberProject.js"></script>
+    <script src="/js/activity/fetchActivity.js"></script>
+    <script src="/js/table/table.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/project-setting/projectSetting.js"></script>
+    <script src="/js/project-setting/createFunction.js"></script>
+
+    <script src="/js/default_js/main.js"></script>
+
+    <!-- <script>
+      $(document).ready(function() {
+          $('.select2').select2({
+              placeholder: "Select Row",
+              allowClear: true,
+              width: '100%',
+              dropdownParent: $("#addMember")
+          });
+      });
+  </script> -->
+
+  </body>
+
+</html>

@@ -1,0 +1,526 @@
+<!-- Offcanvas -->
+<div class="offcanvas offcanvas-end issue-offcanvas" tabindex="-1" id="issueDetailsOffcanvas">
+  <div class="offcanvas-header pb-0">
+    <button type="button" class="btn p-1" data-bs-dismiss="offcanvas"><i class='bx bx-arrow-to-right fs-3'></i></button>
+  </div>
+  <div class="offcanvas-body pt-2 position-relative">
+    <div class="p-1">
+      <h6 id="issue-category" class="fs-6">
+        <div class="d-flex justify-content-start placeholder-glow w-100">
+          <span class="placeholder col-5 rounded-1"></span>
+        </div>
+      </h6>
+      <h6 id="issue-name" class="issue-name">
+        <div class="d-flex justify-content-start placeholder-glow w-100">
+          <span class="placeholder col-5 rounded-1"></span>
+        </div>
+      </h6>
+      <div id="issue-des">
+        <div class="d-flex justify-content-start placeholder-glow w-100">
+          <span class="placeholder col-12 rounded-1"></span>
+        </div>
+      </div>
+      <button class="btn btn-outline-primary d-flex justify-content-center align-items-center" type="button"
+        data-bs-toggle="modal" data-bs-target="#createSubIssue"><i class='bx bx-layer-plus me-2'></i> Add
+        sub-issue</button>
+      <hr>
+      
+      <div class="p-2" id="subIssue-section">
+        <div class="card row shadow-none" style="height: 40px;">
+          <div class="col-lg-5 col-12 h-100">
+            <div class="px-1 h-100 d-flex justify-content-start align-items-center">
+                <div class="d-flex align-items-center">
+                <div class="d-flex justify-content-start placeholder-glow" style="width: 15px;">
+                  <span class="placeholder col-12 rounded-1"></span>
+                </div>
+                <h5 class="issue_name mb-0 fs-6 ps-2" id="issue_name">
+                  <div class="d-flex justify-content-start placeholder-glow" style="width: 80px;">
+                    <span class="placeholder col-12 rounded-1"></span>
+                  </div>
+                </h5>
+                </div>
+                <div class="px-2"></div>
+                <div class="progress col-3">
+                  <div class="d-flex justify-content-start placeholder-glow" style="width: 80px;">
+                    <span class="placeholder col-12 rounded-1"></span>
+                  </div>
+                </div>
+            </div>
+          </div>
+          <div class="col-lg-7 col-12 h-100 d-flex justify-content-end align-items-center">
+            <div id="statusDropdown" class="dropdown">
+              <div class="d-flex justify-content-start placeholder-glow" style="width: 80px;">
+                <span class="placeholder col-12 rounded-1" style="padding-block: 13px;"></span>
+              </div>
+            </div>
+            <div class="dropdown ms-1">
+              <div class="d-flex justify-content-start placeholder-glow" style="width: 80px;">
+                <span class="placeholder col-12 rounded-1" style="padding-block: 13px;"></span>
+              </div>
+            </div>
+            <div id="trackerDropdown" class="dropdown ms-1">
+              <div class="d-flex justify-content-start placeholder-glow" style="width: 80px;">
+                <span class="placeholder col-12 rounded-1" style="padding-block: 13px;"></span>
+              </div>
+            </div>
+            <div class="ms-2">
+              <div class="d-flex justify-content-start placeholder-glow" style="width: 20px;">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="issue-properties-section mt-3 mb-4">
+        <h4 class="fs-5">Properties</h4>
+        <div id="issue-properties">
+          <div class="row px-4 gy-3">
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-user-circle fs-6' ></i>
+                <span class="fs-6 ps-1">Created by</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-user-circle fs-6' ></i>
+                <span class="fs-6 ps-1">Updated by</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-loader-alt fs-6' ></i>
+                <span class="fs-6 ps-1">Status</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-flag fs-6' ></i>
+                <span class="fs-6 ps-1">Priority</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-target-lock fs-6' ></i>
+                <span class="fs-6 ps-1">Tracker</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-label fs-6'></i>
+                <span class="fs-6 ps-1">Label</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-calendar-plus fs-6' ></i>
+                <span class="fs-6 ps-1">Start Date</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-calendar-check fs-6' ></i>
+                <span class="fs-6 ps-1">Due Date</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-user-pin fs-6' ></i>
+                <span class="fs-6 ps-1">Assignee</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-git-commit fs-6'></i>
+                <span class="fs-6 ps-1">Progress</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="issue-activity border-top">
+        <div class="mt-3">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="fs-5 fw-semibold">Activities <span class="text-primary fs-7 fw-medium"> ~ ( Today )</span> </span>
+            <a class="border-0 bg-transparent cursor-pointer text-primary text-decoration-underline px-0 py-0" onclick="issueAllActivityOffcanvasOpen(this)" id="issueAllActivityOffcanvasLink" data-issue="" data-issuename="">
+                See All
+            </a>
+          </div>
+          
+          <div id="issue-activity">
+            <div class="issue-activity-container d-flex" data-id="">
+              <div>
+                  <div class="actor-img">
+                    <div class="d-flex justify-content-start placeholder-glow" style="width: 50px; height: 50px;">
+                      <span class="placeholder w-100 h-100 rounded-circle"></span>
+                    </div>
+                  </div>
+              </div>
+              <div class="w-100 d-flex flex-column ps-2 pe-3 pt-2">
+                <div class="w-100 d-flex justify-content-between">
+                  <div class="d-flex ms-3 justify-content-start placeholder-glow w-100">
+                    <span class="placeholder col-3 rounded-1"></span>
+                  </div>
+                </div>
+                <div class="w-100 ms-3 mt-2 px-2 pb-2 d-flex issue-activity-content">
+                  <div class="d-flex justify-content-start placeholder-glow w-100">
+                    <span class="placeholder col-11 rounded-1"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="issue-note issue-notes-sec">
+        <div class="mt-4">
+          <h5 class="mb-4">Notes</h5>
+          <div id="issue-notes">
+
+          </div>
+        </div>
+        <div class="py-3">
+          <div id="toolbar-container" class="border">
+            <span class="ql-formats py-3">
+              <select class="ql-font"></select>
+              <select class="ql-size"></select>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-bold"></button>
+              <button class="ql-italic"></button>
+              <button class="ql-underline"></button>
+              <button class="ql-strike"></button>
+            </span>
+            <span class="ql-formats">
+              <select class="ql-color"></select>
+              <select class="ql-background"></select>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-script" value="sub"></button>
+              <button class="ql-script" value="super"></button>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-header" value="1"></button>
+              <button class="ql-header" value="2"></button>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-list" value="ordered"></button>
+              <button class="ql-list" value="bullet"></button>
+              <button class="ql-indent" value="-1"></button>
+              <button class="ql-indent" value="+1"></button>
+            </span>
+            <span class="ql-formats">
+              <select class="ql-align"></select>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-link"></button>
+              <button class="ql-image"></button>
+              <button class="ql-clean"></button>
+            </span>
+          </div>
+          <div id="note-editor" class="py-3 px-4">
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary btn-comment-note fs-7 py-1 px-2" id="btn-add-issue-comment-note"
+              data-issue="">
+              <div id="btn-add-issue-note-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none"
+                role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span id="btn-add-issue-note-text">
+                Comment <i class='bx bx-send fs-7'></i>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-off-scroll">
+      <button class="btn btn-outline-primary d-flex px-2 py-2 rounded-circle">
+        <i class='bx bx-chevron-down fs-4'></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Offcanvas -->
+<div class="offcanvas offcanvas-end issue-offcanvas" tabindex="-1" id="issueAllActivityOffcanvas">
+  <div class="offcanvas-header pb-0">
+    <button type="button" class="btn p-1" data-bs-dismiss="offcanvas"><i class='bx bx-arrow-to-right fs-3'></i></button>
+  </div>
+  <div class="offcanvas-body position-relative">
+    <h6 id="issue-name" class="pt-3 pb-2 fs-5 fw-semibold text-secondary">All activity in <span class="fs-5 fw-semibold text-primary" id="issueAllActivityOffcanvasName"></span></h6>
+    <div class="content issue-activity pb-5" id="issueActivityOffcanvasContent">
+      
+    </div>
+  </div>
+</div>
+
+
+<div class="offcanvas offcanvas-end sub-issue-offcanvas" tabindex="-1" id="subIssueDetailsOffcanvas">
+  <div class="offcanvas-header pb-0">
+    <button type="button" class="btn p-1" data-bs-dismiss="offcanvas"><i class='bx bx-arrow-to-right fs-3'></i></button>
+  </div>
+  <div class="offcanvas-body pt-2">
+    <div class="p-1">
+      <h6 id="subissue-issue" class="fs-6"></h6>
+      <h6 id="subissue-name" class="issue-name"></h6>
+      <div id="subissue-des">
+        <div class="d-flex justify-content-start placeholder-glow w-100">
+          <span class="placeholder col-12 rounded-1"></span>
+        </div>
+      </div>
+      <hr>
+      <div class="issue-properties-section mt-3">
+        <h4 class="fs-5">Properties</h4>
+        <div id="subissue-properties">
+          <div class="row px-4 gy-3">
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-user-circle fs-6' ></i>
+                <span class="fs-6 ps-1">Created by</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-user-circle fs-6' ></i>
+                <span class="fs-6 ps-1">Updated by</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-loader-alt fs-6' ></i>
+                <span class="fs-6 ps-1">Status</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-flag fs-6' ></i>
+                <span class="fs-6 ps-1">Priority</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-target-lock fs-6' ></i>
+                <span class="fs-6 ps-1">Tracker</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-label fs-6'></i>
+                <span class="fs-6 ps-1">Label</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-calendar-plus fs-6' ></i>
+                <span class="fs-6 ps-1">Start Date</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-calendar-check fs-6' ></i>
+                <span class="fs-6 ps-1">Due Date</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-user-pin fs-6' ></i>
+                <span class="fs-6 ps-1">Assignee</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+            <div class="py-2 col-4 d-flex align-items-center">
+              <div class="issue-component">
+                <i class='bx bx-git-commit fs-6'></i>
+                <span class="fs-6 ps-1">Progress</span>
+              </div>
+            </div>
+            <div class="py-2 col-8 d-flex justify-content-start align-items-center">
+              <div class="d-flex justify-content-start placeholder-glow w-100">
+                <span class="placeholder col-12 rounded-1"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <hr>
+      <div class="subissue-note">
+        <div class="py-3">
+          <div id="subissuetoolbar-container" class="border">
+            <span class="ql-formats py-3">
+              <select class="ql-font"></select>
+              <select class="ql-size"></select>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-bold"></button>
+              <button class="ql-italic"></button>
+              <button class="ql-underline"></button>
+              <button class="ql-strike"></button>
+            </span>
+            <span class="ql-formats">
+              <select class="ql-color"></select>
+              <select class="ql-background"></select>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-list" value="ordered"></button>
+              <button class="ql-list" value="bullet"></button>
+              <button class="ql-indent" value="-1"></button>
+              <button class="ql-indent" value="+1"></button>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-link"></button>
+            </span>
+          </div>
+          <div id="subcomment-editor" class="py-3 px-4">
+          </div>
+          <div class="d-flex justify-content-end">
+            <button class="btn btn-primary btn-comment-subissue fs-8 py-1 px-2" id="btn-add-sub-issue-comment"
+              data-subissue="">
+              <div id="btn-add-sub-issue-comment-spinner"
+                class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <span id="btn-add-sub-issue-comment-text">Save</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const offcanvasElement = document.getElementById('issueDetailsOffcanvas');
+    const btnScroll = document.querySelector('.btn-off-scroll');
+    const offcanvasBody = document.querySelector('.offcanvas-body');
+
+    offcanvasElement.addEventListener('hide.bs.offcanvas', function() {
+      offcanvasBody.scrollTo({ top: 0, behavior: 'instant' }); // Scroll to top instantly
+    });
+
+    btnScroll.addEventListener('click', function () {
+      if (offcanvasBody.scrollTop + offcanvasBody.clientHeight >= offcanvasBody.scrollHeight) {
+        // If at the bottom, scroll to the top
+        offcanvasBody.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Otherwise, scroll to the bottom
+        offcanvasBody.scrollTo({ top: offcanvasBody.scrollHeight, behavior: 'smooth' });
+      }
+    });
+
+    offcanvasBody.addEventListener('scroll', function () {
+      if (offcanvasBody.scrollTop + offcanvasBody.clientHeight >= offcanvasBody.scrollHeight) {
+        // If at the bottom, change the icon to "up"
+        btnScroll.innerHTML = `
+          <button class="btn btn-outline-primary d-flex px-2 py-2 rounded-circle">
+            <i class='bx bx-chevron-up fs-4'></i>
+          </button>
+        `;
+      } else {
+        // Otherwise, keep the icon as "down"
+        btnScroll.innerHTML = `
+          <button class="btn btn-outline-primary d-flex px-2 py-2 rounded-circle">
+            <i class='bx bx-chevron-down fs-4'></i>
+          </button>
+        `;
+      }
+    });
+  });
+</script>

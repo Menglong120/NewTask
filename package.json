@@ -1,0 +1,15 @@
+{
+    "name": "task-management-system-v2",
+    "version": "1.0.0",
+    "description": "NSM Task Management System with Next.js Frontend and Express Backend",
+    "scripts": {
+        "dev:backend": "cd backend && nodemon --ignore ../frontend app.js",
+        "dev:frontend": "cd frontend && npm run dev",
+        "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+        "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2",
+        "nodemon": "^3.0.0"
+    }
+}

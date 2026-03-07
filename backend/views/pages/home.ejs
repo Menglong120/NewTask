@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+
+<%- include('../partials/head')  %>
+
+<body>
+  <div id="page-loader" aria-label="Loading">
+    <div class="spinner"></div>
+</div>
+
+    <!-- Page Wrapper -->
+    <div class="layout-wrapper layout-content-navbar" id="main-content">
+
+      <div class="layout-container">
+          <!-- Sidebar -->
+          <%- include('../partials/sidebar-superadmin')  %>
+          <!-- End of Sidebar -->
+  
+          <!-- Content Wrapper -->
+          <div class="layout-page">
+  
+              <!-- Main Content -->
+                  <!-- Topbar -->
+                  <%- include('../partials/topbar-superadmin')  %>
+                  <!-- End of Topbar -->
+  
+                  <div class="content-wrapper">
+                    <!-- Content -->
+        
+                    <div class="container-fluid home-super-admin">
+                      <div class="p-4 bg-white" style="margin-top: 35px; box-shadow: 0 0 0.375rem 0.25rem rgba(161, 172, 184, 0.15); border-radius: 8px;">
+                      <!-- Page Heading -->
+                        <div class="d-flex justify-content-between">
+                          <h4 class=" mb-4 pb-2 text-gray-800"><span id="showNames"></span></h4>
+                          <div class="d-flex">
+                            <!-- <span><i class='bx bx-time-five fs-4 text-primary'></i></span> -->
+                          
+                          </div>
+                          <div class="d-flex">
+                              <p class="mb-0 text-primary" id="currentDate" style="font-size: 19px;">10 JULY 2025</p>
+                             <div class="clock ms-2 mt-1">
+                              <div class="hours">
+                                <div class="first">
+                                  <div class="number">0</div>
+                                </div>
+                                <div class="second">
+                                  <div class="number">0</div>
+                                </div>
+                              </div>
+                              <div class="tick">:</div>
+                              <div class="minutes">
+                                <div class="first">
+                                  <div class="number">0</div>
+                                </div>
+                                <div class="second">
+                                  <div class="number">0</div>
+                                </div>
+                              </div>
+                              <div class="tick">:</div>
+                              <div class="seconds">
+                                <div class="first">
+                                  <div class="number">0</div>
+                                </div>
+                                <div class="second infinite">
+                                  <div class="number">0</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                      <div class="container-fluid mt-3 px-0">
+                        <div class="row mb-4 g-4">
+                          <div class="col-md-3">
+                            <div class="box" style="background-color: #9e7eff;">
+                              <span class=" fs-5 text-white ps-2">All Projects</span>
+                              <div class="mt-4 d-flex flex-column align-items-center justify-content-center">
+                                 <img style="width: 70px;" src="/img/icons/flati/backlog.png" alt="">
+                                <h1 id="totalProject" class="text-white mt-3">0</h1>
+                                <!-- <p class="text-white">Created Projects</p> -->
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="box" style="background-color: #95CAE3;">
+                              <span class=" fs-5 text-white ps-2">To Start Projects</span>
+                              <div class="mt-4 d-flex flex-column align-items-center justify-content-center">
+                                <img style="width: 70px;" src="/img/icons/flati/task-management.png" alt="">
+                                <h1 id="toStart" class="text-white mt-3">0</h1>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="box" style="background-color: #D9B747;">
+                              <span class=" fs-5 text-white ps-2">In Progress Projects</span>
+                              <div class="mt-4 d-flex flex-column align-items-center justify-content-center">
+                                <img style="width: 70px;" src="/img/icons/flati/checklist.png" alt="">
+                                <h1 id="totalStatus" class="text-white mt-3">0</h1>
+                                <!-- <p class="text-white">Projects In progress</p> -->
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-3">
+                            <div class="box" style="background-color: #92D445;">
+                              <span class=" fs-5 text-white ps-2">Completed Projects</span>
+                              <div class="mt-4 d-flex flex-column align-items-center justify-content-center">
+                                 <img style="width: 70px;" src="/img/icons/flati/project-manager.png" alt="">
+                                <h1 id="totalDone" class="text-white mt-3">0</h1>
+                                <!-- <p class="text-white">Projects Completed</p> -->
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="box box-card card px-3">
+                              <h6 style="font-weight: 800;" class="px-3 pt-2 mb-0">In progress </h6>
+                              <!-- <div > -->
+                                <ul class="recent-scroll mt-3 overflow-auto p-1 px-3" style="height: 200px;" id="allFolderRecent">
+
+                                </ul>
+                              <!-- </div> -->
+                            </div>
+
+                          </div>
+                          <div class="col-md-6">
+                            <div class="box box-card px-3 card">
+                              <h6 style="font-weight: 800;" class="px-3 pt-2 mb-0">Folder Project</h6>
+                              <!-- <div> -->
+                                <ul class="recent-scroll mt-3 overflow-auto p-1 px-3" style="height: 200px;" id="allFolder">
+
+                                </ul>
+                              <!-- </div> -->
+                            </div>
+                          </div>
+                          <div class="col-md-12">
+                            <div class="box card">
+                              <h6 style="font-weight: 800;" class="px-3 pt-2">Dashboard</h6>
+                              <div id="chart2" class="mt-4 px-3"></div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="box activity-container card recent-scroll ">
+                              <h6 style="font-weight: 800;" class="px-3 pt-2 mb-1">Activity</h6>
+                              <div class="activity-content ">
+                                <div class="w-100">
+                                  <div class="activity-hover px-3 py-0 " id="showActivity" style="font-size: 14px;">
+                                   <div>
+                                    <i class='bx bx-user-voice fs-2 pe-2'></i>
+                                    <strong>Troeng Chounmann</strong> <span class="text-primary fw-bold">super Admin</span> assigned member to <strong>KOT</strong> project
+                                   </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <div class="card">
+                              <div class="card-header recent-scroll pt-3" style="height: 385px;overflow-y: auto;">
+                                <h6 style="font-weight: 800;">Projects Process</h6>
+                                <div id="proShow">
+                                 
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      </div>
+                    </div>
+                    <!-- / Content -->
+        
+                    <!-- Footer -->
+            
+                    <!-- / Footer -->
+        
+                    <div class="content-backdrop fade"></div>
+                  </div>
+              <!-- End of Main Content -->
+  
+          </div>
+          <!-- End of Content Wrapper -->
+      </div>
+
+    </div>
+
+    <%- include('../partials/modal/modal')  %>
+
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>
+    <script src="/vendor/libs/jquery/jquery.js"></script>
+    <script src="/vendor/libs/popper/popper.js"></script>
+    <script src="/vendor/js/bootstrap.js"></script>
+    <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/vendor/select2/select2.min.js"></script>
+    <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+    <script src="/vendor/libs/apex-charts/apexcharts.js"></script>
+    <script src="/vendor/js/menu.js"></script>
+    <!-- endbuild -->
+
+    <script src="/js/backNavigationHandler.js"></script>
+    <script src="/js/spinner.js"></script>
+
+    <script src="/js/fetchApi.js"></script>
+    <script src="/js/btnLoading.js"></script>
+    <script src="/js/activity/fetchActivity.js"></script>
+    <script src="/js/projected/fetchProject.js"></script>
+    <script src="/js/sidebar/sidebar-project.js"></script>
+    <script src="/js/category/fetch.js"></script>
+    <script src="/js/requestPassword/fetchRequest.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/topbar/topbar-superadmin.js"></script>
+    <script src="/js/logout/logout.js"></script>
+    <script src="/js/dashboard/fetchDashboard.js"></script>
+    <script src="/js/home.js"></script>
+    <!-- Main JS -->
+    <script src="/js/default_js/main.js"></script>
+
+
+    <!-- Core plugin JavaScript-->
+
+    <!-- Custom scripts for all pages-->     
+     
+    <script>
+      $(document).ready(function () {
+        $('#showByrole').select2({
+          width: '150px', 
+          minimumResultsForSearch: Infinity 
+        });
+      });
+
+      $(document).ready(function () {
+        $('#rowsPerPage').select2({
+          width: '80px', 
+          minimumResultsForSearch: Infinity 
+        });
+      });
+
+      var hoursContainer = document.querySelector('.hours')
+      var minutesContainer = document.querySelector('.minutes')
+      var secondsContainer = document.querySelector('.seconds')
+      var tickElements = Array.from(document.querySelectorAll('.tick'))
+
+      var last = new Date(0)
+      last.setUTCHours(-1)
+
+      var tickState = true
+
+      function updateTime () {
+        var now = new Date
+        
+        var lastHours = last.getHours().toString()
+        var nowHours = now.getHours().toString()
+        if (lastHours !== nowHours) {
+          updateContainer(hoursContainer, nowHours)
+        }
+        
+        var lastMinutes = last.getMinutes().toString()
+        var nowMinutes = now.getMinutes().toString()
+        if (lastMinutes !== nowMinutes) {
+          updateContainer(minutesContainer, nowMinutes)
+        }
+        
+        var lastSeconds = last.getSeconds().toString()
+        var nowSeconds = now.getSeconds().toString()
+        if (lastSeconds !== nowSeconds) {
+          //tick()
+          updateContainer(secondsContainer, nowSeconds)
+        }
+        
+        last = now
+      }
+
+      function tick () {
+        tickElements.forEach(t => t.classList.toggle('tick-hidden'))
+      }
+
+      function updateContainer (container, newTime) {
+        var time = newTime.split('')
+        
+        if (time.length === 1) {
+          time.unshift('0')
+        }
+        
+        
+        var first = container.firstElementChild
+        if (first.lastElementChild.textContent !== time[0]) {
+          updateNumber(first, time[0])
+        }
+        
+        var last = container.lastElementChild
+        if (last.lastElementChild.textContent !== time[1]) {
+          updateNumber(last, time[1])
+        }
+      }
+
+      function updateNumber (element, number) {
+        //element.lastElementChild.textContent = number
+        var second = element.lastElementChild.cloneNode(true)
+        second.textContent = number
+        
+        element.appendChild(second)
+        element.classList.add('move')
+
+        setTimeout(function () {
+          element.classList.remove('move')
+        }, 990)
+        setTimeout(function () {
+          element.removeChild(element.firstElementChild)
+        }, 990)
+      }
+
+      setInterval(updateTime, 100)
+
+
+
+      // current Date
+
+      const today = new Date();
+
+      const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ];
+
+      const day = today.getDate();
+      const month = months[today.getMonth()];
+      const year = today.getFullYear();
+
+      const formattedDate = `${day} ${month} ${year}`;
+      document.getElementById("currentDate").textContent = formattedDate;
+
+    </script>
+
+</body>
+
+</html>

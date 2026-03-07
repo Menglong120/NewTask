@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+
+<%- include('../partials/head') %>
+
+  <body>
+    <div id="page-loader" aria-label="Loading">
+      <div class="spinner"></div>
+  </div>
+    <!-- Page Wrapper -->
+    <div class="layout-wrapper layout-content-navbar" id="main-content">
+      <div class="layout-container">
+      <!-- Sidebar -->
+      <%- include('../partials/sidebar-superadmin')  %>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div class="layout-page">
+
+          <!-- Main Content -->
+          <%- include('../partials/topbar-superadmin') %>
+          
+          <!-- Topbar -->
+          <div class="content-wrapper ">
+              <!-- End of Topbar -->
+              <!-- Begin Page Content -->
+              <div class="container-fluid table_users_setting tab-content setting-project mt-3">
+                  <!-- status    -->
+                  <div class="tab-pane active show fade custom_border" id="pills-contact"
+                    role="tabpanel" aria-labelledby="pills-contact-tab" tabindex="0">
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="search-container">
+                          <h4 class="card-title">Status</h4>
+                          <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                              data-bs-target="#addStatus" data-bs-whatever="@getbootstrap"><i class="fas fa-plus"></i>
+                              Add Status</button>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="addStatus" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Create Status (Project)</h5>
+                                <button type="button" class="btn-close closebtn"  data-bs-dismiss="modal" aria-label="Close" ></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                      <i class='bx bx-stats pe-1 icon' ></i>
+                                        <input class="title_input form-control" type="text" id="inputStauts" placeholder="Input Status" oninput="onInputRequireString('inputStauts', 'invalid-status', 255, 
+                                        {
+                                          require: 'Please fill in your Status!',
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Status name cannot over than 255 character!'
+                                        })" style="border-radius: 0px 5px 5px 0px;">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-status">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                                <button type="button" class="btn btn-primary d-flex align-items-center" id="btn-create-status-project" onclick="createstauts()">
+                                  <div id="btn-create-status-project-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-create-status-project-text">Add Status</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="modal fade" id="editStatus" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                          <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleModalCenterTitle">Edit Status (Project)</h5>
+                                <button type="button" class="btn-close closebtn" data-bs-dismiss="modal" aria-label="Close" ></button>
+                              </div>
+                              <div class="modal-body">
+                                <div class="d-flex status_title_input">
+                                  <div class="w-100">
+                                    <div class="col px-0 input-container" >
+                                      <i class='bx bx-stats pe-1 icon' ></i>
+                                        <input id="editstatus" class="title_input form-control " type="text"placeholder="Input Status" style="border-radius: 0px 5px 5px 0px;" oninput="onInputRequireString('editstatus', 'invalid-edit', 255, 
+                                        {
+                                          require: 'Please fill in your Status!', 
+                                          needdata: 'Issue name need to be more than 1 characters!',
+                                          overdata: 'Status name cannot over than 255 character!'
+                                        })">
+                                      </div>
+                                      <div class="invalid-feedback " id="invalid-edit">
+                                        Please fill in your password!
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary closebtn" data-bs-dismiss="modal" aria-label="Close" >Close</button>
+                                <button onclick="updatestatus()" type="button" class="btn btn-primary d-flex align-items-center" id="btn-update-status-project">
+                                  <div id="btn-update-status-project-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                  </div>
+                                  <span id="btn-update-status-project-text">Update</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="table-responsive">
+                          <form action="">
+                            <div class="add_status d-none">
+                             
+                            </div>
+                            <!-- defual  -->
+                            <div id="showstatus">
+
+                            </div>
+                          </form>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+              <!-- /.container-fluid -->
+              <div class="content-backdrop fade"></div>
+            </div>
+          </div>
+          <!-- End of Main Content -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+      </div>
+
+    </div>
+
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="/vendor/libs/jquery/jquery.js"></script>
+    <script src="/vendor/libs/popper/popper.js"></script>
+    <script src="/vendor/js/bootstrap.js"></script>
+    <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/vendor/select2/select2.min.js"></script>
+    <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+    <script src="/vendor/libs/apex-charts/apexcharts.js"></script>
+    <script src="/vendor/js/menu.js"></script>
+
+    <script src="/js/backNavigationHandler.js"></script>
+    <script src="/js/spinner.js"></script>
+
+    <script src="/js/fetchApi.js"></script>
+    <script src="/js/validation.js"></script>
+    <script src="/js/btnLoading.js"></script>
+    <script src="/js/activity/fetchActivity.js"></script>
+    <script src="/js/projected/fetchProject.js"></script>
+    <script src="/js/sidebar/sidebar-project.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/requestPassword/fetchRequest.js"></script>
+    <script src="/js/topbar/topbar-superadmin.js"></script>
+    <script src="/js/logout/logout.js"></script>
+    <script src="/js/category/fetch.js"></script>
+    <script src="/js/status.js"></script>
+
+    <script src="/js/default_js/main.js"></script>
+
+  </body>
+
+</html>

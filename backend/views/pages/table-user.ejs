@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+
+<%- include('../partials/head') %>
+
+  <body>
+    <div id="page-loader" aria-label="Loading">
+      <div class="spinner"></div>
+  </div>
+
+    <!-- Page Wrapper -->
+    <div class="layout-wrapper layout-content-navbar" id="main-content">
+
+     <div class="layout-container">
+       <!-- Sidebar -->
+       <%- include('../partials/sidebar-superadmin')  %>
+       <!-- End of Sidebar -->
+
+       <!-- Content Wrapper -->
+       <div class="layout-page">
+
+         <!-- Main Content -->
+         <div id="content">
+
+           <!-- Topbar -->
+           <%- include('../partials/topbar-superadmin')  %>
+             <!-- End of Topbar -->
+             <div class="content-wrapper">
+              <!-- Content -->
+              <div class="container-fluid table_users_setting mt-2">
+
+                <!-- Page Heading -->
+                <div class="tab-content px-0" id="pills-tabContent">
+                  <!-- All  -->
+                  <div class="tab-pane fade show active" id="pills-home" role="tabpanel"
+                    aria-labelledby="pills-home-tab" tabindex="0">
+                    <div class="card">
+                      <div class="card-body">
+                        <div class="search-container">
+                          <div class="d-flex">
+                            <div class="form-group d-flex align-items-center mr-3">
+                              <label for="rowsPerPage" class="font-16 fw-5 me-2 ">Rows</label>
+                              <select id="rowsPerPage" class="form-control select2"
+                                onchange="userUpdateRowsPerPage('rowsPerPage')">
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                              </select>
+                            </div>
+                            <div class="form-group d-flex align-items-center selectmemeber">
+                              <label for="showByrole" class="font-16 fw-5 mx-2">Show</label>
+                              <div class="form-group d-flex align-items-center selectmemeber">
+                                <!-- <label for="showByrole" class="font-16 fw-5 mt-2 mr-2">Show</label> -->
+                                <select id="showByrole" class="form-control select2" onchange="selectRoles('showByrole')">
+                                  <option value="0" selected>All Member</option>
+                                  <option value="1">Admin</option>
+                                  <option value="2">Normal User</option>
+                              </select>
+                              
+                            </div>
+                            
+                            </div>
+                          </div>
+                          <div class="d-flex gap-2">
+                            <div class="search-box-table ">
+                              <input type="text" id="searchInput" class="form-control" placeholder="Search...."
+                                onkeyup="searchAlluser('searchInput')">
+                            </div>
+                            <button style="height: 38px;" type="button" class="btn btn-primary" data-bs-toggle="modal"
+                              onclick="createAccoutOpenModal()">
+                              <a href="javascript:void(0)" class="text-white py-1 fs-6">
+                                <i class='bx bxs-user-plus'></i>
+                              </a>
+                            </button>
+                          </div>
+                        </div>
+ 
+                        <div class="table-responsive">
+                          <table class="table tbl-user">
+                            <thead>
+                              <tr>
+                                <th class="id_table">NO</th>
+                                <th>Profile</th>
+                                <th>Full Name</th>
+                                <th>User Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Project</th>
+                                <th class="active_table text-center"><i class='bx bx-slider-alt'></i>
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody id="allUser">
+ 
+                            </tbody>
+                          </table>
+                        </div>
+ 
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div class="entriesInfo">Showing 1 to 10 of 20 entries</div>
+                          <nav>
+                            <ul class="pagination mb-0" id="pagination">
+                      
+                            </ul>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- / Content -->
+  
+              <div class="content-backdrop fade"></div>
+            </div>
+             <!-- /.container-fluid -->
+         </div>
+       
+         <!-- End of Main Content -->
+
+         <%- include('../partials/modal/modal')  %>
+
+       </div>
+       <!-- End of Content Wrapper -->
+     </div>
+
+    </div>
+
+
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="/vendor/libs/jquery/jquery.js"></script>
+    <script src="/vendor/libs/popper/popper.js"></script>
+    <script src="/vendor/js/bootstrap.js"></script>
+    <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/vendor/select2/select2.min.js"></script>
+    <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+    <script src="/vendor/js/menu.js"></script>
+    
+    <script src="/js/backNavigationHandler.js"></script>
+    <script src="/js/spinner.js"></script>
+
+    <script src="/js/fetchApi.js"></script>
+    <script src="/js/btnLoading.js"></script>
+    <script src="/js/activity/fetchActivity.js"></script>
+    <script src="/js/projected/fetchProject.js"></script>
+    <script src="/js/validation.js"></script>
+    <script src="/js/sidebar/sidebar-project.js"></script>
+    <script src="/js/category/fetch.js"></script>
+    <script src="/js/requestPassword/fetchRequest.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/topbar/topbar-superadmin.js"></script>
+    <script src="/js/logout/logout.js"></script>
+    <script src="/js/table/table.js"></script>
+    <script src="/js/table/table-user-function.js"></script>
+    <script src="/js/table/table-user.js"></script>
+
+    <script src="/js/default_js/main.js"></script>
+    
+    <script>
+      $(document).ready(function() {
+    $('.select2').select2({
+        width: '100%', // Make it full width
+        minimumResultsForSearch: Infinity, // Disable search box
+        dropdownParent: $("#createAccount") // Corrected ID selector
+    });
+});
+      $(document).ready(function () {
+        $('#showByrole').select2({
+          width: '150px', 
+          minimumResultsForSearch: Infinity 
+        });
+      });
+
+      $(document).ready(function () {
+        $('#rowsPerPage').select2({
+          width: '80px', 
+          minimumResultsForSearch: Infinity 
+        });
+      });
+    </script>
+  <script>
+  document.querySelector('.show-btn').addEventListener('click', function() {
+  const passwordInput = document.querySelector('#changePw');
+  const eyeIcon = this.querySelector('i');
+
+  if (passwordInput.type === 'password') {
+    passwordInput.type = 'text';
+    eyeIcon.classList.remove('fa-eye');
+    eyeIcon.classList.add('fa-eye-slash'); // Change icon to "eye-slash"
+  } else {
+    passwordInput.type = 'password';
+    eyeIcon.classList.remove('fa-eye-slash');
+    eyeIcon.classList.add('fa-eye'); // Change icon back to "eye"
+  }
+});
+  </script>
+
+
+
+
+  </body>
+
+</html>

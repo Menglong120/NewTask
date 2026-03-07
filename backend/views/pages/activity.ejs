@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+<%- include('../partials/head')  %>
+
+<body>
+  <div id="page-loader" aria-label="Loading">
+    <div class="spinner"></div>
+</div>
+  <!-- Page Wrapper -->
+  <div class="layout-wrapper layout-content-navbar" id="main-content">
+
+      <div class="layout-container">
+        
+    <!-- Sidebar -->
+    <%- include('../partials/sidebar-superadmin')  %>
+    <!-- End of Sidebar -->
+
+    <!-- Content Wrapper -->
+    <div class="layout-page">
+
+      <!-- Main Content -->
+      
+      <!-- Topbar -->
+      <%- include('../partials/topbar-superadmin')  %>
+      <!-- End of Topbar -->
+      <div class="content-wrapper">
+      
+        <div class="container-fluid activity-supper-admin mt-5">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="text-gray-800 mb-2">Activity</h4>
+            <div class="">
+             
+            </div>
+          </div>
+
+            <div  id="showActivity">
+              
+            </div>
+          
+        </div>
+
+
+        <!-- End of Main Content -->
+        <div class="content-backdrop fade"></div>
+      </div>
+      </div>
+      <!-- End of Content Wrapper -->
+      </div>
+
+    </div>
+
+
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="/vendor/libs/jquery/jquery.js"></script>
+    <script src="/vendor/libs/popper/popper.js"></script>
+    <script src="/vendor/js/bootstrap.js"></script>
+    <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/vendor/select2/select2.min.js"></script>
+    <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+    <script src="/vendor/js/menu.js"></script>
+
+    <script src="/js/backNavigationHandler.js"></script>
+    <script src="/js/spinner.js"></script>
+
+    <!-- Sidebar  -->
+    <script src="/js/fetchApi.js"></script>
+    <script src="/js/btnLoading.js"></script>
+    <script src="/js/projected/fetchProject.js"></script>
+    <script src="/js/validation.js"></script>
+    <script src="/js/sidebar/sidebar-project.js"></script>
+    <script src="/js/requestPassword/fetchRequest.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/topbar/topbar-superadmin.js"></script>    
+    <script src="/js/logout/logout.js"></script>
+    <script src="/js/category/fetch.js"></script>
+    <!-- / Sidebar -->
+
+    <script src="/js/activity.js"></script>
+    <script src="/js/activity/fetchActivity.js"></script>
+    <script src="/js/table/table.js"></script>
+
+    <script src="/js/default_js/main.js"></script>
+
+
+</body>
+
+</html>

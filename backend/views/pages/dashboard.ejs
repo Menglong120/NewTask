@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+  <%- include('../partials/head')  %>
+
+<body id="page-top">
+  <div id="page-loader" aria-label="Loading">
+    <div class="spinner"></div>
+</div>
+
+  <!-- Layout wrapper -->
+  <div class="layout-wrapper layout-content-navbar superadmin-dashboard" id="main-content">
+    <div class="layout-container">
+      <!-- Menu -->
+
+      <%- include('../partials/sidebar-superadmin')  %>
+      <!-- / Menu -->
+
+      <!-- Layout container -->
+      <div class="layout-page">
+        <!-- Navbar -->
+
+        <%- include('../partials/topbar-superadmin')  %>
+
+        <!-- Begin Page Content -->
+        <div class="container-fluid home-super-admin">
+          <h4 class="mt-5 text-gray-800">Dashboard</h4>
+          <div class="p-4 bg-white"
+            style="margin-top: 25px; box-shadow: 0 0 0.375rem 0.25rem rgba(161, 172, 184, 0.15); border-radius: 8px;">
+            <div class="row g-4">
+              <div class="col-lg-8 col-md-12">
+                <div class="row g-4">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header d-flex position-relative overflow-hidden">
+                        <div class="dash-greeting" style="width: 70%;">
+                          <div class="greet-bg-hover"></div>
+                          <h4>This Is Your Dashboard Area</h4>
+                          <p>
+                            Have a great <span id="timeShow"></span>! Stay focused and productive as you work through your tasks today.
+                          </p>
+                        </div>
+                        <div style="width: 30%; z-index: 20;">
+                          <div class="img-wave-dash">
+                            <img src="/img/dashboard/research.png" alt="">
+                          </div>
+                          <div class="img-research-dash">
+                            <img src="/img/login/wave.png" alt="">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <h6 style="font-weight: 800;" class="ms-4 mb-0">Work Space</h6>
+                  <div class="col-md-6 col-12">
+                    <div class="card">
+                      <div class="card-header card-total" style="background-color: #9e7eff;">
+                        <div class="dash-icon mt-1">
+                          <i class='bx bx-briefcase'></i>
+                        </div>
+                        <div class="dash-txt text-center">
+                          <p class="fs-3 m-0" id="totalProject">1000</p>
+                          <p class="m-0">Total Projects</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6 col-12">
+                    <div class="card">
+                      <div class="card-header card-total" style="background-color: #95CAE3;">
+                        <div class="dash-icon mt-1">
+                          <i class='bx bx-user'></i>
+                        </div>
+                        <div class="dash-txt text-center">
+                          <p class="fs-3 m-0" id="totalMember">1000</p>
+                          <p class="m-0">Total Members</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6 col-12">
+                    <div class="card">
+                      <div class="card-header card-total" style="background-color: #D9B747;">
+                        <div class="dash-icon mt-1">
+                          <i class='bx bx-user'></i>
+                        </div>
+                        <div class="dash-txt text-center">
+                          <p class="fs-3 m-0" id="totalAdmin">1000</p>
+                          <p class="m-0">Total Admin</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6 col-12">
+                    <div class="card">
+                      <div class="card-header card-total" style="background-color: #92D445;">
+                        <div class="dash-icon mt-1">
+                          <i class='bx bx-task'></i>
+                        </div>
+                        <div class="dash-txt text-center">
+                          <p class="fs-3 m-0" id="totalCategories">1000</p>
+                          <p class="m-0">Total Category</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-12">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">
+                        <div class="weather">
+                          <form class="d-none">
+                            <input  type="text" id="name" autocomplete="off">
+                          </form>
+                          <section class="result">
+
+                            <figure class="name mb-0">
+                              <figcaption>Lo1ndon</figcaption>
+                              <img src="https://flagsapi.com/GB/shiny/32.png">
+                            </figure>
+
+                            <figure class="temperature mb-0">
+                              <img src="https://openweathermap.org/img/wn/10d@4x.png">
+                              <figcaption>
+                                <span>31</span>
+                                <sup>o</sup>
+                              </figcaption>
+                            </figure>
+                            <p class="description">overcast clouds</p>
+                            <ul>
+                              <li>
+                                <span>clouds</span>
+                                <i class="fa-solid fa-cloud"></i>
+                                <span id="clouds">98</span>%
+                              </li>
+                              <li>
+                                <span>humidity</span>
+                                <i class="fa-solid fa-droplet"></i>
+                                <span id="humidity">98</span>%
+                              </li>
+                              <li>
+                                <span>pressure</span>
+                                <i class="fa-solid fa-gauge"></i>
+                                <span id="pressure">1011</span>hPa
+                              </li>
+                            </ul>
+                          </section>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">
+                        <h6 style="font-weight: 800;">Total Issue</h6>
+                        <div id="chart"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">
+                        <h6 style="font-weight: 800;">Tracking Status</h6>
+                        <div id="chart1"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-12">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header recent-scroll" style="height: 324px;overflow-y: auto;">
+                        <h6 style="font-weight: 800;">Projects Process</h6>
+                        <div id="proShow">
+                         
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="row">
+                  <div class="col-12">
+                    <div class="card">
+                      <div class="card-header">
+                        <div id="chart2"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="content-backdrop fade"></div>
+        </div>
+      
+          <!-- /.container-fluid -->
+        </div>
+        <!-- End of Main Content -->
+
+      </div>
+      <!-- End of Content Wrapper -->
+
+    </div>
+
+
+
+  </div>
+  </div>
+
+  <!-- Core JS -->
+  <!-- build:js assets/vendor/js/core.js -->
+    <script src="/vendor/libs/jquery/jquery.js"></script>
+    <script src="/vendor/libs/popper/popper.js"></script>
+    <script src="/vendor/js/bootstrap.js"></script>
+    <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+    <script src="/vendor/select2/select2.min.js"></script>
+    <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+    <script src="/vendor/libs/apex-charts/apexcharts.js"></script>
+    <script src="/vendor/js/menu.js"></script>
+
+    <script src="/js/backNavigationHandler.js"></script>
+    <script src="/js/spinner.js"></script>
+
+    <script src="/js/fetchApi.js"></script>
+    <script src="/js/btnLoading.js"></script>
+    <script src="/js/activity/fetchActivity.js"></script>
+    <script src="/js/projected/fetchProject.js"></script>
+    <script src="/js/sidebar/sidebar-project.js"></script>
+    <script src="/js/category/fetch.js"></script>
+    <script src="/js/requestPassword/fetchRequest.js"></script>
+    <script src="/js/profile/fetchProfile.js"></script>
+    <script src="/js/topbar/topbar-superadmin.js"></script>
+    <script src="/js/logout/logout.js"></script>
+    <script src="/js/dashboard/fetchDashboard.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <!-- Main JS -->
+    <script src="/js/default_js/main.js"></script>
+    
+  <script>
+    let id = '9505fd1df737e20152fbd78cdb289b6a';
+let url = 'https://api.openweathermap.org/data/2.5/weather?units=metric&appid=' + id;
+let city = document.querySelector('.name');
+let form = document.querySelector("form");
+let temperature = document.querySelector('.temperature');
+let description = document.querySelector('.description');
+let valueSearch = document.getElementById('name');
+let clouds = document.getElementById('clouds');
+let humidity = document.getElementById('humidity');
+let pressure = document.getElementById('pressure');
+let main = document.querySelector('main');
+form.addEventListener("submit", (e) => {
+    e.preventDefault();  
+    if(valueSearch.value != ''){
+        searchWeather();
+    }
+});
+const searchWeather = () => {
+    fetch(url+'&q='+ valueSearch.value)
+        .then(response => response.json())
+        .then(data => {
+            // console.log(data);
+            if(data.cod == 200){
+                city.querySelector('figcaption').innerHTML = data.name;
+                city.querySelector('img').src = `https://flagsapi.com/${data.sys.country}/shiny/32.png`;
+                temperature.querySelector('img').src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`;
+                temperature.querySelector('span').innerText = data.main.temp;
+                description.innerText = data.weather[0].description;
+
+                clouds.innerText = data.clouds.all;
+                humidity.innerText = data.main.humidity;
+                pressure.innerText = data.main.pressure;
+            }else{
+                main.classList.add('error');
+                setTimeout(() => {
+                    main.classList.remove('error');
+                }, 1000);
+            }
+            valueSearch.value = '';
+        })
+}
+// search Default
+const initApp = () => {
+    valueSearch.value = 'Cambodia';
+    searchWeather();
+}
+initApp();
+
+  </script>
+
+</body>
+
+</html>

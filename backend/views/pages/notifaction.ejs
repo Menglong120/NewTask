@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en" class="light-style layout-menu-fixed" dir="ltr" data-theme="theme-default" data-assets-path="../assets/"
+  data-template="vertical-menu-template-free">
+
+  <%- include('../partials/head')  %>
+<body >
+  <div id="page-loader" aria-label="Loading">
+    <div class="spinner"></div>
+</div>
+
+  <!-- Layout wrapper -->
+  <div class="layout-wrapper layout-content-navbar" id="main-content">
+    <div class="layout-container">
+      <!-- Menu -->
+
+      <%- include('../partials/sidebar-superadmin')  %>
+      <!-- / Menu -->
+
+      <!-- Layout container -->
+      <div class="layout-page">
+        <!-- Navbar -->
+
+        <%- include('../partials/topbar-superadmin')  %>
+
+        <!-- Begin Page Content -->
+        <div class="container-fluid home-super-admin">
+          <h4 style="margin-top: 49px;" class="text-gray-800">Notifications</h4>
+          <div class="p-4 bg-white mt-4" style="box-shadow: 0 0 0.375rem 0.25rem rgba(161, 172, 184, 0.15); border-radius: 8px;">
+            <!-- Page Heading -->
+          <div>
+            <div class="tab-content mt-3 p-0 " id="myTabContent ">
+              <div class="tab-pane fade show active px-2 d-none" id="showActivity" role="tabpanel" aria-labelledby="all-tab">
+                <div class="row d-flex justify-content-between border-bottom p-3 mt-3">
+                  <div class="d-flex col-9">
+                    <div class="d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border-radius: 100%;">
+                      <div class="placeholder-glow overflow-hidden" style="width: 60px; height: 60px; border-radius: 100%;">
+                        <span class="placeholder w-100 h-100 rounded-full"></span>
+                      </div>
+                    </div>
+                    <div class="ps-3 d-flex flex-column justify-content-center align-items-start w-100 placeholder-glow">
+                      <span class="placeholder mb-3 col-3 rounded-1"></span>
+                      <span class="placeholder col-9 rounded-1"></span>
+                    </div>
+                  </div>
+                  <div class="col-3 d-flex justify-content-center align-items-center">
+                    <div class="placeholder-glow w-100 d-flex justify-content-end">
+                      <span class="placeholder col-5 rounded-1"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+  
+          </div>
+          <div class="col-12 d-none" id="superadmin">
+            <div class="nav-align-top mb-4 border-0">
+              <ul class="nav nav-tabs nav-fill" role="tablist">
+                  <li class="nav-item">
+                      <button type="button" class="nav-link active text" role="tab" data-bs-toggle="tab" data-bs-target="#all-notifications" aria-controls="all-notifications" aria-selected="true">
+                        <i class='bx bx-bell mb-1'></i>  All Notifications
+                      </button>
+                  </li>
+                  <li class="nav-item">
+                      <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#approved-notifications" aria-controls="approved-notifications" aria-selected="false">
+                        <i class='bx bx-paper-plane mb-1'></i>  Approved
+                      </button>
+                  </li>
+                  <li class="nav-item">
+                      <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#rejected-notifications" aria-controls="rejected-notifications" aria-selected="false">
+                        <i class='bx bxs-no-entry mb-1'></i>  Rejected
+                      </button>
+                  </li>
+                  <li class="nav-item">
+                      <button type="button" class="nav-link" role="tab" data-bs-toggle="tab" data-bs-target="#pending-notifications" aria-controls="pending-notifications" aria-selected="false">
+                        <i class='bx bx-time mb-1'></i>  Pending
+                      </button>
+                  </li>
+              </ul>
+              <div class="tab-content px-0" style="box-shadow: none !important;">
+                  <div class="tab-pane fade show active" id="all-notifications" role="tabpanel">
+                      <div id="all-notifications-content">
+
+                        <div class="row">
+                          <div class="col-9 d-flex">
+                            <div class="d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border-radius: 100%;">
+                                <div class="placeholder-glow overflow-hidden" style="width: 60px; height: 60px; border-radius: 100%;">
+                                  <span class="placeholder w-100 h-100 rounded-full"></span>
+                                </div>
+                            </div>
+                            <div class="ps-3 d-flex flex-column justify-content-center align-items-start w-100 placeholder-glow">
+                              <span class="placeholder mb-2 col-2 rounded-1"></span>
+                              <span class="placeholder col-6 rounded-1"></span>
+                            </div>
+                          </div>
+                          <div class="col-3 d-flex justify-center align-items-end flex-column">
+                            <div class="dropdown mb-2 d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-1 rounded-1"></span>
+                            </div>
+                            <div class="d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-7 rounded-1"></span>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                  </div>
+                  <div class="tab-pane fade" id="approved-notifications" role="tabpanel">
+                      <div id="approved-notifications-content">
+
+                        <div class="row">
+                          <div class="col-9 d-flex">
+                            <div class="d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border-radius: 100%;">
+                                <div class="placeholder-glow overflow-hidden" style="width: 60px; height: 60px; border-radius: 100%;">
+                                  <span class="placeholder w-100 h-100 rounded-full"></span>
+                                </div>
+                            </div>
+                            <div class="ps-3 d-flex flex-column justify-content-center align-items-start w-100 placeholder-glow">
+                              <span class="placeholder mb-2 col-2 rounded-1"></span>
+                              <span class="placeholder col-6 rounded-1"></span>
+                            </div>
+                          </div>
+                          <div class="col-3 d-flex justify-center align-items-end flex-column">
+                            <div class="dropdown mb-2 d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-1 rounded-1"></span>
+                            </div>
+                            <div class="d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-7 rounded-1"></span>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                  </div>
+                  <div class="tab-pane fade" id="rejected-notifications" role="tabpanel">
+                      <div id="rejected-notifications-content">
+
+                        <div class="row">
+                          <div class="col-9 d-flex">
+                            <div class="d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border-radius: 100%;">
+                                <div class="placeholder-glow overflow-hidden" style="width: 60px; height: 60px; border-radius: 100%;">
+                                  <span class="placeholder w-100 h-100 rounded-full"></span>
+                                </div>
+                            </div>
+                            <div class="ps-3 d-flex flex-column justify-content-center align-items-start w-100 placeholder-glow">
+                              <span class="placeholder mb-2 col-2 rounded-1"></span>
+                              <span class="placeholder col-6 rounded-1"></span>
+                            </div>
+                          </div>
+                          <div class="col-3 d-flex justify-center align-items-end flex-column">
+                            <div class="dropdown mb-2 d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-1 rounded-1"></span>
+                            </div>
+                            <div class="d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-7 rounded-1"></span>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                  </div>
+                  <div class="tab-pane fade" id="pending-notifications" role="tabpanel">
+                      <div id="pending-notifications-content">
+
+                        <div class="row">
+                          <div class="col-9 d-flex">
+                            <div class="d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; border-radius: 100%;">
+                                <div class="placeholder-glow overflow-hidden" style="width: 60px; height: 60px; border-radius: 100%;">
+                                  <span class="placeholder w-100 h-100 rounded-full"></span>
+                                </div>
+                            </div>
+                            <div class="ps-3 d-flex flex-column justify-content-center align-items-start w-100 placeholder-glow">
+                              <span class="placeholder mb-2 col-2 rounded-1"></span>
+                              <span class="placeholder col-6 rounded-1"></span>
+                            </div>
+                          </div>
+                          <div class="col-3 d-flex justify-center align-items-end flex-column">
+                            <div class="dropdown mb-2 d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-1 rounded-1"></span>
+                            </div>
+                            <div class="d-flex justify-content-end placeholder-glow w-100">
+                              <span class="placeholder col-7 rounded-1"></span>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+          </div>
+        </div>
+      
+        <!-- /.container-fluid -->
+      </div>
+      <!-- End of Main Content -->
+
+    </div>
+    <!-- End of Content Wrapper -->
+    <div class="content-backdrop fade"></div>
+</div>
+
+  </div>
+
+
+  </div>
+  </div>
+
+  <!-- Core JS -->
+  <!-- build:js assets/vendor/js/core.js -->
+  <script src="/vendor/libs/jquery/jquery.js"></script>
+  <script src="/vendor/libs/popper/popper.js"></script>
+  <script src="/vendor/js/bootstrap.js"></script>
+  <script src="/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>
+  <script src="/vendor/select2/select2.min.js"></script>
+  <script src="/vendor/sweetAlert2/sweetalert2@11.js"></script>
+  <script src="/vendor/js/menu.js"></script>
+  <!-- endbuild -->
+
+  <script src="/js/backNavigationHandler.js"></script>
+  <script src="/js/spinner.js"></script>
+
+  <script src="/js/fetchApi.js"></script>
+  <script src="/js/projected/fetchProject.js"></script>
+  <script src="/js/sidebar/sidebar-project.js"></script>
+  <script src="/js/category/fetch.js"></script>
+  <script src="/js/activity/fetchActivity.js"></script>
+  <script src="/js/requestPassword/fetchRequest.js"></script>
+  <script src="/js/profile/fetchProfile.js"></script>
+  <script src="/js/topbar/topbar-superadmin.js"></script>
+  <script src="/js/logout/logout.js"></script>
+  <script src="/js/notifaction.js"></script>
+  <!-- Main JS -->
+  <script src="/js/default_js/main.js"></script>
+  
+</body>
+
+</html>

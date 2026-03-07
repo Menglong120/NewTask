@@ -1,0 +1,285 @@
+<!-- Create Issue -->
+
+<div class="modal fade" id="createIssue" aria-hidden="true" aria-labelledby="createIssueLabel" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom py-3">
+                <h1 class="modal-title fs-5 text-b font-weight-bold" id="createIssueLabel">Create New Issue</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="py-2" id="modal-main-compo">
+
+                </div>
+                <form action="" id="bootstrap-form" novalidate>
+                    <div class="row g-3 py-4">
+                        <div class="col-12">
+                            <input type="text" id="createIssueName" class="form-control" oninput="onInputRequireString('createIssueName', 'createIssueNameValidate', 255, {
+                                require: 'Issue name is required..!',
+                                needdata: 'Issue name need to be more than 1 characters!',
+                                overdata: 'Issue name cannot be more than 255 characters..!',
+                            })" placeholder="Issue title">
+                            <div class="mt-1 px-2 text-danger d-none" id="createIssueNameValidate">
+
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <textarea name="description" id="createIssueDescription" placeholder="Issue description"
+                                class="form-control" style="height: 110px;"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="col-12 h-100 d-flex flex-wrap justify-content-start align-items-center"
+                    id="create-issue-property">
+
+                </div>
+            </div>
+            <div class="modal-footer pt-0 pb-4">
+                <button onclick="register()" class="btn btn-secondary border-2" data-bs-target="#createIssue"
+                    data-bs-toggle="modal">Cancel</button>
+                <button class="btn btn-primary border-2 d-flex align-items-center" id="btn-create-issue"
+                    onclick="createIssueClicked()">
+                    <div id="btn-create-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span id="btn-create-issue-text">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- / Create Issue -->
+
+<!-- Update Issue -->
+
+<div class="modal fade" id="editIssue" aria-hidden="true" aria-labelledby="createIssueLabel" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom py-3">
+                <h1 class="modal-title fs-5 text-b font-weight-bold" id="editIssueLabel">Edit Issue</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="py-2" id="modal-update-main-compo">
+
+                </div>
+                <form action="" id="bootstrap-form" novalidate>
+                    <div class="row g-3 py-4">
+                        <div class="col-12">
+                            <input type="text" id="updateIssueName" class="form-control" oninput="onInputRequireString('updateIssueName', 'updateIssueNameValidate', 255, {
+                                require: 'Issue name is required..!',
+                                needdata: 'Issue name need to be more than 1 characters!',
+                                overdata: 'Issue name cannot be more than 255 characters..!',
+                            })" placeholder="Issue title">
+                            <div class="mt-1 px-2 text-danger d-none" id="updateIssueNameValidate">
+
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <textarea name="description" id="updateIssueDescription" placeholder="Issue description"
+                                class="form-control" style="height: 110px;"></textarea>
+                        </div>
+                        <div class="col-12 d-flex align-items-center py-2" id="updateIssueProgressModal">
+
+                        </div>
+                    </div>
+                </form>
+                <div class="col-12 h-100 d-flex flex-wrap justify-content-start align-items-center"
+                    id="update-issue-property">
+
+                </div>
+            </div>
+            <div class="modal-footer pt-0 pb-4">
+                <button onclick="register()" class="btn btn-secondary border-2" data-bs-target="#editIssue"
+                    data-bs-toggle="modal">Cancel</button>
+                <button class="btn btn-primary border-2 d-flex align-items-center" id="btn-edit-issue"
+                    onclick="updateIssueClicked()">
+                    <div id="btn-edit-issue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span id="btn-edit-issue-text">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- / Update Issue -->
+
+<!-- Create Sub Issue -->
+
+<div class="modal fade" id="createSubIssue" aria-hidden="true" aria-labelledby="createSubIssueLabel" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom py-3">
+                <h1 class="modal-title fs-5 text-b font-weight-bold" id="createSubIssueLabel">Create New Sub-Issue</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="py-2" id="create_subIssue_modal_prop_head">
+
+                </div>
+                <form id="bootstrap-form" novalidate>
+                    <div class="row g-3 py-4">
+                        <div class="col-12">
+                            <input type="text" id="createSubIssueName" class="form-control" oninput="onInputRequireString('createSubIssueName', 'createSubIssueNameValidate', 255, {
+                                require: 'Sub-Issue name is required..!',
+                                needdata: 'Sub-Issue name need to be more than 1 characters!',
+                                overdata: 'Sub-Issue name cannot be more than 255 characters..!',
+                            })" placeholder="Issue title">
+                            <div class="mt-1 px-2 text-danger d-none" id="createSubIssueNameValidate">
+
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <textarea name="description" id="createSubIssueDescription"
+                                placeholder="Sub-Issue description" class="form-control"
+                                style="height: 110px;"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="col-12 h-100 d-flex justify-content-start align-items-center" id="create_sub_issue_prop">
+
+                </div>
+            </div>
+            <div class="modal-footer pt-0 pb-4">
+                <button class="btn btn-secondary" data-bs-target="#createSubIssue" data-bs-toggle="modal">Cancel</button>
+                <button class="btn btn-primary border-2 d-flex align-items-center" id="btn-create-subissue"
+                    onclick="createSubIssueClicked()">
+                    <div id="btn-create-subissue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span id="btn-create-subissue-text">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- / Create Sub Issue -->
+
+<!-- Update Sub Issue -->
+
+<div class="modal fade" id="editSubIssue" aria-hidden="true" aria-labelledby="editSubIssueLabel" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom py-3">
+                <h1 class="modal-title fs-5 text-b font-weight-bold" id="editSubIssueLabel">Edit Sub-Issue</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="py-2" id="update_subIssue_modal_prop_head">
+
+                </div>
+                <form id="bootstrap-form" novalidate>
+                    <div class="row g-3 py-4">
+                        <div class="col-12">
+                            <input type="text" id="updateSubIssueName" class="form-control" oninput="onInputRequireString('updateSubIssueName', 'updateSubIssueNameValidate', 255, {
+                                require: 'Sub-Issue name is required..!',
+                                needdata: 'Sub-Issue name need to be more than 1 characters!',
+                                overdata: 'Sub-Issue name cannot be more than 255 characters..!',
+                            })" placeholder="Issue title">
+                            <div class="mt-1 px-2 text-danger d-none" id="updateSubIssueNameValidate">
+
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <textarea name="description" id="updateSubIssueDescription"
+                                placeholder="Sub-Issue description" class="form-control"
+                                style="height: 110px;"></textarea>
+                        </div>
+                        <div class="col-12 d-flex align-items-center py-2" id="updateSubIssueProgressModal">
+
+                        </div>
+                        <input type="hidden" id="subIssueComment">
+                    </div>
+                </form>
+                <div class="col-12 h-100 d-flex justify-content-start align-items-center" id="update_sub_issue_prop">
+
+                </div>
+            </div>
+            <div class="modal-footer pt-0 pb-4">
+                <button class="btn btn-secondary" data-bs-target="#updateSubIssue" data-bs-toggle="modal">Cancel</button>
+                <button class="btn btn-primary border-2 d-flex align-items-center" id="btn-update-subissue"
+                    onclick="updateSubIssueClicked()">
+                    <div id="btn-update-subissue-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span id="btn-update-subissue-text">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- / Update Issue Note -->
+
+<div class="modal fade" id="editIssueNote" aria-hidden="true" aria-labelledby="editIssueNoteLabel" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom py-3">
+                <h1 class="modal-title fs-5 text-b font-weight-bold" id="editIssueNoteLabel">Edit Note</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="py-2" id="issue-note-prop">
+
+                </div>
+                <div class="py-3">
+                    <div id="notetoolbar-container" class="border">
+                        <span class="ql-formats py-3">
+                            <select class="ql-font"></select>
+                            <select class="ql-size"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-bold"></button>
+                            <button class="ql-italic"></button>
+                            <button class="ql-underline"></button>
+                            <button class="ql-strike"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-color"></select>
+                            <select class="ql-background"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-script" value="sub"></button>
+                            <button class="ql-script" value="super"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-header" value="1"></button>
+                            <button class="ql-header" value="2"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-list" value="ordered"></button>
+                            <button class="ql-list" value="bullet"></button>
+                            <button class="ql-indent" value="-1"></button>
+                            <button class="ql-indent" value="+1"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-align"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button class="ql-link"></button>
+                            <button class="ql-image"></button>
+                            <button class="ql-clean"></button>
+                        </span>
+                    </div>
+                    <div id="editnote-editor" class="py-3 px-4">
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer pt-0 pb-4">
+                <button class="btn btn-secondary" data-bs-target="#editIssueNote" data-bs-toggle="modal">Cancel</button>
+                <button class="btn btn-primary border-2 d-flex align-items-center" data-id="" data-issue="" id="btn-editIssueNote"
+                    onclick="editIssueNoteClicked()">
+                    <div id="btn-edit-issue-note-spinner" class="spinner-border text-white spinner-border-sm me-2 d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span id="btn-edit-issue-note-text">Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
