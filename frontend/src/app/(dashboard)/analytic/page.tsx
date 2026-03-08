@@ -4,364 +4,396 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { fetchApi } from '@/lib/api';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { 
-  BarChart3, Layers, BookOpen, Users, Search, 
-  ChevronRight, Activity, CircleDot, AlertCircle
+import {
+   BarChart3, Layers, BookOpen, Users, Search,
+   ChevronRight, Activity, CircleDot, AlertCircle, ArrowUpRight, TrendingUp, Calendar, Loader2
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import {
+   Table,
+   TableBody,
+   TableCell,
+   TableHead,
+   TableHeader,
+   TableRow,
+} from '@/components/ui/table';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
-const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
+const Chart = dynamic(() => import('react-apexcharts'), {
+   ssr: false,
+   loading: () => <div className="h-[300px] w-full flex items-center justify-center bg-white/5 rounded-xl border border-white/5"><Loader2 className="h-6 w-6 animate-spin text-primary opacity-20" /></div>
+});
 
 interface Member { user: { id: string; first_name: string; last_name: string; avarta: string; dis_name: string; email: string; } }
 interface StatusIssue { name: string; total_issues: string | number; }
 interface PriorityIssue { name: string; total_issues: string | number; }
 interface AssigneeIssue {
-  assignee: { dis_name: string; email: string; mainissue: string; mainissueid: string; issuename: string; startdate: string; duedate: string; progress: string | number; role: { name: string; } };
-  status: { name: string; };
+   assignee: { dis_name: string; email: string; mainissue: string; mainissueid: string; issuename: string; startdate: string; duedate: string; progress: string | number; role: { name: string; } };
+   status: { name: string; };
 }
 
-const formatDate = (dateString: string) => {
-  if (!dateString) return "No Date";    
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return dateString;    
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
 const AnalyticPage = () => {
-  const router = useRouter();
-  const [projectId, setProjectId] = useState<string | null>(null);
-  const [totalIssues, setTotalIssues] = useState(0);
-  const [totalSubIssues, setTotalSubIssues] = useState(0);
-  const [totalMembers, setTotalMembers] = useState(0);
-  const [totalResources, setTotalResources] = useState(0);
-  
-  const [members, setMembers] = useState<Member[]>([]);
-  const [performanceIssues, setPerformanceIssues] = useState<AssigneeIssue[]>([]);
-  const [searchMember, setSearchMember] = useState('');
-  
-  const [statusChart, setStatusChart] = useState<any>(null);
-  const [priorityChart, setPriorityChart] = useState<any>(null);
-  const [monthChart, setMonthChart] = useState<any>(null);
+   const router = useRouter();
+   const [projectId, setProjectId] = useState<string | null>(null);
+   const [totalIssues, setTotalIssues] = useState(0);
+   const [totalSubIssues, setTotalSubIssues] = useState(0);
+   const [totalMembers, setTotalMembers] = useState(0);
+   const [totalResources, setTotalResources] = useState(0);
 
-  useEffect(() => {
-    const id = localStorage.getItem('projectID');
-    if (!id) router.push('/home');
-    else setProjectId(id);
-  }, [router]);
+   const [members, setMembers] = useState<Member[]>([]);
+   const [performanceIssues, setPerformanceIssues] = useState<AssigneeIssue[]>([]);
+   const [searchMember, setSearchMember] = useState('');
+   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!projectId) return;
+   const [statusChart, setStatusChart] = useState<any>(null);
+   const [priorityChart, setPriorityChart] = useState<any>(null);
+   const [monthChart, setMonthChart] = useState<any>(null);
 
-    const loadData = async () => {
-      try {
-         const issueRes = await fetchApi(`/api/analyst/project/total/${projectId}`);
-         if (issueRes.result) { setTotalIssues(issueRes.data.total?.issue || 0); setTotalSubIssues(issueRes.data.total?.sub_issue || 0); }
+   useEffect(() => {
+      const id = localStorage.getItem('projectID');
+      if (!id) router.push('/home');
+      else setProjectId(id);
+   }, [router]);
 
-         const memRes = await fetchApi(`/api/projects/members/${projectId}?search&perpage=&page=`);
-         if (memRes.result) { setTotalMembers(memRes.data.paginate?.total || memRes.data.datas?.length || 0); setMembers(memRes.data.datas || []); }
+   useEffect(() => {
+      if (!projectId) return;
 
-         const resRes = await fetchApi(`/api/projects/resources/${projectId}?search&perpage=&page=`);
-         if (resRes.result) setTotalResources(resRes.data.datas?.length || 0);
+      const loadData = async () => {
+         try {
+            setLoading(true);
+            const [issueRes, memRes, resRes, statusRes, prioRes, perRes, monthRes] = await Promise.all([
+               fetchApi(`/api/analyst/project/total/${projectId}`),
+               fetchApi(`/api/projects/members/${projectId}?search&perpage=&page=`),
+               fetchApi(`/api/projects/resources/${projectId}?search&perpage=&page=`),
+               fetchApi(`/api/analyst/project/issue/status/${projectId}`),
+               fetchApi(`/api/analyst/project/issue/priority/${projectId}`),
+               fetchApi(`/api/analyst/project/issue/assignee/${projectId}`),
+               fetchApi(`/api/analyst/project/issue/month/${projectId}`)
+            ]);
 
-         // Status Donut Chart
-         const statusRes = await fetchApi(`/api/analyst/project/issue/status/${projectId}`);
-         if (statusRes.result && statusRes.data?.issue_status) {
-           const issues: StatusIssue[] = statusRes.data.issue_status;
-           if (issues.some(sta => sta.name && Number(sta.total_issues) > 0)) {
-              setStatusChart({
-                series: issues.map(s => Number(s.total_issues)),
-                options: {
-                  labels: issues.map(s => s.name),
-                  chart: { type: 'donut', fontFamily: 'inherit' },
-                  colors: ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
-                  plotOptions: { pie: { donut: { size: '75%', labels: { show: true, name: { fontSize: '14px', color: '#6B7280' }, value: { fontSize: '24px', fontWeight: 700, color: '#111827' }, total: { show: true, showAlways: true, label: 'Total', fontSize: '14px', color: '#6B7280' } } } } },
-                  dataLabels: { enabled: false },
-                  stroke: { show: false },
-                  legend: { position: 'bottom', horizontalAlign: 'center', fontSize: '13px', markers: { radius: 12 }, itemMargin: { horizontal: 10, vertical: 5 } }
-                }
-              });
-           }
-         }
+            if (issueRes.result) {
+               setTotalIssues(issueRes.data.total?.issue || 0);
+               setTotalSubIssues(issueRes.data.total?.sub_issue || 0);
+            }
 
-         // Priority Bar Chart
-         const prioRes = await fetchApi(`/api/analyst/project/issue/priority/${projectId}`);
-         if (prioRes.result && prioRes.data?.issue_priority) {
-           const priorities: PriorityIssue[] = prioRes.data.issue_priority;
-           setPriorityChart({
-             series: [{ name: 'Issues', data: priorities.map(p => Number(p.total_issues)) }],
-             options: {
-               chart: { type: 'bar', height: 280, toolbar: { show: false }, fontFamily: 'inherit' },
-               plotOptions: { bar: { horizontal: true, borderRadius: 6, dataLabels: { position: 'top' }, columnWidth: '40%' } },
-               dataLabels: { enabled: true, offsetX: 20, style: { fontSize: '12px', colors: ['#4B5563'], fontWeight: 600 } },
-               colors: ['#F59E0B'],
-               xaxis: { categories: priorities.map(p => p.name), axisBorder: { show: false }, axisTicks: { show: false }, labels: { show: false } },
-               yaxis: { labels: { style: { fontSize: '13px', fontWeight: 600, colors: '#4B5563' } } },
-               grid: { show: false }
-             }
-           });
-         }
+            if (memRes.result) {
+               setTotalMembers(memRes.data.paginate?.total || memRes.data.datas?.length || 0);
+               setMembers(memRes.data.datas || []);
+            }
 
-         // Member Performance
-         const perRes = await fetchApi(`/api/analyst/project/issue/assignee/${projectId}`);
-         if (perRes.result && perRes.data?.issue) setPerformanceIssues(perRes.data.issue);
+            if (resRes.result) setTotalResources(resRes.data.datas?.length || 0);
 
-         // Month Bar Chart
-         const monthRes = await fetchApi(`/api/analyst/project/issue/month/${projectId}`);
-         if (monthRes.result && monthRes.data) {
-            let monthsSet = new Set<string>();
-            monthRes.data.forEach((stu: any) => { if(stu.status?.issue) stu.status.issue.forEach((issue: any) => monthsSet.add(issue.month)); });
-            let months = Array.from(monthsSet).sort();
-            
-            let seriesDataMap = new Map<string, number[]>();
-            monthRes.data.forEach((stu: any) => {
-              let statusName = stu.status.name;
-              if (!seriesDataMap.has(statusName)) seriesDataMap.set(statusName, new Array(months.length).fill(0));
-              if(stu.status?.issue) stu.status.issue.forEach((issue: any) => {
-                  let monthIndex = months.indexOf(issue.month);
-                  seriesDataMap.get(statusName)![monthIndex] = parseInt(issue.total_issues) || 0;
-              });
-            });
+            // Status Donut Chart
+            if (statusRes.result && statusRes.data?.issue_status) {
+               const issues: StatusIssue[] = statusRes.data.issue_status;
+               setStatusChart({
+                  series: issues.map(s => Number(s.total_issues)),
+                  options: {
+                     labels: issues.map(s => s.name),
+                     chart: { type: 'donut', background: 'transparent' },
+                     colors: ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'],
+                     legend: { position: 'bottom', labels: { colors: '#94a3b8' } },
+                     dataLabels: { enabled: false },
+                     stroke: { width: 0 },
+                     theme: { mode: 'dark' },
+                     plotOptions: { pie: { donut: { size: '75%' } } }
+                  }
+               });
+            }
 
-            setMonthChart({
-              series: Array.from(seriesDataMap, ([name, data]) => ({ name, data })),
-              options: {
-                chart: { type: 'bar', height: 350, toolbar: { show: false }, stacked: true, fontFamily: 'inherit' },
-                plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 4 } },
-                colors: ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
-                dataLabels: { enabled: false },
-                xaxis: { categories: months, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#6B7280', fontSize: '12px', fontWeight: 600 } } },
-                yaxis: { labels: { style: { colors: '#6B7280', fontSize: '12px', fontWeight: 600 } } },
-                grid: { borderColor: '#F3F4F6', strokeDashArray: 4, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
-                legend: { position: 'top', horizontalAlign: 'right', fontSize: '13px', markers: { radius: 12 }, labels: { colors: '#4B5563' } }
-              }
-            });
-         }
-      } catch (error) { console.error(error); }
-    };
-    loadData();
-  }, [projectId]);
+            // Priority Bar Chart
+            if (prioRes.result && prioRes.data?.issue_priority) {
+               const priorities: PriorityIssue[] = prioRes.data.issue_priority;
+               setPriorityChart({
+                  series: [{ name: 'Issues', data: priorities.map(p => Number(p.total_issues)) }],
+                  options: {
+                     chart: { type: 'bar', toolbar: { show: false }, background: 'transparent' },
+                     xaxis: {
+                        categories: priorities.map(p => p.name),
+                        labels: { style: { colors: '#64748b' } },
+                        axisBorder: { show: false },
+                        axisTicks: { show: false }
+                     },
+                     yaxis: { labels: { style: { colors: '#64748b' } } },
+                     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+                     colors: ['#f59e0b'],
+                     plotOptions: { bar: { borderRadius: 6, horizontal: true, barHeight: '50%' } },
+                     theme: { mode: 'dark' },
+                     dataLabels: { enabled: false }
+                  }
+               });
+            }
 
-  const filteredPerformances = useMemo(() => {
-    if (!searchMember) return performanceIssues;
-    const lower = searchMember.toLowerCase();
-    return performanceIssues.filter(mem => {
-      const displayName = (mem.assignee.dis_name || mem.assignee.email).toLowerCase();
-      const roleName = mem.assignee.role?.name?.toLowerCase() || '';
-      const category = mem.assignee.mainissue?.toLowerCase() || '';
-      const issueName = mem.assignee.issuename?.toLowerCase() || '';
-      const statusName = mem.status?.name?.toLowerCase() || '';
-      return displayName.includes(lower) || roleName.includes(lower) || category.includes(lower) || issueName.includes(lower) || statusName.includes(lower);
-    });
-  }, [searchMember, performanceIssues]);
+            // Member Performance
+            if (perRes.result && perRes.data?.issue) setPerformanceIssues(perRes.data.issue);
 
-  const goToIssueDetail = (mainissueid: string) => {
-    localStorage.setItem("categoryID", mainissueid);
-    router.push('/issuescategory');
-  };
+            // Monthly Trend Chart
+            if (monthRes.result && monthRes.data) {
+               let monthsSet = new Set<string>();
+               monthRes.data.forEach((stu: any) => { if (stu.status?.issue) stu.status.issue.forEach((issue: any) => monthsSet.add(issue.month)); });
+               let months = Array.from(monthsSet).sort();
 
-  const getStatusClasses = (statusName: string) => {
-    const s = statusName.toLowerCase();
-    if (s === 'done') return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20';
-    if (s === 'in progress') return 'bg-blue-50 text-blue-700 ring-blue-600/20';
-    if (s === 'to start') return 'bg-indigo-50 text-indigo-700 ring-indigo-600/20';
-    if (s === 'close' || s === 'closed') return 'bg-gray-50 text-gray-700 ring-gray-600/20';
-    return 'bg-orange-50 text-orange-700 ring-orange-600/20';
-  };
+               let seriesDataMap = new Map<string, number[]>();
+               monthRes.data.forEach((stu: any) => {
+                  let statusName = stu.status.name;
+                  if (!seriesDataMap.has(statusName)) seriesDataMap.set(statusName, new Array(months.length).fill(0));
+                  if (stu.status?.issue) stu.status.issue.forEach((issue: any) => {
+                     let monthIndex = months.indexOf(issue.month);
+                     seriesDataMap.get(statusName)![monthIndex] = parseInt(issue.total_issues) || 0;
+                  });
+               });
 
-  if(!projectId) return null;
+               setMonthChart({
+                  series: Array.from(seriesDataMap, ([name, data]) => ({ name, data })),
+                  options: {
+                     chart: { type: 'bar', toolbar: { show: false }, stacked: true, background: 'transparent' },
+                     plotOptions: { bar: { horizontal: false, columnWidth: '35%', borderRadius: 6 } },
+                     colors: ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'],
+                     xaxis: { categories: months, labels: { style: { colors: '#64748b' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                     yaxis: { labels: { style: { colors: '#64748b' } } },
+                     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4 },
+                     legend: { position: 'top', horizontalAlign: 'right', labels: { colors: '#94a3b8' } },
+                     theme: { mode: 'dark' },
+                     dataLabels: { enabled: false }
+                  }
+               });
+            }
+         } catch (error) { console.error(error); }
+         finally { setLoading(false); }
+      };
+      loadData();
+   }, [projectId]);
 
-  return (
-    <div className="p-6 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500">
-      
-      {/* Header */}
-      <div className="bg-white/60 backdrop-blur-xl p-6 rounded-3xl shadow-sm border border-gray-100/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
-            <BarChart3 className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">Project Analytics</h1>
-            <p className="text-sm text-gray-500 font-medium tracking-wide">In-depth insights and performance metrics</p>
-          </div>
-        </div>
+   const filteredPerformances = useMemo(() => {
+      if (!searchMember) return performanceIssues;
+      const lower = searchMember.toLowerCase();
+      return performanceIssues.filter(mem => {
+         const displayName = (mem.assignee.dis_name || mem.assignee.email).toLowerCase();
+         const roleName = mem.assignee.role?.name?.toLowerCase() || '';
+         const category = mem.assignee.mainissue?.toLowerCase() || '';
+         const issueName = mem.assignee.issuename?.toLowerCase() || '';
+         const statusName = mem.status?.name?.toLowerCase() || '';
+         return displayName.includes(lower) || roleName.includes(lower) || category.includes(lower) || issueName.includes(lower) || statusName.includes(lower);
+      });
+   }, [searchMember, performanceIssues]);
+
+   const goToIssueDetail = (mainissueid: string) => {
+      localStorage.setItem("categoryID", mainissueid);
+      router.push('/issuescategory');
+   };
+
+   if (loading) return (
+      <div className="flex grow flex-col items-center justify-center py-32 space-y-4">
+         <Loader2 className="h-10 w-10 animate-spin text-primary" />
+         <p className="text-muted-foreground font-medium anonymous">Synthesizing workspace insights...</p>
       </div>
+   );
 
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex items-center gap-5 group hover:border-indigo-200 hover:shadow-md transition-all">
-            <div className="h-14 w-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-               <Layers className="h-6 w-6" />
-            </div>
-            <div>
-               <p className="text-gray-500 font-bold tracking-wider text-xs uppercase mb-1">Total Issues</p>
-               <h2 className="text-3xl font-black text-gray-900">{totalIssues}</h2>
-            </div>
-         </div>
-         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex items-center gap-5 group hover:border-sky-200 hover:shadow-md transition-all">
-            <div className="h-14 w-14 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-sky-600 group-hover:text-white transition-all duration-300">
-               <AlertCircle className="h-6 w-6" />
-            </div>
-            <div>
-               <p className="text-gray-500 font-bold tracking-wider text-xs uppercase mb-1">Sub-Issues</p>
-               <h2 className="text-3xl font-black text-gray-900">{totalSubIssues}</h2>
-            </div>
-         </div>
-         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex items-center gap-5 group hover:border-amber-200 hover:shadow-md transition-all">
-            <div className="h-14 w-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-amber-600 group-hover:text-white transition-all duration-300">
-               <Users className="h-6 w-6" />
-            </div>
-            <div>
-               <p className="text-gray-500 font-bold tracking-wider text-xs uppercase mb-1">Members</p>
-               <h2 className="text-3xl font-black text-gray-900">{totalMembers}</h2>
-            </div>
-         </div>
-         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex items-center gap-5 group hover:border-emerald-200 hover:shadow-md transition-all">
-            <div className="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
-               <BookOpen className="h-6 w-6" />
-            </div>
-            <div>
-               <p className="text-gray-500 font-bold tracking-wider text-xs uppercase mb-1">Resources</p>
-               <h2 className="text-3xl font-black text-gray-900">{totalResources}</h2>
-            </div>
-         </div>
-      </div>
+   return (
+      <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500">
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         
-         {/* Status Donut Chart */}
-         <div className="bg-white rounded-3xl border border-gray-100/50 shadow-sm p-6 lg:p-8 flex flex-col h-[420px]">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"><CircleDot className="h-5 w-5 text-indigo-500" /> Overall Status</h3>
-            <div className="flex-1 flex items-center justify-center">
-               {statusChart ? (
-                 <Chart options={statusChart.options} series={statusChart.series} type="donut" width="100%" height={320} />
-               ) : (
-                 <div className="flex flex-col items-center justify-center text-gray-400">
-                    <Activity className="h-12 w-12 opacity-20 mb-3" />
-                    <p className="font-bold text-sm">No status data available</p>
-                 </div>
-               )}
-            </div>
-         </div>
-
-         {/* Priority Bar Chart */}
-         <div className="bg-white rounded-3xl border border-gray-100/50 shadow-sm p-6 lg:p-8 flex flex-col h-[420px]">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"><AlertCircle className="h-5 w-5 text-amber-500" /> Issues by Complexity</h3>
-            <div className="flex-1 -ml-4">
-               {priorityChart ? (
-                 <Chart options={priorityChart.options} series={priorityChart.series} type="bar" height={300} />
-               ) : (
-                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                    <Activity className="h-12 w-12 opacity-20 mb-3" />
-                    <p className="font-bold text-sm">No priority data available</p>
-                 </div>
-               )}
-            </div>
-         </div>
-
-         {/* Monthly Trends */}
-         <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100/50 shadow-sm p-6 lg:p-8 flex flex-col">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"><Activity className="h-5 w-5 text-emerald-500" /> Monthly Issue Volume & Completion</h3>
-            <div className="-ml-3 mt-2">
-               {monthChart ? (
-                 <Chart options={monthChart.options} series={monthChart.series} type="bar" height={350} />
-               ) : (
-                 <div className="h-[350px] flex flex-col items-center justify-center text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                    <Activity className="h-12 w-12 opacity-20 mb-3" />
-                    <p className="font-bold text-sm">No monthly trend data available</p>
-                 </div>
-               )}
-            </div>
-         </div>
-
-         {/* Team Overview */}
-         <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100/50 shadow-sm p-6 lg:p-8 flex flex-col">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2"><Users className="h-5 w-5 text-purple-500" /> Team Members</h3>
-            <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar lg:flex-wrap">
-               {members.length === 0 ? (
-                  <p className="text-gray-400 font-medium py-8 text-center w-full bg-gray-50 rounded-2xl">No team members assigned</p>
-               ) : (
-                  members.map(mem => (
-                     <div key={mem.user.id} className="bg-gray-50 border border-gray-100 rounded-2xl p-4 flex flex-col items-center min-w-[140px] hover:border-indigo-200 hover:shadow-md transition-all group">
-                        <img src={`/upload/${mem.user.avarta}`} className="h-16 w-16 rounded-full object-cover ring-4 ring-white shadow-sm mb-3 group-hover:scale-105 transition-transform bg-gray-200" onError={(e) => { (e.target as HTMLImageElement).src = '/img/default-avatar.png'; }} />
-                        <span className="font-bold text-gray-900 text-sm truncate w-full text-center group-hover:text-indigo-600 transition-colors">{mem.user.first_name} {mem.user.last_name}</span>
-                        <span className="text-xs font-medium text-gray-500 truncate w-full text-center mt-0.5">@{mem.user.dis_name || mem.user.first_name}</span>
+         {/* Header */}
+         <Card className="border-white/5 bg-card overflow-hidden relative">
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+            <CardHeader className="p-6 relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+               <div className="flex items-center gap-4">
+                  <div className="p-3 bg-primary/10 text-primary rounded-xl ring-1 ring-primary/20 shadow-lg shadow-primary/10">
+                     <TrendingUp className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                     <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                        <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Workspace</span>
+                        <ChevronRight className="h-3 w-3" />
+                        <span className="text-foreground">Global Analytics</span>
                      </div>
-                  ))
-               )}
-            </div>
-         </div>
-
-         {/* Member Performance Table */}
-         <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100/50 shadow-sm overflow-hidden flex flex-col">
-            <div className="p-6 lg:px-8 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
-               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Activity className="h-5 w-5 text-rose-500" /> Performance Tracking</h3>
-               <div className="relative w-full sm:w-72">
-                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                 <input 
-                   type="text" 
-                   placeholder="Search members, roles, categories..." 
-                   className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-sm text-gray-700 bg-white shadow-sm"
-                   value={searchMember}
-                   onChange={(e) => setSearchMember(e.target.value)}
-                 />
+                     <CardTitle className="text-2xl font-bold">Workspace Health Report</CardTitle>
+                  </div>
                </div>
-            </div>
+               <Badge variant="outline" className="h-9 px-4 bg-white/5 border-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px] gap-2">
+                  <Calendar className="h-3.5 w-3.5" /> Updated: {new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+               </Badge>
+            </CardHeader>
+         </Card>
 
-            <div className="overflow-x-auto">
-               <table className="w-full text-left border-collapse">
-                 <thead>
-                   <tr className="bg-gray-50 border-b border-gray-100">
-                     <th className="py-3.5 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Member</th>
-                     <th className="py-3.5 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Role</th>
-                     <th className="py-3.5 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider">Issue Reference</th>
-                     <th className="py-3.5 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell text-right">Progress</th>
-                     <th className="py-3.5 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Status</th>
-                     <th className="py-3.5 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider w-10"></th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y divide-gray-50">
-                   {performanceIssues.length === 0 ? (
-                      <tr><td colSpan={6} className="py-16 text-center text-gray-400 font-medium">No performance data available.</td></tr>
-                   ) : filteredPerformances.length === 0 ? (
-                      <tr><td colSpan={6} className="py-16 text-center text-gray-400 font-medium">No results found for "{searchMember}"</td></tr>
-                   ) : (
-                      filteredPerformances.map((mem, i) => (
-                         <tr key={i} onClick={() => goToIssueDetail(mem.assignee.mainissueid)} className="hover:bg-indigo-50/50 transition-colors group cursor-pointer text-sm">
-                            <td className="py-4 px-6 font-bold text-gray-900 group-hover:text-indigo-700 transition-colors">
-                               {mem.assignee.dis_name || mem.assignee.email}
-                            </td>
-                            <td className="py-4 px-6 text-gray-500 font-medium hidden md:table-cell">{mem.assignee.role?.name || '--'}</td>
-                            <td className="py-4 px-6">
-                               <p className="font-bold text-gray-800 line-clamp-1 truncate max-w-[200px] lg:max-w-xs">{mem.assignee.issuename}</p>
-                               <p className="text-xs text-gray-400 mt-0.5 font-bold uppercase tracking-wider">{mem.assignee.mainissue}</p>
-                            </td>
-                            <td className="py-4 px-6 hidden lg:table-cell text-right w-48">
-                               <div className="flex items-center justify-end gap-3">
-                                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden max-w-[100px]">
-                                      <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500" style={{ width: `${mem.assignee.progress || 0}%` }}></div>
-                                  </div>
-                                  <span className="text-xs font-black text-gray-600 w-8">{mem.assignee.progress || 0}%</span>
-                               </div>
-                            </td>
-                            <td className="py-4 px-6 text-right w-36">
-                               <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider ring-1 ring-inset ${getStatusClasses(mem.status?.name || '')}`}>
-                                  {mem.status?.name}
-                               </span>
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                               <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-indigo-500 transition-colors" />
-                            </td>
-                         </tr>
-                      ))
-                   )}
-                 </tbody>
-               </table>
-            </div>
+         {/* KPI Grid */}
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+               { label: 'Cumulative Issues', value: totalIssues, icon: Layers, color: 'text-sky-400', bg: 'bg-sky-500/10' },
+               { label: 'Secondary Tasks', value: totalSubIssues, icon: AlertCircle, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+               { label: 'Project Members', value: totalMembers, icon: Users, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+               { label: 'Documentation', value: totalResources, icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-500/10' }
+            ].map((stat, i) => (
+               <Card key={i} className="group border-white/5 bg-card hover:bg-white/[0.04] transition-all relative overflow-hidden">
+                  <div className="absolute top-0 right-0 h-24 w-24 bg-primary/[0.03] rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
+                  <CardContent className="p-6 relative z-10 flex flex-col justify-between">
+                     <div className="flex justify-between items-start">
+                        <div className={cn("p-3 rounded-xl ring-1 ring-white/5 shadow-inner transition-transform group-hover:scale-105", stat.bg, stat.color)}>
+                           <stat.icon className="h-5 w-5" />
+                        </div>
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                     </div>
+                     <div className="mt-6">
+                        <div className="text-3xl font-black text-foreground">{stat.value}</div>
+                        <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1 opacity-70">{stat.label}</div>
+                     </div>
+                  </CardContent>
+               </Card>
+            ))}
          </div>
 
-      </div>
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="border-white/5 bg-card overflow-hidden h-[420px] flex flex-col relative">
+               <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+               <CardHeader className="pb-0 shrink-0">
+                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                     <CircleDot className="h-4 w-4 text-primary" /> Global Status Distribution
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="flex-1 flex items-center justify-center pt-6">
+                  {statusChart ? (
+                     <Chart options={statusChart.options as any} series={statusChart.series} type="donut" width="100%" height={320} />
+                  ) : (
+                     <div className="flex flex-col items-center justify-center text-muted-foreground opacity-30">
+                        <Activity className="h-12 w-12 mb-3" />
+                        <p className="font-bold text-sm uppercase">Data Unavailable</p>
+                     </div>
+                  )}
+               </CardContent>
+            </Card>
 
-    </div>
-  );
+            <Card className="border-white/5 bg-card overflow-hidden h-[420px] flex flex-col relative">
+               <div className="absolute bottom-0 right-0 h-32 w-32 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+               <CardHeader className="pb-0 shrink-0">
+                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                     <AlertCircle className="h-4 w-4 text-amber-500" /> Complexity Spread
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="flex-1 pt-6 px-2">
+                  {priorityChart ? (
+                     <Chart options={priorityChart.options as any} series={priorityChart.series} type="bar" height={320} />
+                  ) : (
+                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
+                        <Activity className="h-12 w-12 mb-3" />
+                        <p className="font-bold text-sm uppercase">Priority Data missing</p>
+                     </div>
+                  )}
+               </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-2 border-white/5 bg-card overflow-hidden relative">
+               <div className="absolute inset-0 bg-gradient-to-tr from-primary/[0.01] to-transparent pointer-events-none" />
+               <CardHeader>
+                  <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                     <Activity className="h-4 w-4 text-emerald-500" /> Multi-Month Trend Analysis
+                  </CardTitle>
+               </CardHeader>
+               <CardContent className="h-[380px] pb-6">
+                  {monthChart ? (
+                     <Chart options={monthChart.options as any} series={monthChart.series} type="bar" height="100%" />
+                  ) : (
+                     <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-2xl text-muted-foreground opacity-30">
+                        <Activity className="h-12 w-12 mb-3" />
+                        <p className="font-bold text-sm uppercase">Seasonal Trends Loading...</p>
+                     </div>
+                  )}
+               </CardContent>
+            </Card>
+         </div>
+
+         {/* Member Performance Section */}
+         <Card className="border-white/5 bg-card overflow-hidden">
+            <CardHeader className="bg-white/[0.01] border-b border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-5">
+               <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-rose-500" /> Performance Tracking & Assignments
+               </CardTitle>
+               <div className="relative w-full md:w-80">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                     placeholder="Filter by name, role, or category..."
+                     className="pl-10 h-10 bg-background border-white/10 text-foreground text-sm font-medium"
+                     value={searchMember}
+                     onChange={(e) => setSearchMember(e.target.value)}
+                  />
+               </div>
+            </CardHeader>
+            <div className="w-full overflow-x-auto">
+               <Table>
+                  <TableHeader className="bg-[#0a0a0a]">
+                     <TableRow className="border-white/5 hover:bg-transparent">
+                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Team Member</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Workspace Role</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Current Target</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Velocity</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Status</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     {filteredPerformances.length === 0 ? (
+                        <TableRow>
+                           <TableCell colSpan={6} className="py-20 text-center">
+                              <Users className="h-10 w-10 mx-auto opacity-10 mb-3" />
+                              <p className="text-muted-foreground font-medium text-sm">No member rankings found matching your query.</p>
+                           </TableCell>
+                        </TableRow>
+                     ) : filteredPerformances.map((mem, i) => (
+                        <TableRow key={i} onClick={() => goToIssueDetail(mem.assignee.mainissueid)} className="border-white/5 hover:bg-white/[0.01] group/row transition-all cursor-pointer">
+                           <TableCell className="py-4 px-6">
+                              <div className="flex items-center gap-3">
+                                 <Avatar className="h-10 w-10 ring-2 ring-background ring-offset-2 ring-offset-white/5 group-hover/row:ring-primary/40 transition-all">
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                                       {(mem.assignee.dis_name || mem.assignee.email)[0]}
+                                    </AvatarFallback>
+                                 </Avatar>
+                                 <div className="flex flex-col">
+                                    <span className="font-bold text-sm text-foreground group-hover/row:text-primary transition-colors">{mem.assignee.dis_name || 'Anonymous User'}</span>
+                                    <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[150px]">{mem.assignee.email}</span>
+                                 </div>
+                              </div>
+                           </TableCell>
+                           <TableCell className="py-4 px-6">
+                              <Badge variant="outline" className="px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter bg-indigo-500/5 text-indigo-400 border-indigo-500/20">
+                                 {mem.assignee.role?.name || 'Observer'}
+                              </Badge>
+                           </TableCell>
+                           <TableCell className="py-4 px-6">
+                              <div className="flex flex-col gap-1 max-w-[200px]">
+                                 <span className="text-sm font-bold text-foreground truncate">{mem.assignee.issuename}</span>
+                                 <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest truncate">{mem.assignee.mainissue}</span>
+                              </div>
+                           </TableCell>
+                           <TableCell className="py-4 px-6">
+                              <div className="flex items-center gap-3 justify-center max-w-[120px] mx-auto">
+                                 <Progress value={Number(mem.assignee.progress)} className="h-1.5 flex-1" />
+                                 <span className="text-xs font-black text-foreground/70 w-8">{mem.assignee.progress}%</span>
+                              </div>
+                           </TableCell>
+                           <TableCell className="py-4 px-6 text-right">
+                              <Badge className={cn(
+                                 "px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest",
+                                 mem.status?.name === 'Done' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                                    mem.status?.name === 'In Progress' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' :
+                                       'bg-white/5 text-muted-foreground border border-white/10'
+                              )}>
+                                 {mem.status?.name || 'Unknown'}
+                              </Badge>
+                           </TableCell>
+                           <TableCell className="text-right pr-6">
+                              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/row:opacity-100 group-hover/row:translate-x-1 transition-all" />
+                           </TableCell>
+                        </TableRow>
+                     ))}
+                  </TableBody>
+               </Table>
+            </div>
+         </Card>
+      </div>
+   );
 };
 
 export default AnalyticPage;

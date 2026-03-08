@@ -2,12 +2,32 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { fetchApi } from '@/lib/api';
-import { 
+import {
   Plus, Search, MoreVertical, Edit2, Trash2, XCircle,
   Calendar, Layers, LayoutTemplate, Filter, Users, ChevronDown,
-  Clock, CheckCircle2, Loader2, PlayCircle, FolderOpen, ArrowRight, X
+  Clock, CheckCircle2, Loader2, PlayCircle, FolderOpen, ArrowRight, X, Target
 } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
 
 interface Project {
   id: number;
@@ -27,18 +47,14 @@ const ProjectsPage = () => {
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Filters
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [progressFilter, setProgressFilter] = useState('');
-
-  // Dropdown states
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [progressFilter, setProgressFilter] = useState('ALL');
 
   // Modals
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState<'create' | 'edit' | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   // Forms
@@ -48,58 +64,65 @@ const ProjectsPage = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projectRes, progressRes, statusRes, userRes] = await Promise.all([
+      const [projectRes, progressRes, statusRes, userRes] = await Promise.allSettled([
         fetchApi('/api/projects'),
         fetchApi('/api/analyst/dashboard/allprogress'),
-        fetchApi('/api/category/status'),
-        fetchApi('/api/user/all')
+        fetchApi('/api/projects/status'),
+        fetchApi('/api/users')
       ]);
 
-      if (projectRes.result) setProjects(projectRes.data.datas);
-      if (progressRes.result) setProgressData(progressRes.data);
-      if (statusRes.result) setStatuses(statusRes.data);
-      if (userRes.result) setAllUsers(userRes.data);
-    } catch (error) { console.error(error); } finally { setLoading(false); }
+      if (projectRes.status === 'fulfilled' && projectRes.value.result) {
+        setProjects(projectRes.value.data.datas || projectRes.value.data);
+      }
+      if (progressRes.status === 'fulfilled' && progressRes.value.result) {
+        setProgressData(progressRes.value.data);
+      }
+      if (statusRes.status === 'fulfilled' && statusRes.value.result) {
+        // Handle both paginated and non-paginated status data
+        setStatuses(statusRes.value.data.datas || statusRes.value.data);
+      }
+      if (userRes.status === 'fulfilled' && userRes.value.result) {
+        // Handle both paginated and non-paginated user data
+        setAllUsers(userRes.value.data.datas || userRes.value.data);
+      }
+    } catch (error) {
+      console.error('Error in fetchData:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  // Click outside to close dropdowns
-  useEffect(() => {
-    const handleClickOutside = () => setOpenDropdownId(null);
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
-
   const handleCreateProject = async () => {
-    if(!newProject.name || !newProject.status_id || !newProject.estimated_date) {
-        return Swal.fire({ icon: 'error', title: 'Missing Fields', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
+    if (!newProject.name || !newProject.status_id || !newProject.estimated_date) {
+      return Swal.fire({ icon: 'error', title: 'Missing Fields', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
     }
     try {
       setSubmitting(true);
       const res = await fetchApi('/api/project/create', { method: 'POST', body: JSON.stringify(newProject) });
       if (res.result) {
-        setIsCreateModalOpen(false);
+        setActiveModal(null);
         setNewProject({ name: '', status_id: '', estimated_date: '', description: '', members: [] });
         fetchData();
         Swal.fire({ icon: 'success', title: 'Project created!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
       } else { Swal.fire({ title: 'Error', text: res.msg || 'Failed to create project', icon: 'error', background: '#121212', color: '#fff' }); }
-    } catch (error) {} finally { setSubmitting(false); }
+    } catch (error) { } finally { setSubmitting(false); }
   };
 
   const handleUpdateProject = async () => {
     if (!selectedProject || !editForm.name || !editForm.estimated_date) {
-        return Swal.fire({ icon: 'error', title: 'Missing Fields', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
+      return Swal.fire({ icon: 'error', title: 'Missing Fields', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
     }
     try {
       setSubmitting(true);
       const res = await fetchApi(`/api/project/update/${selectedProject.id}`, { method: 'POST', body: JSON.stringify(editForm) });
       if (res.result) {
-        setIsEditModalOpen(false);
+        setActiveModal(null);
         fetchData();
         Swal.fire({ icon: 'success', title: 'Project updated!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
       } else { Swal.fire({ title: 'Error', text: res.msg || 'Failed to update project', icon: 'error', background: '#121212', color: '#fff' }); }
-    } catch (error) {} finally { setSubmitting(false); }
+    } catch (error) { } finally { setSubmitting(false); }
   };
 
   const handleDeleteProject = async (id: number) => {
@@ -122,15 +145,14 @@ const ProjectsPage = () => {
           fetchData();
           Swal.fire({ icon: 'success', title: 'Deleted!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
         } else { Swal.fire({ title: 'Error', text: res.msg || 'Failed to delete project', icon: 'error', background: '#121212', color: '#fff' }); }
-      } catch (error) {}
+      } catch (error) { }
     }
   };
 
   const openEditModal = (project: Project) => {
-    setOpenDropdownId(null);
     setSelectedProject(project);
     setEditForm({ name: project.name, description: project.description || '', estimated_date: project.estimated_date ? new Date(project.estimated_date).toISOString().split('T')[0] : '' });
-    setIsEditModalOpen(true);
+    setActiveModal('edit');
   };
 
   const filteredProjects = useMemo(() => {
@@ -138,8 +160,8 @@ const ProjectsPage = () => {
       const progInfo = progressData.find(pd => pd.id === p.id);
       const progress = progInfo?.progress || 0;
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === '' || p.status.title === statusFilter;
-      const matchesProgress = progressFilter === '' || 
+      const matchesStatus = statusFilter === 'ALL' || p.status.title === statusFilter;
+      const matchesProgress = progressFilter === 'ALL' ||
         (progressFilter === '0' && progress === 0) ||
         (progressFilter === '1-25' && progress > 0 && progress <= 25) ||
         (progressFilter === '26-50' && progress > 25 && progress <= 50) ||
@@ -151,285 +173,333 @@ const ProjectsPage = () => {
   }, [projects, progressData, search, statusFilter, progressFilter]);
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500">
-      
-      {/* Header */}
-      <div className="bg-[#121212]/80 backdrop-blur-xl p-6 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 relative overflow-hidden">
-        {/* Decorative Background blob */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-[#696cff]/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+
+      {/* Header section */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card border border-white/5 p-6 rounded-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 h-64 w-64 bg-primary/5 rounded-full blur-3xl pointer-events-none -mr-32 -mt-32" />
 
         <div className="flex items-center gap-4 relative z-10">
-          <div className="p-3 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 ring-1 ring-white/10 rounded-xl text-indigo-400 shadow-[0_0_15px_rgba(105,108,255,0.3)]">
+          <div className="p-3 bg-primary/10 text-primary rounded-xl ring-1 ring-primary/20 shadow-lg shadow-primary/10">
             <LayoutTemplate className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Company Projects</h1>
-            <p className="text-sm text-white/50 font-medium tracking-wide">Manage, track, and collaborate on your initiatives</p>
+            <h1 className="text-2xl font-bold text-foreground">Projects Hub</h1>
+            <p className="text-sm text-muted-foreground">Manage and track your company initiatives</p>
           </div>
         </div>
 
-        {/* Filters & Actions */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full xl:w-auto relative z-10">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
-            <input 
-              type="text" placeholder="Search projects..." 
-              className="w-full pl-11 pr-4 py-2.5 bg-white/5 hover:bg-white/10 border border-transparent focus:bg-[#121212] focus:border-indigo-500/30 focus:ring-4 focus:ring-indigo-500/10 rounded-xl transition-all font-medium text-sm text-white outline-none placeholder:text-white/30 shadow-sm"
-              value={search} onChange={(e) => setSearch(e.target.value)}
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto relative z-10">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search projects..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-10 bg-background border-white/10 text-foreground"
             />
           </div>
-          
-          <div className="flex bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.2)] p-1 transition-all">
-             <div className="relative border-r border-white/10">
-                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="appearance-none bg-transparent pl-3 pr-8 py-1.5 outline-none text-sm font-bold text-white/70 hover:text-white focus:text-white cursor-pointer w-full md:w-32 [&>option]:bg-[#121212] [&>option]:text-white">
-                  <option value="">All Statuses</option>
-                  <option value="To Start">To Start</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Done">Done</option>
-                  <option value="Close">Close</option>
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 pointer-events-none" />
-             </div>
-             <div className="relative">
-                <select value={progressFilter} onChange={(e) => setProgressFilter(e.target.value)} className="appearance-none bg-transparent pl-3 pr-8 py-1.5 outline-none text-sm font-bold text-white/70 hover:text-white focus:text-white cursor-pointer w-full md:w-36 [&>option]:bg-[#121212] [&>option]:text-white">
-                  <option value="">All Progress</option>
-                  <option value="0">Not Started (0%)</option>
-                  <option value="1-25">Started (1-25%)</option>
-                  <option value="26-50">Quarter Done (26-50%)</option>
-                  <option value="51-75">Half Done (51-75%)</option>
-                  <option value="76-99">Almost Done (76-99%)</option>
-                  <option value="100">Completed (100%)</option>
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30 pointer-events-none" />
-             </div>
-          </div>
-          
-          {(search || statusFilter || progressFilter) && (
-            <button onClick={() => { setSearch(''); setStatusFilter(''); setProgressFilter(''); }} className="px-3 py-2 text-sm font-bold text-red-400 hover:bg-red-500/10 rounded-xl transition-colors flex items-center gap-1 shrink-0">
-               <XCircle className="h-4 w-4" /> Clear
-            </button>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px] bg-background border-white/10 text-foreground h-10">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground mr-1.5" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a1a] border-white/10 dark">
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="To Start">To Start</SelectItem>
+              <SelectItem value="In Progress">In Progress</SelectItem>
+              <SelectItem value="Done">Done</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={progressFilter} onValueChange={setProgressFilter}>
+            <SelectTrigger className="w-[160px] bg-background border-white/10 text-foreground h-10">
+              <Target className="h-3.5 w-3.5 text-muted-foreground mr-1.5" />
+              <SelectValue placeholder="Progress" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1a1a1a] border-white/10 dark">
+              <SelectItem value="ALL">All Progress</SelectItem>
+              <SelectItem value="0">Not Started (0%)</SelectItem>
+              <SelectItem value="1-25">Started (1-25%)</SelectItem>
+              <SelectItem value="26-50">Quarter (26-50%)</SelectItem>
+              <SelectItem value="51-75">Half (51-75%)</SelectItem>
+              <SelectItem value="76-99">Almost (76-99%)</SelectItem>
+              <SelectItem value="100">Done (100%)</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {(search || statusFilter !== 'ALL' || progressFilter !== 'ALL') && (
+            <Button variant="ghost" onClick={() => { setSearch(''); setStatusFilter('ALL'); setProgressFilter('ALL'); }} className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-10 px-3">
+              <XCircle className="h-4 w-4 mr-1.5" /> Reset
+            </Button>
           )}
 
-          <button onClick={() => setIsCreateModalOpen(true)} className="shrink-0 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all font-bold shadow-[0_0_15px_rgba(105,108,255,0.4)] text-sm hover:-translate-y-0.5 border border-indigo-400/20">
-            <Plus className="h-4 w-4" /> New Project
-          </button>
+          <Button onClick={() => setActiveModal('create')} className="bg-primary hover:bg-primary/90 text-white h-10 px-5 shadow-lg shadow-primary/20 font-bold">
+            <Plus className="h-4 w-4 mr-1.5" /> New Project
+          </Button>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center py-24"><Loader2 className="h-10 w-10 animate-spin text-indigo-400" /></div>
-      ) : filteredProjects.length === 0 ? (
-        <div className="bg-[#121212]/50 backdrop-blur-md rounded-3xl border border-dashed border-white/10 flex flex-col items-center justify-center py-24 text-center px-4 shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative overflow-hidden">
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
-           <FolderOpen className="h-16 w-16 text-white/20 mb-4" />
-           <h3 className="text-xl font-bold text-white mb-2 relative z-10">No projects found</h3>
-           <p className="text-white/40 mt-2 max-w-sm relative z-10 font-medium">There are no projects matching your current filters. Adjust your search or create a new project to get started.</p>
-           <button onClick={() => setIsCreateModalOpen(true)} className="mt-6 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 font-bold px-6 py-2.5 rounded-xl transition-all relative z-10">Create your first project</button>
+        <div className="flex flex-col items-center justify-center py-32 space-y-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-muted-foreground font-medium">Loading your projects...</p>
         </div>
+      ) : filteredProjects.length === 0 ? (
+        <Card className="border-dashed border-white/10 bg-transparent py-24">
+          <CardContent className="flex flex-col items-center justify-center text-center space-y-4">
+            <div className="p-4 rounded-full bg-white/5 border border-white/10">
+              <FolderOpen className="h-12 w-12 text-muted-foreground opacity-20" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-foreground">No projects found</h3>
+              <p className="text-muted-foreground max-w-sm mx-auto">Try adjusting your filters or create a new project to get started.</p>
+            </div>
+            <Button variant="outline" onClick={() => { setSearch(''); setStatusFilter('ALL'); setProgressFilter('ALL'); }} className="border-white/10 hover:bg-white/5">
+              Clear all filters
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredProjects.map((project) => {
             const progInfo = progressData.find(pd => pd.id === project.id);
             const progress = progInfo?.progress || 0;
             const issues = progInfo?.issue.total || '0';
             const estimatedDate = project.estimated_date ? new Date(project.estimated_date) : null;
             const daysRemaining = estimatedDate ? Math.ceil((estimatedDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
-            
-            const badgeClasses = project.status.title === 'Done' || project.status.title === 'Close' 
-                ? 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20 border border-emerald-500/10' 
-                : project.status.title === 'In Progress' 
-                    ? 'bg-sky-500/10 text-sky-400 ring-sky-500/20 border border-sky-500/10' 
-                    : 'bg-amber-500/10 text-amber-400 ring-amber-500/20 border border-amber-500/10';
+
+            const badgeVariant = project.status.title === 'Done' ? 'success' : project.status.title === 'In Progress' ? 'info' : 'warning';
+            // Custom badge logic using Tailwind classes if variant doesn't fit
+            const badgeClasses = project.status.title === 'Done'
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+              : project.status.title === 'In Progress'
+                ? 'bg-sky-500/10 text-sky-400 border-sky-500/20'
+                : 'bg-amber-500/10 text-amber-400 border-amber-500/20';
 
             return (
-              <div key={project.id} className="bg-[#121212]/80 backdrop-blur-xl rounded-[2rem] border border-white/5 hover:border-indigo-500/30 shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_32px_rgba(105,108,255,0.15)] transition-all duration-300 group flex flex-col relative overflow-hidden hover:-translate-y-1">
-                
-                {/* Subtle top gradient line for project cards */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:via-indigo-500/50 transition-colors"></div>
+              <Card key={project.id} className="group border-white/5 bg-card hover:border-primary/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary/5 flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/0 to-transparent group-hover:via-primary/50 transition-all" />
 
-                {/* Card Header */}
-                <div className="p-6 pb-4 flex justify-between items-start relative z-10">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ring-1 ring-inset ${badgeClasses}`}>
-                    {project.status.title === 'Done' || project.status.title === 'Close' ? <CheckCircle2 className="h-3 w-3 mr-1" /> : project.status.title === 'In Progress' ? <PlayCircle className="h-3 w-3 mr-1" /> : <Clock className="h-3 w-3 mr-1" />}
-                    {project.status.title}
-                  </span>
-                  
-                  <div className="relative">
-                    <button onClick={(e) => { e.stopPropagation(); setOpenDropdownId(openDropdownId === project.id ? null : project.id); }} className="p-1.5 text-white/30 hover:text-white/80 bg-white/5 hover:bg-white/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 border border-transparent hover:border-white/10">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-                    {openDropdownId === project.id && (
-                        <div className="absolute right-0 top-full mt-2 w-40 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-xl shadow-black/60 z-20 py-1.5 origin-top-right animate-in fade-in zoom-in-95 backdrop-blur-xl">
-                           <button onClick={() => openEditModal(project)} className="w-full text-left px-4 py-2 text-sm font-bold text-white/70 hover:bg-white/5 hover:text-white flex items-center gap-2.5 transition-colors"><Edit2 className="h-4 w-4" /> Edit</button>
-                           <button onClick={() => handleDeleteProject(project.id)} className="w-full text-left px-4 py-2 text-sm font-bold text-red-400 hover:bg-red-500/10 flex items-center gap-2.5 transition-colors"><Trash2 className="h-4 w-4" /> Delete</button>
-                        </div>
-                    )}
+                <CardHeader className="p-6 pb-2 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <Badge className={cn('px-2 py-0.5 text-[10px] font-black uppercase tracking-widest border', badgeClasses)}>
+                      {project.status.title}
+                    </Badge>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10 dark w-40">
+                        <DropdownMenuItem onClick={() => openEditModal(project)} className="gap-2 cursor-pointer font-semibold">
+                          <Edit2 className="h-3.5 w-3.5" /> Edit Project
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteProject(project.id)} className="gap-2 cursor-pointer font-semibold text-red-400 focus:text-red-400 focus:bg-red-500/10">
+                          <Trash2 className="h-3.5 w-3.5" /> Delete Project
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                </div>
 
-                {/* Card Body */}
-                <div className="px-6 flex-1 flex flex-col relative z-10">
-                  <h3 className="text-xl font-bold text-white mb-2 leading-tight group-hover:text-indigo-400 transition-colors line-clamp-1 truncate" title={project.name}>{project.name}</h3>
-                  <p className="text-sm text-white/40 font-medium line-clamp-2 mb-6 h-10 leading-relaxed">
-                    {project.description || 'No description provided for this project. Update it in settings.'}
+                  <CardTitle className="text-xl font-bold line-clamp-1 group-hover:text-primary transition-colors cursor-pointer" title={project.name} onClick={() => window.location.href = `/projects/${project.id}`}>
+                    {project.name}
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="p-6 pt-0 flex-1 space-y-6">
+                  <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px] leading-relaxed">
+                    {project.description || 'Elevate your enterprise with this innovative project initiative.'}
                   </p>
-                  
-                  {/* Members & Progress Info Row */}
-                  <div className="flex items-end justify-between mb-3 mt-auto">
-                    <div className="flex -space-x-2 overflow-hidden items-center group/av">
-                       {project.members.slice(0, 4).map((m, i) => (
-                          <img key={i} src={`/upload/${m.user?.avarta}`} className="inline-block h-8 w-8 rounded-full ring-2 ring-[#121212] object-cover bg-white/10 transition-transform group-hover/av:scale-105" title={m.user?.display_name || m.user?.dis_name} onError={(e) => { (e.target as HTMLImageElement).src = '/img/default-avatar.png'; }} />
-                       ))}
-                       {project.members.length > 4 && (
-                          <div className="inline-flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-[#121212] bg-[#1a1a1a] border border-white/10 text-xs font-bold text-white/70 transition-transform group-hover/av:scale-105">
-                             +{project.members.length - 4}
-                          </div>
-                       )}
-                       {project.members.length === 0 && (
-                          <div className="inline-flex h-8 items-center justify-center px-3 rounded-full bg-white/5 text-xs font-bold text-white/30 border border-white/10 border-dashed">No members</div>
-                       )}
-                    </div>
-                    <span className="text-2xl font-black text-white tracking-tight">{Math.round(progress)}<span className="text-sm text-white/30 ml-0.5">%</span></span>
-                  </div>
-                  
-                  {/* Progress Bar */}
-                  <div className="w-full bg-[#0a0a0a] border border-white/5 rounded-full h-1.5 mb-2 overflow-hidden relative">
-                     <div className={`absolute top-0 bottom-0 left-0 rounded-full transition-all duration-1000 ${progress < 30 ? 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]' : progress < 70 ? 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]' : progress < 100 ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'}`} style={{ width: `${progress}%` }}>
-                       <div className="absolute inset-0 bg-white/20" style={{ animation: 'shimmer 2s infinite linear' }}></div>
-                     </div>
-                  </div>
-                </div>
 
-                {/* Card Footer */}
-                <div className="px-6 py-4 bg-white/[0.02] border-t border-white/5 flex items-center justify-between relative z-10">
-                   <div className="flex items-center gap-1.5 text-xs font-bold text-white/50 bg-[#0a0a0a] px-2.5 py-1.5 rounded-lg border border-white/5 shadow-inner">
-                      <Layers className="h-3.5 w-3.5 text-indigo-400" /> {issues} Issues
-                   </div>
-                   <div className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg border shadow-inner ${daysRemaining < 0 ? 'text-red-400 bg-red-500/10 border-red-500/20' : daysRemaining === 0 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' : 'text-white/50 bg-[#0a0a0a] border-white/5'}`}>
-                      <Calendar className="h-3.5 w-3.5 opacity-70" /> 
-                      {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : daysRemaining === 0 ? 'Due today' : `${daysRemaining}d left`}
-                   </div>
-                </div>
-              </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <div className="flex -space-x-2">
+                        {project.members.slice(0, 4).map((m, i) => (
+                          <Avatar key={i} className="h-8 w-8 ring-2 ring-card group-hover:ring-primary/20 transition-all">
+                            <AvatarImage src={`/upload/${m.user?.avarta}`} />
+                            <AvatarFallback className="text-[10px] bg-indigo-600/20 text-indigo-300">
+                              {m.user?.display_name?.[0] || 'U'}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {project.members.length > 4 && (
+                          <div className="h-8 w-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-bold text-muted-foreground ring-2 ring-card">
+                            +{project.members.length - 4}
+                          </div>
+                        )}
+                      </div>
+                      <span className="text-2xl font-black text-foreground">{Math.round(progress)}<span className="text-sm text-muted-foreground ml-0.5">%</span></span>
+                    </div>
+                    <Progress value={progress} className="h-1.5 bg-white/5 [&>div]:bg-primary" />
+                  </div>
+                </CardContent>
+
+                <CardFooter className="p-6 pt-0 flex items-center justify-between border-t border-white/5 mt-auto bg-white/[0.01]">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground">
+                    <Layers className="h-3.5 w-3.5 text-primary opacity-70" /> {issues} Issues
+                  </div>
+                  <div className={cn(
+                    "flex items-center gap-1.5 text-[11px] font-bold",
+                    daysRemaining < 0 ? "text-red-400" : daysRemaining <= 3 ? "text-amber-400" : "text-muted-foreground"
+                  )}>
+                    <Calendar className="h-3.5 w-3.5 opacity-50" />
+                    {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : daysRemaining === 0 ? 'Due Today' : `${daysRemaining}d left`}
+                  </div>
+                </CardFooter>
+              </Card>
             );
           })}
         </div>
       )}
 
-      {/* --- MODALS --- */}
-      
-      {/* Create Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0a]/80 backdrop-blur-md p-4 animate-in fade-in duration-200 overflow-y-auto">
-          <div className="bg-[#121212] border border-white/10 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.8)] w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col my-auto relative">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mt-32 -mr-32"></div>
-            
-            <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02] relative z-10">
-              <h3 className="text-xl font-bold text-white flex items-center gap-3"><Plus className="h-5 w-5 text-indigo-400 p-1 bg-indigo-500/20 rounded-md ring-1 ring-indigo-500/30" /> Start New Project</h3>
-              <button onClick={() => setIsCreateModalOpen(false)} className="p-2 text-white/30 hover:text-white/80 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-white/10"><X className="h-5 w-5" /></button>
+      {/* --- DIALOGS --- */}
+
+      {/* Create Project Dialog */}
+      <Dialog open={activeModal === 'create'} onOpenChange={(open) => !open && setActiveModal(null)}>
+        <DialogContent className="bg-[#121212] border-white/10 text-foreground rounded-2xl dark max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Plus className="h-5 w-5 text-primary" /> Start New Project
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Project Name</Label>
+              <Input
+                placeholder="e.g. Website Overhaul"
+                value={newProject.name}
+                onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                className="h-11 bg-background border-white/10 text-foreground"
+              />
             </div>
-            
-            <div className="p-8 space-y-6 relative z-10">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="space-y-2 md:col-span-2">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Project Name <span className="text-red-500">*</span></label>
-                       <input type="text" className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:bg-[#121212] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-white outline-none shadow-inner placeholder:text-white/20" placeholder="e.g. Website Redesign" value={newProject.name} onChange={(e) => setNewProject({...newProject, name: e.target.value})} />
-                   </div>
-                   
-                   <div className="space-y-2 relative">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Initial Status <span className="text-red-500">*</span></label>
-                       <select className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:bg-[#121212] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-white outline-none appearance-none shadow-inner [&>option]:bg-[#121212]" value={newProject.status_id} onChange={(e) => setNewProject({...newProject, status_id: e.target.value})}>
-                          <option value="">Select Status...</option>
-                          {statuses.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-                       </select>
-                       <ChevronDown className="absolute right-4 top-[38px] h-4 w-4 text-white/30 pointer-events-none" />
-                   </div>
-                   
-                   <div className="space-y-2">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Target Date <span className="text-red-500">*</span></label>
-                       <input type="date" className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:bg-[#121212] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-white outline-none shadow-inner [color-scheme:dark]" value={newProject.estimated_date} onChange={(e) => setNewProject({...newProject, estimated_date: e.target.value})} />
-                   </div>
-                   
-                   <div className="space-y-2 md:col-span-2">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Description</label>
-                       <textarea rows={3} className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:bg-[#121212] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-white outline-none resize-none shadow-inner placeholder:text-white/20" placeholder="What are the goals of this project?" value={newProject.description} onChange={(e) => setNewProject({...newProject, description: e.target.value})} />
-                   </div>
-                   
-                   <div className="space-y-2 md:col-span-2">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Add Team Members</label>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 bg-[#0a0a0a] border border-white/10 rounded-xl p-3 max-h-[180px] overflow-y-auto gap-2 shadow-inner custom-scrollbar">
-                           {allUsers.map(user => (
-                               <label key={user.id} className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition-all">
-                                   <input type="checkbox" className="w-4 h-4 rounded text-indigo-500 bg-[#121212] border-white/20 focus:ring-indigo-500/30 focus:ring-offset-0" checked={newProject.members.includes(user.id)} onChange={(e) => { const members = e.target.checked ? [...newProject.members, user.id] : newProject.members.filter(id => id !== user.id); setNewProject({...newProject, members}); }} />
-                                   <div className="flex items-center gap-2.5">
-                                       <img src={`/upload/${user.avarta}`} className="w-7 h-7 rounded-full object-cover bg-white/10 border border-white/10" onError={(e) => { (e.target as HTMLImageElement).src = '/img/default-avatar.png'; }} />
-                                       <span className="text-sm font-bold text-white/70">{user.display_name || user.dis_name || user.first_name}</span>
-                                   </div>
-                               </label>
-                           ))}
-                       </div>
-                   </div>
-               </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Inital Status</Label>
+              <Select value={newProject.status_id} onValueChange={(v) => setNewProject({ ...newProject, status_id: v })}>
+                <SelectTrigger className="bg-background border-white/10 text-foreground h-11">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1a1a] border-white/10 dark">
+                  {statuses.map(s => <SelectItem key={s.id} value={String(s.id)}>{s.title}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-            
-            <div className="px-8 py-5 bg-white/[0.02] border-t border-white/5 flex justify-end gap-3 mt-auto relative z-10">
-                <button onClick={() => setIsCreateModalOpen(false)} className="px-5 py-2.5 rounded-xl font-bold text-white/50 hover:text-white hover:bg-white/5 transition-all outline-none focus:ring-2 focus:ring-white/20">Cancel</button>
-                <button onClick={handleCreateProject} disabled={submitting} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-[0_0_15px_rgba(105,108,255,0.4)] transition-all disabled:opacity-50 flex items-center gap-2 border border-indigo-400/20 outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#121212]">
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Create Project
-                </button>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Date</Label>
+              <Input
+                type="date"
+                value={newProject.estimated_date}
+                onChange={(e) => setNewProject({ ...newProject, estimated_date: e.target.value })}
+                className="h-11 bg-background border-white/10 text-foreground [color-scheme:dark]"
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</Label>
+              <textarea
+                rows={3}
+                placeholder="Briefly describe the project goals..."
+                className="w-full px-3 py-3 bg-background border border-white/10 rounded-md focus:ring-1 focus:ring-primary outline-none text-foreground text-sm font-medium transition-all"
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">Team Members</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[160px] overflow-y-auto p-3 bg-background border border-white/10 rounded-xl custom-scrollbar">
+                {allUsers.map(user => (
+                  <div key={user.id} className="flex items-center space-x-2 p-2 hover:bg-white/5 rounded-lg transition-colors cursor-pointer group" onClick={() => {
+                    const members = newProject.members.includes(user.id)
+                      ? newProject.members.filter(id => id !== user.id)
+                      : [...newProject.members, user.id];
+                    setNewProject({ ...newProject, members });
+                  }}>
+                    <div className={cn(
+                      "w-4 h-4 rounded border border-white/20 flex items-center justify-center transition-all",
+                      newProject.members.includes(user.id) ? "bg-primary border-primary" : "bg-transparent"
+                    )}>
+                      {newProject.members.includes(user.id) && <X className="h-3 w-3 text-white" />}
+                    </div>
+                    <span className="text-[11px] font-bold text-white/70 group-hover:text-white truncate">
+                      {user.display_name || user.first_name}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Edit Modal */}
-      {isEditModalOpen && selectedProject && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0a]/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-[#121212] border border-white/10 rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.8)] w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col relative">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -mt-32 -mr-32"></div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setActiveModal(null)} className="text-muted-foreground hover:text-foreground">Cancel</Button>
+            <Button onClick={handleCreateProject} disabled={submitting} className="bg-primary hover:bg-primary/90 text-white font-bold px-6">
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Create Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <div className="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02] relative z-10">
-              <h3 className="text-xl font-bold text-white flex items-center gap-3"><Edit2 className="h-5 w-5 text-indigo-400 p-1 bg-indigo-500/20 rounded-md ring-1 ring-indigo-500/30" /> Edit Project details</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-white/30 hover:text-white/80 hover:bg-white/10 rounded-xl transition-all border border-transparent hover:border-white/10"><X className="h-5 w-5" /></button>
+      {/* Edit Project Dialog */}
+      <Dialog open={activeModal === 'edit'} onOpenChange={(open) => !open && setActiveModal(null)}>
+        <DialogContent className="bg-[#121212] border-white/10 text-foreground rounded-2xl dark max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Edit2 className="h-5 w-5 text-primary" /> Edit Project
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Project Name</Label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                className="h-11 bg-background border-white/10 text-foreground"
+              />
             </div>
-            
-            <div className="p-8 space-y-6 relative z-10">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="space-y-2 md:col-span-2">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Project Name <span className="text-red-500">*</span></label>
-                       <input type="text" className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:bg-[#121212] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-white outline-none shadow-inner" value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} />
-                   </div>
-                   
-                   <div className="space-y-2 md:col-span-2">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Target Date <span className="text-red-500">*</span></label>
-                       <input type="date" className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:bg-[#121212] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-white outline-none shadow-inner [color-scheme:dark]" value={editForm.estimated_date} onChange={(e) => setEditForm({...editForm, estimated_date: e.target.value})} />
-                   </div>
-                   
-                   <div className="space-y-2 md:col-span-2">
-                       <label className="text-xs font-black text-white/30 uppercase tracking-widest pl-1">Description</label>
-                       <textarea rows={4} className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:bg-[#121212] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-white outline-none resize-none shadow-inner" value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})} />
-                   </div>
-               </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Target Date</Label>
+              <Input
+                type="date"
+                value={editForm.estimated_date}
+                onChange={(e) => setEditForm({ ...editForm, estimated_date: e.target.value })}
+                className="h-11 bg-background border-white/10 text-foreground [color-scheme:dark]"
+              />
             </div>
-            
-            <div className="px-8 py-5 bg-white/[0.02] border-t border-white/5 flex justify-end gap-3 mt-auto relative z-10">
-                <button onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 rounded-xl font-bold text-white/50 hover:text-white hover:bg-white/5 transition-all outline-none focus:ring-2 focus:ring-white/20">Cancel</button>
-                <button onClick={handleUpdateProject} disabled={submitting} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-[0_0_15px_rgba(105,108,255,0.4)] transition-all disabled:opacity-50 flex items-center gap-2 border border-indigo-400/20 outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#121212]">
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit2 className="h-4 w-4" />} Save Changes
-                </button>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</Label>
+              <textarea
+                rows={4}
+                className="w-full px-3 py-3 bg-background border border-white/10 rounded-md focus:ring-1 focus:ring-primary outline-none text-foreground text-sm font-medium transition-all"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              />
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* Global Styles for Scrollbar & Animations passed inline for scoped components */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setActiveModal(null)} className="text-muted-foreground hover:text-foreground">Cancel</Button>
+            <Button onClick={handleUpdateProject} disabled={submitting} className="bg-primary hover:bg-primary/90 text-white font-bold px-6">
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Update Project
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 20px; }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #555; }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-      `}} />
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+      `}</style>
     </div>
   );
 };

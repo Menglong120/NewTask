@@ -5,6 +5,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
@@ -22,7 +26,6 @@ const LoginPage = () => {
     const payload = { dis_name: username, password, rememberMe: 1 };
 
     try {
-      // First try normal login
       let response = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,7 +35,6 @@ const LoginPage = () => {
 
       let data = await response.json();
 
-      // If normal login fails because user is superadmin (401), try superadmin login
       if (response.status === 401 && data.msg === 'Login Failed.') {
         response = await fetch(`${API_BASE_URL}/api/superadmin/login`, {
           method: 'POST',
@@ -46,7 +48,6 @@ const LoginPage = () => {
       if (response.ok) {
         router.push('/');
       } else {
-        // If it's a validation error (400), show the specific error messages
         if (response.status === 400 && data.data) {
           const validationErrors = Object.values(data.data).join(' ');
           setError(validationErrors || data.msg);
@@ -54,7 +55,7 @@ const LoginPage = () => {
           setError(data.msg || 'Invalid credentials');
         }
       }
-    } catch (err) {
+    } catch {
       setError('Connection failed. Please check if the backend is running.');
     } finally {
       setLoading(false);
@@ -62,99 +63,105 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f5f5f9] p-4">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-xl">
-        <div className="flex flex-col items-center">
-          <div className="relative mb-6 h-16 w-48">
-            <Image 
-              src="/img/Logo NSM Tech.V2-Confirm.png" 
-              alt="NSM Tech Logo" 
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-4 relative overflow-hidden">
+      {/* Background blobs */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-400/10 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/10 rounded-full blur-[100px] pointer-events-none" />
+
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/90 backdrop-blur-sm relative z-10">
+        <CardHeader className="flex flex-col items-center pb-2 pt-8 px-8 gap-3">
+          <div className="relative h-14 w-44">
+            <Image
+              src="/img/Logo NSM Tech.V2-Confirm.png"
+              alt="NSM Tech Logo"
               fill
               className="object-contain"
               priority
             />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800">Welcome to NSM! 👋</h2>
-          <p className="mt-2 text-sm text-gray-500">Please sign-in to your account</p>
-        </div>
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl font-bold text-gray-900">Welcome to NSM! 👋</h1>
+            <p className="text-sm text-muted-foreground">Please sign-in to your account</p>
+          </div>
+        </CardHeader>
 
-        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
-          {error && (
-            <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
-              {error}
-            </div>
-          )}
+        <CardContent className="px-8 pb-8 pt-4">
+          <form className="space-y-5" onSubmit={handleLogin}>
+            {error && (
+              <div className="rounded-xl bg-destructive/10 border border-destructive/20 p-3.5 text-sm text-destructive font-medium">
+                {error}
+              </div>
+            )}
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                User Name
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-sm font-semibold text-gray-700">
+                Username
+              </Label>
+              <Input
                 id="username"
                 type="text"
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-[#696cff] focus:outline-none focus:ring-1 focus:ring-[#696cff]"
                 placeholder="Enter your username"
+                className="h-11 border-gray-200 focus-visible:ring-primary/30 focus-visible:border-primary"
               />
             </div>
 
-            <div className="relative">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
                 Password
-              </label>
+              </Label>
               <div className="relative">
-                <input
+                <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-[#696cff] focus:outline-none focus:ring-1 focus:ring-[#696cff]"
                   placeholder="••••••••"
+                  className="h-11 pr-11 border-gray-200 focus-visible:ring-primary/30 focus-visible:border-primary"
                 />
-                <button
+                <Button
                   type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-muted-foreground hover:text-foreground"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                </Button>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center gap-2 pt-1">
               <input
                 id="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-[#696cff] focus:ring-[#696cff]"
+                className="h-4 w-4 rounded-sm border-gray-300 accent-primary cursor-pointer"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+              <Label htmlFor="remember-me" className="text-sm font-medium text-gray-600 cursor-pointer">
                 Remember Me
-              </label>
+              </Label>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex w-full items-center justify-center rounded-lg bg-[#696cff] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#5f61e6] focus:outline-none focus:ring-2 focus:ring-[#696cff] focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              'Log In'
-            )}
-          </button>
-        </form>
-      </div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Log In'
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

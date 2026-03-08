@@ -3,16 +3,22 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { fetchApi } from '@/lib/api';
-import { 
-  Activity as ActivityIcon, 
-  User, 
-  Trash2, 
+import {
+  Activity as ActivityIcon,
+  User,
+  Trash2,
   ChevronRight,
   Clock,
   Briefcase,
   History,
   AlertCircle
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface ActivityItem {
   id: string;
@@ -72,7 +78,7 @@ const ActivityPage = () => {
     const today = new Date().toLocaleDateString();
     const yesterday = new Date(Date.now() - 86400000).toLocaleDateString();
 
-    const sorted = [...activities].sort((a, b) => 
+    const sorted = [...activities].sort((a, b) =>
       new Date(b.acted_on).getTime() - new Date(a.acted_on).getTime()
     );
 
@@ -80,7 +86,7 @@ const ActivityPage = () => {
       const dateObj = new Date(item.acted_on);
       const dateString = dateObj.toLocaleDateString();
       let label = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      
+
       if (dateString === today) label = 'Today';
       else if (dateString === yesterday) label = 'Yesterday';
 
@@ -104,108 +110,112 @@ const ActivityPage = () => {
   };
 
   return (
-    <div className="p-6 max-w-[1200px] mx-auto space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#121212]/80 backdrop-blur-xl p-6 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/5 relative overflow-hidden gap-4">
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-500">
 
-        <div className="space-y-1 relative z-10 w-full">
-          <div className="flex items-center gap-2 text-xs font-black text-white/40 uppercase tracking-widest pl-1">
-            <span className="hover:text-indigo-400 cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Workspace</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-white/60">{projectName}</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-indigo-400 font-bold">Activity</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 ring-1 ring-indigo-500/20 shadow-inner">
-               <ActivityIcon className="h-4 w-4" />
+      {/* Header */}
+      <Card className="border-white/5 bg-card overflow-hidden relative">
+        <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <CardHeader className="p-6 relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-primary/10 text-primary rounded-xl ring-1 ring-primary/20 shadow-lg shadow-primary/10">
+              <History className="h-6 w-6" />
             </div>
-            Activity Timeline
-          </h1>
-        </div>
-        <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2 text-xs font-bold text-white/40 cursor-default relative z-10 shadow-inner ring-1 ring-white/5 shrink-0">
-          <History className="h-4 w-4 text-white/30" />
-          AUDIT TRAIL
-        </div>
-      </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Workspace</span>
+                <ChevronRight className="h-3 w-3" />
+                <span className="text-foreground">{projectName || 'Project'}</span>
+              </div>
+              <CardTitle className="text-2xl font-bold">Activity Audit Timeline</CardTitle>
+            </div>
+          </div>
+          <Badge variant="outline" className="h-9 px-4 bg-white/5 border-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px] gap-2">
+            <ActivityIcon className="h-3.5 w-3.5" /> Live Log
+          </Badge>
+        </CardHeader>
+      </Card>
 
-      <div className="bg-[#121212]/80 backdrop-blur-xl rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/5 p-6 md:p-10 relative overflow-hidden">
-        <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent pointer-events-none z-30"></div>
-        
-        <div className="relative space-y-10 md:space-y-12 before:absolute before:left-8 before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-indigo-500/50 before:via-white/10 before:to-transparent before:hidden md:before:block z-10">
+      <Card className="border-white/5 bg-card min-h-[500px] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.01] to-transparent pointer-events-none" />
+        <CardContent className="p-8 relative z-10">
           {loading ? (
-            [1, 2, 3].map(i => (
-              <div key={i} className="h-28 bg-white/5 animate-pulse rounded-[1.5rem] border border-white/5 ml-0 md:ml-20"></div>
-            ))
+            <div className="space-y-8">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-32 bg-white/5 animate-pulse rounded-2xl border border-white/5"></div>
+              ))}
+            </div>
           ) : Object.keys(groupedActivities).length > 0 ? (
-            Object.entries(groupedActivities).map(([date, items]) => (
-              <div key={date} className="relative z-10">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="hidden md:flex h-16 w-16 bg-[#0a0a0a] border border-[#121212] rounded-full flex items-center justify-center z-10 text-[10px] font-black text-indigo-400 shadow-[0_0_0_4px_#121212] uppercase text-center px-1 leading-tight ring-1 ring-white/10 shrink-0">
-                    {date}
+            <div className="space-y-12 relative before:absolute before:left-[19px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary/50 before:via-white/5 before:to-transparent">
+              {Object.entries(groupedActivities).map(([date, items]) => (
+                <div key={date} className="relative space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-background border border-primary/20 flex items-center justify-center z-10 shadow-lg">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.2em] text-primary">{date}</span>
+                    <Separator className="flex-1 bg-white/5" />
                   </div>
-                  <div className="flex-1 border-t border-white/10 md:hidden"></div>
-                  <h3 className="text-xs font-black tracking-widest text-indigo-400 uppercase md:hidden px-2">{date}</h3>
-                </div>
 
-                <div className="space-y-4 md:ml-20 relative">
-                  {items.map((item) => (
-                    <div key={item.id} className="bg-[#0a0a0a] p-5 rounded-[1.5rem] shadow-inner border border-white/5 hover:border-indigo-500/30 hover:shadow-[0_4px_20px_rgba(105,108,255,0.15)] transition-all group relative">
-                       {/* Connector Triangle for Desktop */}
-                       <div className="absolute top-8 w-0 h-0 border-[8px] border-transparent border-r-[#0a0a0a] -left-4 hidden md:block"></div>
-                       <div className="absolute top-8 w-0 h-0 border-[9px] border-transparent border-r-white/5 -left-[18px] -z-10 hidden md:block transition-colors group-hover:border-r-indigo-500/30"></div>
-                       
-                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 relative z-10">
-                        <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-400 shrink-0 ring-1 ring-indigo-500/20 shadow-inner mt-1">
-                            <User className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <div className="text-[15px] leading-relaxed">
-                              <span className="font-bold text-white text-base mr-1">{item.actor.user.first_name} {item.actor.user.last_name}</span>
-                              <span className="mx-2 px-2 py-0.5 rounded-md bg-white/10 border border-white/5 text-[10px] font-black text-white/50 uppercase tracking-widest inline-flex align-middle">{item.actor.user.role.name}</span>
-                              <span className="text-white/60 font-medium">{item.activity}</span>
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 mt-2">
-                              <div className="flex items-center gap-1.5 text-[11px] font-black text-white/40 bg-white/5 border border-white/5 px-2.5 py-1 rounded-md uppercase tracking-widest shadow-inner">
-                                <Briefcase className="h-3.5 w-3.5 text-white/30" />
-                                {item.project.name}
+                  <div className="space-y-4 pl-12">
+                    {items.map((item) => (
+                      <div key={item.id} className="group relative bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-primary/20 p-5 rounded-2xl transition-all">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <Avatar className="h-10 w-10 ring-2 ring-background ring-offset-2 ring-offset-white/5 shrink-0 mt-0.5">
+                              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs uppercase">
+                                {item.actor.user.first_name[0]}{item.actor.user.last_name[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="space-y-1">
+                              <div className="text-[15px] leading-snug">
+                                <span className="font-bold text-foreground">{item.actor.user.first_name} {item.actor.user.last_name}</span>
+                                <Badge variant="outline" className="mx-2 h-5 px-1.5 text-[9px] font-black uppercase tracking-tighter bg-white/5 border-white/10 text-muted-foreground align-middle">
+                                  {item.actor.user.role.name}
+                                </Badge>
+                                <span className="text-muted-foreground font-medium">{item.activity}</span>
                               </div>
-                              <span className="text-[13px] font-bold text-white/80 bg-white/5 border border-white/10 px-2.5 py-1 rounded-md">"{item.title}"</span>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Badge variant="secondary" className="h-6 gap-1 px-2 text-[10px] font-bold bg-primary/5 text-primary border-transparent">
+                                  <Briefcase className="h-3 w-3 opacity-50" /> {item.project.name}
+                                </Badge>
+                                <span className="text-[13px] font-bold text-foreground/70 bg-white/5 px-2 py-0.5 rounded-md border border-white/5 shrink-0">
+                                  "{item.title}"
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 sm:pt-1">
-                          <div className="flex items-center gap-1.5 text-[11px] font-black text-white/30">
-                            <Clock className="h-3.5 w-3.5 text-white/20" />
-                            {new Date(item.acted_on).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+                          <div className="flex items-center justify-between md:justify-end gap-4 shrink-0">
+                            <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground whitespace-nowrap">
+                              <Clock className="h-3.5 w-3.5 opacity-50" />
+                              {new Date(item.acted_on).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            <Button
+                              variant="ghost" size="icon"
+                              onClick={() => handleDelete(item.id)}
+                              className="h-8 w-8 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <button 
-                            onClick={() => handleDelete(item.id)}
-                            className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 outline-none focus:ring-2 focus:ring-red-500/50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           ) : (
-            <div className="text-center py-24 bg-[#0a0a0a] rounded-[2rem] border border-dashed border-white/10 shadow-inner relative overflow-hidden">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
-              <div className="h-24 w-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 ring-1 ring-white/10 relative z-10">
-                 <ActivityIcon className="h-10 w-10 text-white/20" />
+            <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="h-20 w-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                <ActivityIcon className="h-8 w-8 text-muted-foreground opacity-20" />
               </div>
-              <h3 className="text-xl font-bold text-white mb-2 relative z-10">No activity yet</h3>
-              <p className="text-[15px] font-medium text-white/40 max-w-sm mx-auto relative z-10">Activities will appear here as soon as you and your team start working in this workspace.</p>
+              <h3 className="text-xl font-bold mb-1">No Trace Found</h3>
+              <p className="text-muted-foreground max-w-sm font-medium">Once team members start adding tasks or updating files, their footprints will appear here.</p>
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

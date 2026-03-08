@@ -1,11 +1,11 @@
 const express = require('express');
 const projectController = require('../../controllers/api/project');
 const { requireAuth, requireBothAdmin } = require('../../middleware/auth');
-const { requireProjectMember, requireProjectMemberAdmin, 
-        checkProject, checkMemberAddToProject, 
-        checkMemberProjectByMemberId, checkProjectResource, checkProjectResourceFile,
-        checkProjectActivity,
-    } = require('../../middleware/project');
+const { requireProjectMember, requireProjectMemberAdmin,
+    checkProject, checkMemberAddToProject,
+    checkMemberProjectByMemberId, checkProjectResource, checkProjectResourceFile,
+    checkProjectActivity,
+} = require('../../middleware/project');
 
 const router = express.Router();
 
@@ -18,7 +18,7 @@ router.put('/projectstatus/:id', requireProjectMember, projectController.editPro
 router.delete('/project/:id', requireProjectMember, projectController.deleteProject);
 
 // Project Status
-router.get('/projects/status', requireBothAdmin, projectController.getAllStatuses);
+router.get('/projects/status', requireAuth, projectController.getAllStatuses);
 router.get('/projects/status/:id', requireBothAdmin, projectController.getStatus);
 router.post('/projects/status', requireBothAdmin, projectController.createStatus);
 router.put('/projects/status/:id', requireBothAdmin, projectController.updateStatus);
@@ -32,7 +32,7 @@ router.delete('/projects/member/:id', requireBothAdmin, checkMemberProjectByMemb
 
 // Project Resource
 router.get('/projects/resources/:id', requireProjectMember, projectController.getAllProjectResources); // params project id
-router.get('/projects/resource/:id' , requireAuth, checkProjectResource, projectController.getProjectResource); // params resource id
+router.get('/projects/resource/:id', requireAuth, checkProjectResource, projectController.getProjectResource); // params resource id
 router.post('/projects/resource/:id', requireProjectMember, projectController.createProjectResource); // params project id
 router.put('/projects/resource/:id', requireAuth, checkProjectResource, projectController.editProjectResource) // params resource id
 router.delete('/projects/resource/:id', requireAuth, checkProjectResource, projectController.deleteProjectResource); // params resource id
@@ -41,7 +41,7 @@ router.delete('/projects/resource/:id', requireAuth, checkProjectResource, proje
 router.get('/projects/resources/files/:id', requireAuth, checkProjectResource, projectController.getAllProjectResourceFiles); // params resource id
 router.get('/projects/resources/file/:id', requireAuth, checkProjectResourceFile, projectController.getProjectResourceFile); // params file id
 router.post('/projects/resources/file/:id', requireAuth, checkProjectResource, projectController.addProjectResourceFile); // params resource id
-router.put('/projects/resources/file/:id',requireAuth ,checkProjectResourceFile, projectController.updateProjectResourceFile); // params file id
+router.put('/projects/resources/file/:id', requireAuth, checkProjectResourceFile, projectController.updateProjectResourceFile); // params file id
 router.delete('/projects/resources/file/:id', requireAuth, checkProjectResourceFile, projectController.deleteProjectResourceFile) // params file id
 
 // Project Activity

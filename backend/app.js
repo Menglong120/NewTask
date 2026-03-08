@@ -1,3 +1,10 @@
+/**
+ * NewTask Backend Server
+ * 
+ * NOTE: The primary user interface has moved to the Next.js frontend (port 3000).
+ * This backend now primarily serves as an API layer (/api/*).
+ * Legacy EJS views in /views and web routes in /routes/web are maintained for fallback/compatibility.
+ */
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -25,7 +32,7 @@ const io = new Server(server);
 app.set('view engine', 'ejs');
 
 app.use(cors({
-    origin: ["http://127.0.0.1:5501", "http://localhost:3000"],
+    origin: ["http://127.0.0.1:5501", "http://localhost:3000", "http://localhost:3001"],
     credentials: true
 }));
 app.use(fileUpload());

@@ -3,14 +3,16 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
     const token = request.cookies.get('jwtToken');
-    const isLoginPage = request.nextUrl.pathname === '/login';
+    const { pathname } = request.nextUrl;
 
-    if (!token && !isLoginPage) {
-        return NextResponse.redirect(new URL('/login', request.url));
+    const isPublicPath = pathname === '/' || pathname === '/login';
+
+    if (token && isPublicPath) {
+        return NextResponse.redirect(new URL('/home', request.url));
     }
 
-    if (token && isLoginPage) {
-        return NextResponse.redirect(new URL('/', request.url));
+    if (!token && !isPublicPath) {
+        return NextResponse.redirect(new URL('/login', request.url));
     }
 
     return NextResponse.next();

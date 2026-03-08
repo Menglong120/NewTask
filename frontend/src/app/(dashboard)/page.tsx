@@ -1,30 +1,20 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { 
-  Briefcase, 
-  Users, 
-  UserCheck, 
-  LayoutPanelLeft,
-  Cloud,
-  Droplets,
-  Gauge
-} from 'lucide-react';
+import { Briefcase, Users, UserCheck, LayoutPanelLeft, Cloud, Droplets, Gauge } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
-// ApexCharts needs to be imported dynamically for Next.js SSR compatibility
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
 const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState('');
-  const [weather, setWeather] = useState({
-    temp: 31,
-    description: 'overcast clouds',
-    humidity: 98,
-    clouds: 98,
-    pressure: 1011,
-    city: 'Phnom Penh',
-    country: 'KH'
+  const [weather] = useState({
+    temp: 31, description: 'overcast clouds',
+    humidity: 98, clouds: 98, pressure: 1011,
+    city: 'Phnom Penh', country: 'KH'
   });
 
   useEffect(() => {
@@ -41,32 +31,21 @@ const Dashboard = () => {
   }, []);
 
   const stats = [
-    { label: 'Total Projects', value: '1,248', icon: Briefcase, color: 'bg-[#9e7eff]' },
-    { label: 'Total Members', value: '852', icon: Users, color: 'bg-[#95CAE3]' },
-    { label: 'Total Admin', value: '12', icon: UserCheck, color: 'bg-[#D9B747]' },
-    { label: 'Total Category', value: '45', icon: LayoutPanelLeft, color: 'bg-[#92D445]' },
+    { label: 'Total Projects', value: '1,248', icon: Briefcase, color: 'text-violet-400', bg: 'bg-violet-500/15' },
+    { label: 'Total Members', value: '852', icon: Users, color: 'text-sky-400', bg: 'bg-sky-500/15' },
+    { label: 'Total Admin', value: '12', icon: UserCheck, color: 'text-amber-400', bg: 'bg-amber-500/15' },
+    { label: 'Total Category', value: '45', icon: LayoutPanelLeft, color: 'text-emerald-400', bg: 'bg-emerald-500/15' },
   ];
 
   const issueChartOptions: any = {
-    chart: { type: 'donut' },
+    chart: { type: 'donut', background: 'transparent' },
     labels: ['Todo', 'In Progress', 'Done', 'Testing'],
     colors: ['#696cff', '#03c3ec', '#71dd37', '#ffab00'],
-    legend: { position: 'bottom' },
+    legend: { position: 'bottom', labels: { colors: '#9ca3af' }, markers: { width: 10, height: 10, radius: 3 } },
     dataLabels: { enabled: false },
+    stroke: { width: 0 },
     plotOptions: {
-      pie: {
-        donut: {
-          size: '75%',
-          labels: {
-            show: true,
-            total: {
-              show: true,
-              label: 'Issues',
-              formatter: () => '452'
-            }
-          }
-        }
-      }
+      pie: { donut: { size: '72%', labels: { show: true, total: { show: true, label: 'Issues', color: '#9ca3af', formatter: () => '452' }, value: { color: '#fff', fontSize: '22px', fontWeight: 700 } } } }
     }
   };
 
@@ -77,139 +56,148 @@ const Dashboard = () => {
     { name: 'Internal Tooling', progress: 10, status: 'Planning' },
   ];
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-      </div>
+  const statusColor: Record<string, string> = {
+    Active: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20',
+    Testing: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+    Planning: 'bg-blue-500/15 text-blue-400 border-blue-500/20',
+  };
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Greeting Card */}
-          <div className="lg:col-span-8">
-            <div className="relative overflow-hidden rounded-xl bg-[#696cff]/5 p-8">
-              <div className="relative z-10 space-y-2">
-                <h2 className="text-2xl font-bold text-gray-800">This Is Your Dashboard Area</h2>
-                <p className="max-w-md text-gray-600">
-                  Have a great <span className="font-semibold text-[#696cff]">{currentTime}</span>! Stay focused and productive as you work through your tasks today.
+  return (
+    <div className="space-y-6 max-w-[1400px] mx-auto">
+
+      {/* Welcome Banner */}
+      <Card className="border-white/5 bg-card overflow-hidden relative">
+        <div className="absolute -right-8 -top-8 h-48 w-48 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -left-4 -bottom-4 h-32 w-32 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
+        <CardContent className="p-6 lg:p-8 relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            {/* Greeting + Stats */}
+            <div className="lg:col-span-8 space-y-6">
+              <div className="rounded-2xl bg-primary/5 border border-primary/10 p-6 relative overflow-hidden">
+                <Briefcase className="absolute right-4 top-4 h-24 w-24 text-primary/8" />
+                <h2 className="text-xl font-bold text-foreground">This Is Your Dashboard Area</h2>
+                <p className="text-muted-foreground mt-1 max-w-md">
+                  Have a great <span className="font-semibold text-primary">{currentTime}</span>!
+                  Stay focused and productive as you work through your tasks today.
                 </p>
               </div>
-              <div className="absolute -right-4 -top-4 h-48 w-48 opacity-10">
-                <Briefcase className="h-full w-full" />
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {stats.map((stat) => (
+                  <Card key={stat.label} className="border-white/5 bg-card/50 hover:bg-card transition-colors">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className={`${stat.bg} ${stat.color} rounded-xl p-2.5 shrink-0`}>
+                        <stat.icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-2xl font-bold text-foreground leading-tight">{stat.value}</p>
+                        <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wide">{stat.label}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {stats.map((stat) => (
-                <div key={stat.label} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-4">
-                    <div className={`${stat.color} rounded-lg p-3 text-white`}>
-                      <stat.icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-gray-800">{stat.value}</p>
-                      <p className="text-xs text-gray-500 uppercase font-medium">{stat.label}</p>
+            {/* Weather */}
+            <div className="lg:col-span-4">
+              <Card className="h-full border-white/5 bg-card/50">
+                <CardContent className="p-6 flex flex-col items-center text-center h-full justify-center">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="font-bold text-foreground">{weather.city}</span>
+                    <Badge variant="secondary" className="text-[10px] border-0 font-bold">{weather.country}</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <Cloud className="h-12 w-12 text-primary" />
+                    <div className="text-left">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-4xl font-bold text-foreground">{weather.temp}</span>
+                        <span className="text-lg text-muted-foreground">°C</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground capitalize">{weather.description}</p>
                     </div>
                   </div>
-                </div>
-              ))}
+                  <div className="w-full space-y-3 border-t border-border pt-4">
+                    {[
+                      { icon: Cloud, label: 'Clouds', value: `${weather.clouds}%` },
+                      { icon: Droplets, label: 'Humidity', value: `${weather.humidity}%` },
+                      { icon: Gauge, label: 'Pressure', value: `${weather.pressure} hPa` },
+                    ].map(({ icon: Icon, label, value }) => (
+                      <div key={label} className="flex justify-between items-center text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Icon className="h-3.5 w-3.5" />
+                          <span>{label}</span>
+                        </div>
+                        <span className="font-semibold text-foreground">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Weather Card */}
-          <div className="lg:col-span-4">
-            <div className="h-full rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-              <div className="flex flex-col items-center text-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold text-gray-800">{weather.city}</span>
-                  <span className="text-xs font-bold text-gray-400">{weather.country}</span>
-                </div>
-                <div className="mt-4 flex items-center gap-4">
-                  <Cloud className="h-12 w-12 text-[#696cff]" />
-                  <div className="text-left">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold text-gray-800">{weather.temp}</span>
-                      <span className="text-xl font-medium text-gray-500">°C</span>
-                    </div>
-                    <p className="text-sm text-gray-500 capitalize">{weather.description}</p>
-                  </div>
-                </div>
-                <div className="mt-6 w-full space-y-3 border-t border-gray-100 pt-6">
-                  <div className="flex justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Cloud className="h-4 w-4" />
-                      <span>Clouds</span>
-                    </div>
-                    <span className="font-medium">{weather.clouds}%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Droplets className="h-4 w-4" />
-                      <span>Humidity</span>
-                    </div>
-                    <span className="font-medium">{weather.humidity}%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Gauge className="h-4 w-4" />
-                      <span>Pressure</span>
-                    </div>
-                    <span className="font-medium">{weather.pressure} hPa</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Donut Chart */}
+        <Card className="border-white/5 bg-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Total Issues</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center pb-4">
+            <Chart options={issueChartOptions} series={[120, 80, 200, 52]} type="donut" width="280" />
+          </CardContent>
+        </Card>
 
-        {/* Charts and Projects Section */}
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Issue Chart */}
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold uppercase text-gray-500">Total Issues</h3>
-            <div className="flex justify-center">
-              <Chart options={issueChartOptions} series={[120, 80, 200, 52]} type="donut" width="280" />
-            </div>
-          </div>
-
-          {/* Tracking Status */}
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold uppercase text-gray-500">Tracking Status</h3>
-             <Chart 
+        {/* Area Chart */}
+        <Card className="border-white/5 bg-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Tracking Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Chart
               options={{
-                chart: { sparkline: { enabled: true } },
-                stroke: { curve: 'smooth' },
-                fill: { opacity: 0.3 },
+                chart: { background: 'transparent', toolbar: { show: false }, sparkline: { enabled: false } },
+                stroke: { curve: 'smooth', width: 2 },
+                fill: { opacity: 0.15, type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
                 colors: ['#696cff'],
-              }} 
-              series={[{ name: 'Issues', data: [31, 40, 28, 51, 42, 109, 100] }]} 
-              type="area" 
-              height="200" 
+                xaxis: { labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { show: false } },
+                grid: { show: false },
+                tooltip: { theme: 'dark' },
+              }}
+              series={[{ name: 'Issues', data: [31, 40, 28, 51, 42, 109, 100] }]}
+              type="area"
+              height="180"
             />
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Project Progress */}
-          <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h3 className="mb-4 text-sm font-bold uppercase text-gray-500">Projects Progress</h3>
-            <div className="space-y-5 overflow-y-auto max-h-[250px] pr-2">
-              {projectProgress.map((project) => (
-                <div key={project.name} className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium text-gray-700">{project.name}</span>
-                    <span className="font-bold text-[#696cff]">{project.progress}%</span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-                    <div 
-                      className="h-full bg-[#696cff] transition-all duration-500" 
-                      style={{ width: `${project.progress}%` }}
-                    />
+        {/* Project Progress */}
+        <Card className="border-white/5 bg-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Projects Progress</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {projectProgress.map((project) => (
+              <div key={project.name} className="space-y-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-medium text-foreground truncate pr-2">{project.name}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge className={`text-[10px] border ${statusColor[project.status] ?? ''} font-semibold`}>
+                      {project.status}
+                    </Badge>
+                    <span className="font-bold text-primary text-xs">{project.progress}%</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                <Progress value={project.progress} className="h-1.5 bg-white/5 [&>div]:bg-primary" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
