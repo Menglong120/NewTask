@@ -1,5 +1,5 @@
 const { values } = require('lodash');
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 // const pool = mysql.createPool({
 //     host: '192.168.69.83',
