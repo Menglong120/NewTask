@@ -5,25 +5,43 @@ import { useParams, useRouter } from 'next/navigation';
 import { fetchApi } from '@/lib/api';
 import Swal from 'sweetalert2';
 import {
-  Plus, Search, ChevronRight, MoreHorizontal, LayoutGrid,
-  FolderOpen, CircleDot, Flag, Target, Tag, UserCircle,
-  Calendar, Clock, Loader2, PlayCircle, CheckCircle2, ClipboardList
+  Plus, Search, ChevronRight, ChevronDown, CircleDot, Flag, Target, Tag,
+  Loader2, CheckCircle2, ClipboardList, Trash2,
+  CalendarPlus, CalendarCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
+import { DatePicker } from '@/components/ui/datepicker';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import IssueKanbanBoard from '@/components/IssueKanbanBoard';
+import IssueDetailDrawer from '@/components/IssueDetailDrawer';
+
+interface SubIssue {
+  id: number;
+  name: string;
+  description: string;
+  progress: number;
+  status: { id: number; name: string };
+}
 
 interface Issue {
   id: number;
@@ -42,8 +60,10 @@ interface Issue {
     email: string;
     dis_name: string;
     status: number;
+    avarta?: string;
     user?: { id: string; display_name: string; avarta: string; email: string; }
   };
+  subIssues?: SubIssue[];
 }
 
 const IssuesCategoryPage = () => {
@@ -54,6 +74,11 @@ const IssuesCategoryPage = () => {
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
+  const [expandedIssues, setExpandedIssues] = useState<Record<number, boolean>>({});
+  const [projectId, setProjectId] = useState<number | null>(null);
+  const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Dropdown data options
   const [statuses, setStatuses] = useState<any[]>([]);
@@ -61,214 +86,604 @@ const IssuesCategoryPage = () => {
   const [trackers, setTrackers] = useState<any[]>([]);
   const [labels, setLabels] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    const fetchCategoryAndIssues = async () => {
-      try {
-        setLoading(true);
-        const [cateRes, issuesRes] = await Promise.all([
-          fetchApi(`/api/category/${id}`),
-          fetchApi(`/api/category/issues/${id}?search=${search}&page=&perpage=`)
+  // Modals
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newIssue, setNewIssue] = useState({
+    name: '',
+    tracker_id: '',
+    status_id: '',
+    priority_id: '',
+    label_id: '',
+    assignee_id: '',
+    start_date: undefined as Date | undefined,
+    due_date: undefined as Date | undefined,
+    description: ''
+  });
+
+  const fetchCategoryAndIssues = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [cateRes, issuesRes] = await Promise.all([
+        fetchApi(`/api/category/${id}`),
+        fetchApi(`/api/category/issues/${id}?search=${search}&page=&perpage=`)
+      ]);
+
+      let projId = null;
+
+      if (cateRes.result) {
+        setCategoryName(cateRes.data.category?.name || cateRes.data.name);
+        setProjectName(cateRes.data.project?.name);
+        projId = cateRes.data.project?.id;
+      }
+
+      if (issuesRes.result) {
+        const baseIssues = issuesRes.data.issues?.datas || issuesRes.data.issues || [];
+        // Fetch sub-issues for each issue
+        const issuesWithSubs = await Promise.all(baseIssues.map(async (issue: Issue) => {
+          const subRes = await fetchApi(`/api/sub/issues/${issue.id}?search=&page=1&perpage=`);
+          return {
+            ...issue,
+            subIssues: subRes.result ? (subRes.data.sub_issues?.datas || subRes.data.sub_issues || []) : []
+          };
+        }));
+        setIssues(issuesWithSubs);
+      }
+
+      if (projId) {
+        setProjectId(projId);
+        const [statusRes, priorityRes, trackerRes, labelRes, memberRes] = await Promise.all([
+          fetchApi(`/api/projects/issue/statuses/${projId}`),
+          fetchApi(`/api/projects/issue/priorities/${projId}`),
+          fetchApi(`/api/projects/issue/trackers/${projId}`),
+          fetchApi(`/api/projects/issue/labels/${projId}`),
+          fetchApi(`/api/projects/members/${projId}?search=&page=&perpage=`)
         ]);
 
-        let projId = null;
-
-        if (cateRes.result) {
-          setCategoryName(cateRes.data.category?.name || cateRes.data.name);
-          setProjectName(cateRes.data.project?.name);
-          projId = cateRes.data.project?.id;
-        }
-
-        if (issuesRes.result) {
-          setIssues(issuesRes.data.issues?.datas || issuesRes.data.issues || []);
-        }
-
-        if (projId) {
-          const [statusRes, priorityRes, trackerRes, labelRes, memberRes] = await Promise.all([
-            fetchApi(`/api/projects/issue/statuses/${projId}`),
-            fetchApi(`/api/projects/issue/priorities/${projId}`),
-            fetchApi(`/api/projects/issue/trackers/${projId}`),
-            fetchApi(`/api/projects/issue/labels/${projId}`),
-            fetchApi(`/api/projects/members/${projId}?search=&page=&perpage=`)
-          ]);
-
-          if (statusRes.result) setStatuses(statusRes.data.statuses);
-          if (priorityRes.result) setPriorities(priorityRes.data.priorities);
-          if (trackerRes.result) setTrackers(trackerRes.data.trackers);
-          if (labelRes.result) setLabels(labelRes.data.labels);
-          if (memberRes.result) setMembers(memberRes.data.datas || memberRes.data);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+        if (statusRes.result) setStatuses(statusRes.data.statuses);
+        if (priorityRes.result) setPriorities(priorityRes.data.priorities);
+        if (trackerRes.result) setTrackers(trackerRes.data.trackers);
+        if (labelRes.result) setLabels(labelRes.data.labels);
+        if (memberRes.result) setMembers(memberRes.data.datas || memberRes.data);
       }
-    };
-
-    if (id) fetchCategoryAndIssues();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }, [id, search]);
 
-  const getAssigneeName = (assignee: any) => {
-    if (!assignee) return 'Assignee';
-    if (assignee.user) return assignee.user.display_name || assignee.user.email || 'Assignee';
-    if (assignee.email) return assignee.status === 1 ? (!assignee.dis_name ? assignee.email : assignee.dis_name) : assignee.email;
-    return 'Assignee';
+  useEffect(() => {
+    if (id) fetchCategoryAndIssues();
+  }, [id, fetchCategoryAndIssues]);
+
+  const refreshData = () => fetchCategoryAndIssues();
+
+  const handleUpdateIssueField = async (issueId: number, field: string, valueId: string | number | Date | undefined) => {
+    try {
+      const fieldToEndpoint: Record<string, string> = {
+        'status': 'status',
+        'priority': 'priority',
+        'tracker': 'tracker',
+        'label': 'label',
+        'assignee': 'assignee',
+        'progress': 'progress',
+        'start_date': 'startdate',
+        'due_date': 'duedate'
+      };
+
+      const endpoint = fieldToEndpoint[field];
+      if (!endpoint) return;
+
+      const isDate = field === 'start_date' || field === 'due_date';
+      const finalValue = isDate && valueId instanceof Date ? valueId.toISOString() : valueId;
+      const payload = isDate ? { date: finalValue } : { item: valueId };
+
+      const res = await fetchApi(`/api/issue/edit/${endpoint}/${issueId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+
+      if (res.result) {
+        // Create activity logs like the old code
+        await fetchApi(`/api/issue/activity/${issueId}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            title: `Update ${field.charAt(0).toUpperCase() + field.slice(1)}`,
+            activity: `Updated ${field} of issue`
+          })
+        });
+
+        Swal.fire({ icon: 'success', title: 'Updated!', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
+        refreshData();
+      } else {
+        Swal.fire({ icon: 'error', title: 'Failed', text: res.msg || 'Update failed', background: '#121212', color: '#fff' });
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleUpdateIssueField = async (issueId: number, field: string, valueId: string | number) => {
-    Swal.fire({ icon: 'info', title: 'Update triggered', text: `Field ${field} selected ${valueId}`, toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
+  const handleDeleteIssue = async (issueId: number) => {
+    const result = await Swal.fire({
+      title: 'Delete Issue?',
+      text: "Permanent action. Record cannot be recoverred.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#EF4444',
+      cancelButtonColor: '#333333',
+      confirmButtonText: 'Yes, delete it!',
+      background: '#121212',
+      color: '#fff'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetchApi(`/api/issue/${issueId}`, { method: 'DELETE' });
+        if (res.result) {
+          Swal.fire({ icon: 'success', title: 'Deleted!', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
+          refreshData();
+        } else {
+          Swal.fire({ icon: 'error', title: 'Failed', text: res.msg || 'Delete failed', background: '#121212', color: '#fff' });
+        }
+      } catch (e) { }
+    }
+  };
+
+  const handleCreateIssue = async () => {
+    if (!newIssue.name || !newIssue.tracker_id || !newIssue.status_id || !newIssue.priority_id) {
+      return Swal.fire({ icon: 'error', title: 'Check Mandatory Fields', text: 'Name, Tracker, Status and Priority are required.', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
+    }
+    try {
+      setSubmitting(true);
+      const payload = {
+        ...newIssue,
+        start_date: newIssue.start_date?.toISOString(),
+        due_date: newIssue.due_date?.toISOString(),
+        assignee: newIssue.assignee_id
+      };
+      const res = await fetchApi(`/api/category/issue/${id}`, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      if (res.result) {
+        // Create activity logs like the old code
+        await fetchApi(`/api/issue/activity/${res.data.id}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            title: 'Issue Action',
+            activity: `created an new issue - ${newIssue.name}`
+          })
+        });
+
+        setIsCreateModalOpen(false);
+        setNewIssue({ name: '', tracker_id: '', status_id: '', priority_id: '', label_id: '', assignee_id: '', start_date: undefined, due_date: undefined, description: '' });
+        Swal.fire({ icon: 'success', title: 'Issue Created!', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
+        refreshData();
+      } else {
+        Swal.fire({ title: 'Error', text: res.msg || 'Failed to create issue', icon: 'error', background: '#121212', color: '#fff' });
+      }
+    } catch (e) { } finally { setSubmitting(false); }
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
 
-      {/* Header & Breadcrumb */}
-      <Card className="border-white/5 bg-card overflow-hidden relative">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        <CardHeader className="p-6 relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-xl ring-1 ring-primary/20 shadow-lg shadow-primary/10">
-              <ClipboardList className="h-6 w-6" />
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-background border px-6 py-4 rounded-xl shadow-sm">
+        <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <div className="p-3 bg-primary/10 text-primary rounded-xl">
+            <ClipboardList className="h-6 w-6" />
+          </div>
+          <div className="space-y-0.5 min-w-0">
+            <div className="flex items-center gap-2 truncate">
+              <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Projects</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground/60 truncate max-w-[150px]">{projectName || 'Project'}</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground truncate">{categoryName || 'Category'}</span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground normal-case">Issue Directory</h1>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="relative flex-1 md:min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50" />
+            <Input
+              placeholder="Search issues..."
+              className="pl-9 h-9 text-xs"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <Tabs value={viewMode} onValueChange={(val: any) => setViewMode(val)} className="w-[150px]">
+            <TabsList className="grid w-full grid-cols-2 h-9 p-1">
+              <TabsTrigger value="list" className="text-[10px] uppercase font-bold">List</TabsTrigger>
+              <TabsTrigger value="board" className="text-[10px] uppercase font-bold">Board</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button onClick={() => setIsCreateModalOpen(true)} size="sm" className="gap-2 h-9 shadow-sm">
+            <Plus className="h-4 w-4" /> New Issue
+          </Button>
+        </div>
+      </div>
+
+      {/* Issues Content Container */}
+      <div className="min-h-[500px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-4 opacity-50">
+            <Loader2 className="h-10 w-10 text-primary animate-spin" />
+            <p className="text-xs font-bold uppercase tracking-widest">Loading directory...</p>
+          </div>
+        ) : issues.length === 0 ? (
+          <Card className="border-dashed border-2 bg-muted/10 py-32 rounded-2xl flex flex-col items-center justify-center text-center space-y-6">
+            <div className="p-4 rounded-full bg-background border shadow-sm">
+              <CheckCircle2 className="h-10 w-10 text-muted-foreground opacity-30" />
             </div>
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Workspace</span>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground">{projectName || 'Project'}</span>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-primary">{categoryName || 'Category'}</span>
-              </div>
-              <CardTitle className="text-2xl font-bold">Issue Directory</CardTitle>
+              <h3 className="text-xl font-bold">No issues found</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">This category is currently empty. <br />Create a new issue to begin tracking your objectives.</p>
             </div>
-          </div>
+            <Button onClick={() => setIsCreateModalOpen(true)} size="sm" variant="outline" className="gap-2">
+              <Plus className="h-4 w-4" /> Initialize Mission
+            </Button>
+          </Card>
+        ) : viewMode === 'board' ? (
+          <IssueKanbanBoard
+            issues={issues}
+            statuses={statuses}
+            priorities={priorities}
+            onUpdateIssue={handleUpdateIssueField}
+            onDelete={handleDeleteIssue}
+            onViewDetail={(issueId) => router.push(`/issue/${issueId}`)}
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {issues.map(issue => (
+              <React.Fragment key={issue.id}>
+                <div
+                  onClick={() => {
+                    setSelectedIssueId(issue.id);
+                    setIsDrawerOpen(true);
+                  }}
+                  className="group relative bg-card border shadow-sm hover:shadow-md hover:border-primary/30 p-5 rounded-xl transition-all duration-300 flex flex-col lg:flex-row gap-6 lg:items-center cursor-pointer"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-4 mb-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "h-8 w-8 rounded-lg transition-all",
+                          expandedIssues[issue.id] ? "bg-primary/10 text-primary" : "text-muted-foreground"
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedIssues(prev => ({ ...prev, [issue.id]: !prev[issue.id] }));
+                        }}
+                      >
+                        {expandedIssues[issue.id] ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">#{issue.id}</span>
+                        <h3 className="font-bold text-lg tracking-tight truncate group-hover:text-primary transition-colors">
+                          {issue.name}
+                        </h3>
+                      </div>
+                    </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="relative flex-1 md:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <div className="flex flex-col gap-2 pl-12">
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary transition-all duration-500"
+                            style={{ width: `${issue.progress || 0}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-primary min-w-[70px] text-right">
+                          {issue.progress || 0}% Done
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4 pl-12 lg:pl-0 w-full lg:w-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {/* State Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest border shadow-none bg-muted/20">
+                            <CircleDot className="h-3.5 w-3.5 text-sky-500" />
+                            {issue.status?.name || 'Status'}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuLabel className="text-[9px] uppercase font-bold text-muted-foreground px-3">Update Status</DropdownMenuLabel>
+                          {statuses.map(s => (
+                            <DropdownMenuItem key={s.id} onClick={() => handleUpdateIssueField(issue.id, 'status', s.id)} className="text-[10px] font-bold uppercase py-2">
+                              {s.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      {/* Labels Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest border shadow-none bg-muted/20">
+                            <Tag className="h-3.5 w-3.5 text-blue-500" />
+                            {issue.label?.name || 'Label'}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuLabel className="text-[9px] uppercase font-bold text-muted-foreground px-3">Update Label</DropdownMenuLabel>
+                          {labels.map(l => (
+                            <DropdownMenuItem key={l.id} onClick={() => handleUpdateIssueField(issue.id, 'label', l.id)} className="text-[10px] font-bold uppercase py-2">
+                              {l.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      {/* Priority Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest border shadow-none bg-muted/20">
+                            <Flag className={cn("h-3.5 w-3.5", issue.priority?.name?.toLowerCase().includes('high') ? "text-red-500" : "text-orange-500")} />
+                            {issue.priority?.name || 'Priority'}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuLabel className="text-[9px] uppercase font-bold text-muted-foreground px-3">Update Priority</DropdownMenuLabel>
+                          {priorities.map(p => (
+                            <DropdownMenuItem key={p.id} onClick={() => handleUpdateIssueField(issue.id, 'priority', p.id)} className="text-[10px] font-bold uppercase py-2">
+                              {p.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div className="flex items-center gap-4 lg:border-l lg:pl-6">
+                      <Avatar className="h-8 w-8 border shadow-sm shrink-0">
+                        <AvatarImage src={`/upload/${issue.assignee?.user?.avarta || issue.assignee?.avarta}`} />
+                        <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
+                          {(issue.assignee?.user?.display_name || issue.assignee?.dis_name || 'U')[0]}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex items-center gap-3">
+                        <DatePicker
+                          selected={issue.start_date ? new Date(issue.start_date) : undefined}
+                          onSelect={(value) => handleUpdateIssueField(issue.id, 'start_date', value)}
+                          placeholder="Start"
+                          dateFormat="PP"
+                          className="w-[110px] h-8 px-2 text-[10px] font-bold uppercase"
+                        />
+                        <DatePicker
+                          selected={issue.due_date ? new Date(issue.due_date) : undefined}
+                          onSelect={(value) => handleUpdateIssueField(issue.id, 'due_date', value)}
+                          placeholder="Due"
+                          dateFormat="PP"
+                          className="w-[110px] h-8 px-2 text-[10px] font-bold uppercase"
+                        />
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteIssue(issue.id)}
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors ml-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-issues Expansion */}
+                {expandedIssues[issue.id] && issue.subIssues && issue.subIssues.length > 0 && (
+                  <div className="ml-12 mt-2 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                    {issue.subIssues.map(sub => (
+                      <div key={sub.id} className="bg-muted/30 border-l-2 border-primary/20 hover:border-primary p-3 rounded-r-lg flex items-center justify-between transition-all ml-4 py-2">
+                        <div className="flex items-center gap-4">
+                          <span className="text-[9px] font-black text-muted-foreground/40 shrink-0">#{sub.id}</span>
+                          <div>
+                            <p className="text-xs font-bold text-foreground/90 uppercase tracking-tight">{sub.name}</p>
+                            <div className="flex items-center gap-3 mt-1">
+                              <Badge variant="outline" className="text-[8px] font-bold h-4 px-1.5 uppercase tracking-widest bg-background">
+                                {sub.status?.name}
+                              </Badge>
+                              <div className="flex items-center gap-2">
+                                <div className="h-1 w-12 bg-muted rounded-full">
+                                  <div className="h-full bg-primary/60" style={{ width: `${sub.progress || 0}%` }} />
+                                </div>
+                                <span className="text-[8px] font-bold text-muted-foreground/60">{sub.progress}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          onClick={() => router.push(`/issue/${issue.id}?sub=${sub.id}`)}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                <Plus className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Issue Directory</p>
+                <p>Initialize New Issue</p>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 py-4 overflow-y-auto max-h-[60vh] px-1">
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</Label>
               <Input
-                placeholder="Filter category tasks..."
-                className="pl-10 h-10 border-white/10 bg-background text-sm font-medium"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Brief objective title..."
+                value={newIssue.name}
+                onChange={(e) => setNewIssue({ ...newIssue, name: e.target.value })}
+                className="h-10 font-medium"
               />
             </div>
-            <Button className="h-10 gap-2 font-bold bg-primary shadow-lg shadow-primary/20">
-              <Plus className="h-4 w-4" /> New Issue
-            </Button>
+
+            <div className="grid grid-cols-2 gap-4 md:col-span-2">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tracker</Label>
+                <Select value={newIssue.tracker_id} onValueChange={(v) => setNewIssue({ ...newIssue, tracker_id: v })}>
+                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {trackers.map(t => <SelectItem key={t.id} value={String(t.id)} className="text-[10px] font-bold uppercase">{t.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Status</Label>
+                <Select value={newIssue.status_id} onValueChange={(v) => setNewIssue({ ...newIssue, status_id: v })}>
+                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                    <SelectValue placeholder="Select State" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses.map(s => <SelectItem key={s.id} value={String(s.id)} className="text-[10px] font-bold uppercase">{s.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Priority</Label>
+                <Select value={newIssue.priority_id} onValueChange={(v) => setNewIssue({ ...newIssue, priority_id: v })}>
+                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                    <SelectValue placeholder="Select Impact" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {priorities.map(p => <SelectItem key={p.id} value={String(p.id)} className="text-[10px] font-bold uppercase">{p.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Label</Label>
+                <Select value={newIssue.label_id} onValueChange={(v) => setNewIssue({ ...newIssue, label_id: v })}>
+                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                    <SelectValue placeholder="Select Tag" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {labels.map(l => <SelectItem key={l.id} value={String(l.id)} className="text-[10px] font-bold uppercase">{l.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 md:col-span-2">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Start Date</Label>
+                <DatePicker
+                  selected={newIssue.start_date}
+                  onSelect={(v) => setNewIssue({ ...newIssue, start_date: v })}
+                  placeholder="Initiation"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Due Date</Label>
+                <DatePicker
+                  selected={newIssue.due_date}
+                  onSelect={(v) => setNewIssue({ ...newIssue, due_date: v })}
+                  placeholder="Target"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Assigned Team Member</Label>
+              <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y">
+                {members.map((m) => {
+                  const isSelected = String(m.id) === newIssue.assignee_id;
+                  const name = m.user?.display_name || m.dis_name || m.email || 'User';
+                  return (
+                    <div
+                      key={m.id}
+                      className={cn(
+                        "flex items-center gap-3 p-2 cursor-pointer transition-colors",
+                        isSelected ? "bg-primary/5" : "hover:bg-muted/50"
+                      )}
+                      onClick={() => setNewIssue({ ...newIssue, assignee_id: String(m.id) })}
+                    >
+                      <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center shrink-0", isSelected ? "border-primary bg-primary" : "border-muted-foreground/30")}>
+                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      </div>
+                      <Avatar className="h-7 w-7 border">
+                        <AvatarImage src={`/upload/${m.user?.avarta || m.avarta}`} />
+                        <AvatarFallback className="text-[8px] font-bold">{name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-bold truncate uppercase">{name}</p>
+                        <p className="text-[9px] text-muted-foreground truncate">{m.email}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</Label>
+              <Textarea
+                placeholder="Tactical objectives and requirements..."
+                rows={3}
+                className="font-medium resize-none shadow-none"
+                value={newIssue.description}
+                onChange={(e) => setNewIssue({ ...newIssue, description: e.target.value })}
+              />
+            </div>
           </div>
-        </CardHeader>
-      </Card>
 
-      {/* Issues List Container */}
-      <Card className="border-white/5 bg-card min-h-[500px] relative overflow-hidden">
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary/[0.02] to-transparent pointer-events-none" />
-        <CardContent className="p-6 relative z-10 space-y-3">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-50">
-              <Loader2 className="h-10 w-10 text-primary animate-spin" />
-              <p className="text-xs font-black uppercase tracking-[0.2em]">Indexing Data...</p>
-            </div>
-          ) : issues.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="h-20 w-20 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-6">
-                <CheckCircle2 className="h-8 w-8 text-muted-foreground opacity-20" />
-              </div>
-              <h3 className="text-xl font-bold mb-1 uppercase tracking-tight">Zero Backlog</h3>
-              <p className="text-muted-foreground max-w-xs font-medium">This category hasn't been populated with issues yet. Ready to start?</p>
-            </div>
-          ) : (
-            issues.map(issue => (
-              <div key={issue.id} className="group relative bg-[#0a0a0a]/50 border border-white/5 hover:border-primary/30 p-4 rounded-xl transition-all flex flex-col xl:flex-row gap-4 xl:gap-8 xl:items-center">
+          <DialogFooter className="mt-2 pt-4 border-t">
+            <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateIssue} disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Create Issue'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2.5">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10">
-                      <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                    </Button>
-                    <span className="font-bold text-foreground text-base truncate selection:bg-primary/30" title={issue.name}>{issue.name}</span>
-                  </div>
-                  <div className="flex items-center gap-4 pl-11">
-                    <Progress value={issue.progress || 0} className="h-1.5 flex-1 max-w-[240px]" />
-                    <span className="text-[11px] font-black text-muted-foreground/80 uppercase">{issue.progress || 0}% Complete</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 pl-11 xl:pl-0">
-
-                  {/* Status Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="h-8 px-3 gap-2 text-[11px] font-bold bg-white/5 border-white/5 hover:border-primary/20 hover:bg-white/10">
-                        <CircleDot className="h-3 w-3 text-sky-400" />
-                        {issue.status?.name || 'Status'}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-48 bg-card border-white/10 text-foreground">
-                      <DropdownMenuLabel className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60">Change Status</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-white/10" />
-                      {statuses.map(s => (
-                        <DropdownMenuItem key={s.id} onClick={() => handleUpdateIssueField(issue.id, 'status', s.id)} className="text-xs font-bold focus:bg-primary/10 focus:text-primary cursor-pointer">
-                          {s.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  {/* Priority Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="h-8 px-3 gap-2 text-[11px] font-bold bg-white/5 border-white/5 hover:border-orange-500/20 hover:bg-white/10">
-                        <Flag className="h-3 w-3 text-orange-500" />
-                        {issue.priority?.name || 'Priority'}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-48 bg-card border-white/10">
-                      <DropdownMenuLabel className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/60">Set Priority</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-white/10" />
-                      {priorities.map(p => (
-                        <DropdownMenuItem key={p.id} onClick={() => handleUpdateIssueField(issue.id, 'priority', p.id)} className="text-xs font-bold focus:bg-orange-500/10 focus:text-orange-500 cursor-pointer">
-                          {p.name}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-
-                  <Badge variant="secondary" className="h-8 px-3 gap-2 bg-white/5 text-muted-foreground border-transparent">
-                    <Target className="h-3 w-3 opacity-50" /> {issue.tracker?.name || 'General'}
-                  </Badge>
-
-                  <Badge variant="outline" className="h-8 px-3 gap-2 bg-transparent border-white/5 text-muted-foreground/80">
-                    <Tag className="h-3 w-3 opacity-40" /> {issue.label?.name || 'None'}
-                  </Badge>
-
-                  <div className="flex items-center gap-3 border-l border-white/10 pl-4 ml-1">
-                    <Avatar className="h-7 w-7 ring-2 ring-background ring-offset-1 ring-offset-white/5">
-                      <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
-                        {(issue.assignee?.dis_name || issue.assignee?.email || 'A')[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-[11px] font-bold text-muted-foreground/40 border-l border-white/10 pl-4">
-                    <div className="flex items-center gap-1.5" title="Timeline Start">
-                      <PlayCircle className="h-3.5 w-3.5" />
-                      <span className="group-hover:text-muted-foreground transition-colors">{issue.start_date ? new Date(issue.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '--'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5" title="Execution Deadline">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span className="group-hover:text-muted-foreground transition-colors">{issue.due_date ? new Date(issue.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '--'}</span>
-                    </div>
-                  </div>
-
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white hover:bg-white/10 ml-2">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <IssueDetailDrawer
+        issueId={selectedIssueId}
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onUpdate={refreshData}
+        statuses={statuses}
+        priorities={priorities}
+        trackers={trackers}
+        labels={labels}
+      />
     </div>
   );
 };

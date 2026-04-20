@@ -109,6 +109,13 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    @apply rounded-xl text-sm font-medium tracking-wide transition-all;
+  }
 }
 
 /* ── Custom Scrollbar ─────────────────────────────── */
@@ -131,5 +138,5 @@
 
 /* ── ApexCharts ───────────────────────────────────── */
 .apexcharts-tooltip {
-  @apply !rounded-xl !border-none !shadow-lg;
+  @apply rounded-xl! border-none! shadow-lg!;
 }

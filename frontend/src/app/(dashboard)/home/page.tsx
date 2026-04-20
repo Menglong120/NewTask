@@ -8,12 +8,38 @@ import {
   FolderOpen, LayoutDashboard, PlayCircle, CheckCircle2, 
   Activity, Clock as ClockIcon, TrendingUp, Layers, ChevronRight
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
-interface Project { id: number; name: string; status: { title: string; updated_on: string; }; }
-interface ActivityItem { id: number; title: string; activity: string; acted_on: string; project: { name: string; }; }
-interface ProjectProgress { id: number; name: string; progress: number; }
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface Project {
+  id: number;
+  name: string;
+  status: {
+    title: string;
+    updated_on: string;
+  };
+}
+
+interface ActivityItem {
+  activity: string;
+  acted_on: string;
+  title: string;
+  project?: {
+    name: string;
+  };
+}
+
+interface ProjectProgress {
+  id: number;
+  name: string;
+  progress: number | string;
+}
 
 const HomePage = () => {
   const router = useRouter();
@@ -77,10 +103,10 @@ const HomePage = () => {
 
   const greeting = useMemo(() => {
     const hours = time.getHours();
-    if (hours >= 5 && hours < 12) return 'Good Morning 🌞';
-    if (hours >= 12 && hours < 18) return 'Good Afternoon ☀️';
-    if (hours >= 18 && hours < 22) return 'Good Evening 🌙';
-    return 'Have a great night 👩‍💻';
+    if (hours >= 5 && hours < 12) return 'Good Morning';
+    if (hours >= 12 && hours < 18) return 'Good Afternoon';
+    if (hours >= 18 && hours < 22) return 'Good Evening';
+    return 'Good Night';
   }, [time]);
 
   const chartData = useMemo(() => {
@@ -106,19 +132,19 @@ const HomePage = () => {
       ],
       options: {
         chart: { type: 'area' as const, height: 320, toolbar: { show: false }, background: 'transparent', fontFamily: 'inherit' },
-        stroke: { width: [3, 3], curve: 'smooth' as const },
+        stroke: { width: [2, 2], curve: 'smooth' as const },
         xaxis: { 
           categories: labels, type: 'datetime' as const,
           axisBorder: { show: false }, axisTicks: { show: false },
-          labels: { style: { colors: '#666', fontSize: '12px', fontWeight: 600 } }
+          labels: { style: { colors: 'hsl(var(--muted-foreground))', fontSize: '11px' } }
         },
-        yaxis: { labels: { style: { colors: '#666', fontSize: '12px', fontWeight: 600 } } },
-        colors: ['#696cff', '#10B981'],
-        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05, stops: [50, 100] } },
-        grid: { borderColor: '#ffffff10', strokeDashArray: 4, xaxis: { lines: { show: true } }, yaxis: { lines: { show: true } } },
+        yaxis: { labels: { style: { colors: 'hsl(var(--muted-foreground))', fontSize: '11px' } } },
+        colors: ['hsl(var(--primary))', 'hsl(var(--success, 142 71% 45%))'],
+        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0, stops: [50, 100] } },
+        grid: { borderColor: 'hsl(var(--border))', strokeDashArray: 4, xaxis: { lines: { show: true } }, yaxis: { lines: { show: true } } },
         dataLabels: { enabled: false },
-        legend: { position: 'top' as const, horizontalAlign: 'right' as const, fontWeight: 700, labels: { colors: '#ffffff' } },
-        tooltip: { theme: 'dark', style: { fontSize: '13px', fontFamily: 'inherit' } }
+        legend: { position: 'top' as const, horizontalAlign: 'right' as const, labels: { colors: 'hsl(var(--foreground))' } },
+        tooltip: { theme: 'dark', style: { fontSize: '12px', fontFamily: 'inherit' } }
       }
     };
   }, [projects]);
@@ -127,225 +153,212 @@ const HomePage = () => {
     localStorage.setItem('projectID', projectId.toString());
     sessionStorage.setItem('project_active', '1');
     sessionStorage.setItem('project_active_id', projectId.toString());
-    router.push(`/projects/${projectId}/settings`); // Replaced /analytic with direct route if applicable, but using existing behaviour:
+    router.push(`/projects/${projectId}/settings`);
   };
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
       
       {/* Header & Clock */}
-      <div className="bg-[#121212]/80 backdrop-blur-xl p-8 rounded-[2rem] shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 relative overflow-hidden">
-        
-        {/* Decorative Background blob */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-[#696cff]/20 rounded-full blur-3xl pointer-events-none"></div>
-
+      <Card className="p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white mb-2">
-            {greeting}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-500">{userName || 'User'}</span>
-            <span className="text-red-500 text-xs ml-4">DIAGNOSTIC: VERSION 4</span>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {greeting}, <span className="text-primary">{userName || 'User'}</span>
           </h1>
-          <p className="text-white/50 font-medium">Here's what is happening with your projects today.</p>
+          <p className="text-sm text-muted-foreground mt-1">Here's an overview of your projects and activity.</p>
         </div>
 
-        <div className="flex flex-col items-end gap-1">
-           <p className="text-indigo-400 font-bold uppercase tracking-wider text-sm flex items-center gap-2">
-              <ClockIcon className="h-4 w-4" />
+        <div className="flex flex-col items-end gap-3">
+           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <ClockIcon className="h-3.5 w-3.5" />
               {time.toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
            </p>
-           {/* Custom Clock UI */}
-           <div className="flex items-center gap-2 mt-2">
-              <div className="flex gap-1">
-                 <div className="bg-[#0a0a0a] text-white font-mono font-bold text-2xl h-12 w-9 flex items-center justify-center rounded-lg border border-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]">{clock.h1}</div>
-                 <div className="bg-[#0a0a0a] text-white font-mono font-bold text-2xl h-12 w-9 flex items-center justify-center rounded-lg border border-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]">{clock.h2}</div>
-              </div>
-              <div className="text-2xl font-bold text-white/30 mb-1">:</div>
-              <div className="flex gap-1">
-                 <div className="bg-[#121212] text-white font-mono font-bold text-2xl h-12 w-9 flex items-center justify-center rounded-lg border border-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]">{clock.m1}</div>
-                 <div className="bg-[#121212] text-white font-mono font-bold text-2xl h-12 w-9 flex items-center justify-center rounded-lg border border-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]">{clock.m2}</div>
-              </div>
-              <div className="text-2xl font-bold text-white/30 mb-1">:</div>
-              <div className="flex gap-1 opacity-70">
-                 <div className="bg-[#1a1a1a] text-white font-mono font-bold text-2xl h-12 w-9 flex items-center justify-center rounded-lg border border-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">{clock.s1}</div>
-                 <div className="bg-[#1a1a1a] text-white font-mono font-bold text-2xl h-12 w-9 flex items-center justify-center rounded-lg border border-white/5 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">{clock.s2}</div>
-              </div>
+           <div className="flex items-center gap-1.5">
+              {[clock.h1, clock.h2, ':', clock.m1, clock.m2, ':', clock.s1, clock.s2].map((char, index) => (
+                <div key={index} className={cn(
+                  "flex items-center justify-center",
+                  char === ':' ? "w-2 text-muted-foreground/30 font-bold" : "bg-muted h-10 w-8 rounded text-lg font-mono font-bold"
+                )}>
+                  {char}
+                </div>
+              ))}
            </div>
         </div>
-      </div>
+      </Card>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         <div className="bg-gradient-to-br from-indigo-600/20 to-indigo-900/20 rounded-3xl p-6 text-white border border-indigo-500/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden group hover:-translate-y-1 transition-transform">
-            <div className="absolute -right-6 -bottom-6 opacity-20 group-hover:scale-110 transition-transform"><LayoutDashboard className="h-32 w-32 text-indigo-400" /></div>
-            <p className="text-indigo-300 font-bold tracking-wider text-sm mb-1">ALL PROJECTS</p>
-            <h2 className="text-5xl font-black">{stats.total}</h2>
-         </div>
-         <div className="bg-gradient-to-br from-sky-600/20 to-sky-900/20 rounded-3xl p-6 text-white border border-sky-500/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden group hover:-translate-y-1 transition-transform">
-            <div className="absolute -right-6 -bottom-6 opacity-20 group-hover:scale-110 transition-transform"><FolderOpen className="h-32 w-32 text-sky-400" /></div>
-            <p className="text-sky-300 font-bold tracking-wider text-sm mb-1">TO START</p>
-            <h2 className="text-5xl font-black">{stats.toStart}</h2>
-         </div>
-         <div className="bg-gradient-to-br from-amber-600/20 to-amber-900/20 rounded-3xl p-6 text-white border border-amber-500/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden group hover:-translate-y-1 transition-transform">
-            <div className="absolute -right-6 -bottom-6 opacity-20 group-hover:scale-110 transition-transform"><PlayCircle className="h-32 w-32 text-amber-400" /></div>
-            <p className="text-amber-300 font-bold tracking-wider text-sm mb-1">IN PROGRESS</p>
-            <h2 className="text-5xl font-black">{stats.inProgress}</h2>
-         </div>
-         <div className="bg-gradient-to-br from-emerald-600/20 to-emerald-900/20 rounded-3xl p-6 text-white border border-emerald-500/20 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden group hover:-translate-y-1 transition-transform">
-            <div className="absolute -right-6 -bottom-6 opacity-20 group-hover:scale-110 transition-transform"><CheckCircle2 className="h-32 w-32 text-emerald-400" /></div>
-            <p className="text-emerald-300 font-bold tracking-wider text-sm mb-1">COMPLETED</p>
-            <h2 className="text-5xl font-black">{stats.completed}</h2>
-         </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+         {[
+           { label: 'ALL PROJECTS', value: stats.total, icon: LayoutDashboard, color: 'text-primary' },
+           { label: 'TO START', value: stats.toStart, icon: FolderOpen, color: 'text-sky-500' },
+           { label: 'IN PROGRESS', value: stats.inProgress, icon: PlayCircle, color: 'text-amber-500' },
+           { label: 'COMPLETED', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-500' }
+         ].map((stat, i) => (
+           <Card key={i} className="p-6 relative overflow-hidden group">
+             <div className="flex justify-between items-start relative z-10">
+               <div>
+                 <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{stat.label}</p>
+                 <h2 className="text-3xl font-bold mt-1">{stat.value}</h2>
+               </div>
+               <div className={cn("p-2 rounded-lg bg-muted", stat.color)}>
+                 <stat.icon className="h-5 w-5" />
+               </div>
+             </div>
+           </Card>
+         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
          
          {/* Main Chart Area */}
-         <div className="lg:col-span-8 bg-[#121212]/80 backdrop-blur-xl border border-white/5 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-6 lg:p-8">
+         <Card className="lg:col-span-8 p-6">
             <div className="flex items-center gap-3 mb-6">
-               <div className="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-xl"><TrendingUp className="h-5 w-5" /></div>
+               <div className="p-2 bg-primary/10 text-primary rounded-lg"><TrendingUp className="h-4 w-4" /></div>
                <div>
-                  <h3 className="text-lg font-bold text-white">Project Trends</h3>
-                  <p className="text-sm text-white/40 font-medium tracking-wide">Weekly progression and completion rates</p>
+                  <CardTitle className="text-base">Project Trends</CardTitle>
+                  <CardDescription>Weekly progression vs completion rates</CardDescription>
                </div>
             </div>
-            <div className="-ml-3 mt-4">
+            <div className="h-[320px] w-full">
               {typeof window !== 'undefined' && chartData.series[0].data.length > 0 ? (
-                 <Chart options={chartData.options} series={chartData.series} type="area" height={320} />
+                 <Chart options={chartData.options} series={chartData.series} type="area" height="100%" />
               ) : (
-                 <div className="h-[320px] flex items-center justify-center text-white/30 font-medium bg-white/5 rounded-2xl border border-dashed border-white/10">Insufficient data to display chart</div>
+                 <div className="h-full flex items-center justify-center text-sm text-muted-foreground bg-muted/40 rounded-lg border border-dashed">
+                   Insufficient data for chart
+                 </div>
               )}
             </div>
-         </div>
+         </Card>
 
-         {/* Right Sidebar: Active Folders */}
-         <div className="lg:col-span-4 space-y-6 flex flex-col">
-            
-            {/* In Progress Quick List */}
-            <div className="bg-[#121212]/80 backdrop-blur-xl border border-white/5 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-6 flex-1 flex flex-col">
-               <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-base font-bold text-white flex items-center gap-2"><PlayCircle className="h-4 w-4 text-amber-500" /> Active Work</h3>
-               </div>
-               <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 max-h-[180px]">
-                  {projects.filter(p => p.status.title.toLowerCase() === 'in progress').length === 0 ? (
-                     <div className="text-center text-white/40 font-medium py-8 bg-white/5 rounded-xl">No active projects</div>
-                  ) : (
-                     projects.filter(p => p.status.title.toLowerCase() === 'in progress').map(project => (
-                        <div key={project.id} onClick={() => linkProjectPage(project.id)} className="group flex items-center justify-between p-3 rounded-xl hover:bg-[#696cff]/10 border border-transparent hover:border-[#696cff]/20 cursor-pointer transition-all">
-                           <div className="flex items-center gap-3 truncate pr-4">
-                              <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 group-hover:bg-[#696cff]/20 group-hover:text-indigo-400 transition-colors"><FolderOpen className="h-4 w-4" /></div>
-                              <span className="font-bold text-white/70 text-sm truncate group-hover:text-white transition-colors">{project.name}</span>
-                           </div>
-                           <ChevronRight className="h-4 w-4 text-white/10 group-hover:text-indigo-400 transition-colors shrink-0" />
-                        </div>
-                     ))
-                  )}
-               </div>
-            </div>
+         {/* Right Sidebar */}
+         <div className="lg:col-span-4 space-y-6 flex flex-col h-fit">
+            <Card className="flex flex-col overflow-hidden border-border/50 shadow-sm">
+               <CardHeader className="p-4 pb-3 border-b flex flex-row items-center gap-2">
+                  <PlayCircle className="h-4 w-4 text-amber-500" />
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">Active Work</CardTitle>
+               </CardHeader>
+               <CardContent className="p-2">
+                  <ScrollArea className="max-h-[220px] -mr-2 pr-2">
+                     <div className="space-y-0.5">
+                       {projects.filter(p => p.status.title.toLowerCase() === 'in progress').length === 0 ? (
+                          <p className="text-[11px] text-muted-foreground py-6 text-center italic font-medium">No active missions</p>
+                       ) : (
+                          projects.filter(p => p.status.title.toLowerCase() === 'in progress').map(project => (
+                             <div key={project.id} onClick={() => linkProjectPage(project.id)} className="group flex items-center justify-between py-1.5 px-3 rounded-lg hover:bg-muted/60 cursor-pointer transition-all">
+                                <div className="flex items-center gap-3 truncate">
+                                   <div className="p-1.5 bg-muted/40 rounded-md group-hover:bg-background transition-colors">
+                                      <FolderOpen className="h-3.5 w-3.5 text-muted-foreground group-hover:text-amber-500" />
+                                   </div>
+                                   <span className="text-[13px] font-bold tracking-tight truncate">{project.name}</span>
+                                </div>
+                                <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" />
+                             </div>
+                          ))
+                       )}
+                     </div>
+                  </ScrollArea>
+               </CardContent>
+            </Card>
 
-            {/* General Folders Quick List */}
-            <div className="bg-[#121212]/80 backdrop-blur-xl border border-white/5 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-6 flex-1 flex flex-col">
-               <div className="flex justify-between items-center mb-5">
-                  <h3 className="text-base font-bold text-white flex items-center gap-2"><Layers className="h-4 w-4 text-indigo-400" /> All Folders</h3>
-               </div>
-               <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 max-h-[180px]">
-                  {projects.length === 0 ? (
-                     <div className="text-center text-white/40 font-medium py-8 bg-white/5 rounded-xl">No projects found</div>
-                  ) : (
-                     projects.map(project => (
-                        <div key={project.id} onClick={() => linkProjectPage(project.id)} className="group flex items-center justify-between p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 cursor-pointer transition-all">
-                           <div className="flex items-center gap-3 truncate pr-4">
-                              <div className="h-8 w-8 rounded-lg bg-[#ffffff]/5 text-white/40 flex items-center justify-center shrink-0 group-hover:bg-[#ffffff]/10  transition-all"><FolderOpen className="h-4 w-4" /></div>
-                              <span className="font-bold text-white/60 text-sm truncate group-hover:text-white transition-colors">{project.name}</span>
-                           </div>
-                           <ChevronRight className="h-4 w-4 text-white/10 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                        </div>
-                     ))
-                  )}
-               </div>
-            </div>
-
+            <Card className="flex flex-col overflow-hidden border-border/50 shadow-sm">
+               <CardHeader className="p-4 pb-3 border-b flex flex-row items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <CardTitle className="text-sm font-bold uppercase tracking-wider">All Folders</CardTitle>
+               </CardHeader>
+               <CardContent className="p-2">
+                  <ScrollArea className="max-h-[280px] -mr-2 pr-2">
+                     <div className="space-y-0.5">
+                       {projects.length === 0 ? (
+                          <p className="text-[11px] text-muted-foreground py-6 text-center italic font-medium">No project repository found</p>
+                       ) : (
+                          projects.map(project => (
+                             <div key={project.id} onClick={() => linkProjectPage(project.id)} className="group flex items-center justify-between py-1.5 px-3 rounded-lg hover:bg-muted/60 cursor-pointer transition-all">
+                                <div className="flex items-center gap-3 truncate">
+                                   <div className="p-1.5 bg-muted/40 rounded-md group-hover:bg-background transition-colors">
+                                      <FolderOpen className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+                                   </div>
+                                   <span className="text-[13px] font-bold tracking-tight truncate">{project.name}</span>
+                                </div>
+                                <ChevronRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" />
+                             </div>
+                          ))
+                       )}
+                     </div>
+                  </ScrollArea>
+               </CardContent>
+            </Card>
          </div>
       </div>
 
-      {/* Bottom Grid: Activity & Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          
-         {/* Global Activity Feed */}
-         <div className="bg-[#121212]/80 backdrop-blur-xl border border-white/5 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-6 lg:p-8 flex flex-col h-[400px]">
-            <div className="flex items-center gap-3 mb-6 shrink-0">
-               <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl"><Activity className="h-5 w-5" /></div>
-               <h3 className="text-lg font-bold text-white">Recent Activity</h3>
-            </div>
-            
-            <div className="overflow-y-auto custom-scrollbar flex-1 pr-4 relative">
-               <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-white/5"></div>
-               {activities.length === 0 ? (
-                  <div className="text-center text-white/30 font-medium py-16">No recent activities</div>
-               ) : (
-                  <div className="space-y-6 relative z-10">
-                     {activities.slice(0, 15).map((acti, idx) => (
-                        <div key={idx} className="flex gap-4 group">
-                           <div className="h-8 w-8 rounded-full bg-[#121212] border-2 border-sky-500 flex items-center justify-center shrink-0 shadow-sm mt-0.5 group-hover:scale-110 transition-transform">
-                              <div className="h-3 w-3 rounded-full bg-sky-500"></div>
-                           </div>
-                           <div className="pt-1.5 pb-2">
-                              <p className="text-sm font-medium text-white/60 leading-relaxed">
-                                 {acti.activity} <span className="font-bold text-white">{acti.project?.name}</span> <span className="font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded ml-1 border border-indigo-500/20">{acti.title}</span>
-                              </p>
-                              <p className="text-xs font-bold text-white/30 mt-1.5">{new Date(acti.acted_on).toLocaleString()}</p>
-                           </div>
-                        </div>
-                     ))}
-                  </div>
-               )}
-            </div>
-         </div>
+          {/* Activity Feed */}
+          <Card className="flex flex-col h-[400px] overflow-hidden border-border/50 shadow-sm">
+             <CardHeader className="pb-4 border-b">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 bg-sky-500/10 text-sky-500 rounded-lg"><Activity className="h-4 w-4" /></div>
+                   <CardTitle className="text-base font-bold">Recent Activity</CardTitle>
+                </div>
+             </CardHeader>
+             
+             <CardContent className="flex-1 min-h-0 pt-6 px-6">
+                <ScrollArea className="h-full -mr-4 pr-4 border-l ml-2 pl-6">
+                   <div className="space-y-6 pb-6">
+                      {activities.length === 0 ? (
+                         <p className="text-sm text-muted-foreground py-10 italic">No recent activity</p>
+                      ) : (
+                         activities.slice(0, 15).map((acti, idx) => (
+                            <div key={idx} className="relative group">
+                               <div className="absolute -left-[1.85rem] top-1 h-3 w-3 rounded-full bg-background border-2 border-sky-500 z-10" />
+                               <div className="space-y-1.5 overflow-hidden">
+                                  <div 
+                                    className="text-xs font-medium leading-relaxed [&>strong]:text-primary [&>strong]:font-bold"
+                                    dangerouslySetInnerHTML={{ __html: acti.activity }}
+                                  />
+                                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                                     <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider">{acti.project?.name}</span>
+                                     <Badge variant="outline" className="text-[9px] font-bold py-0 h-4 bg-muted/40">{acti.title}</Badge>
+                                  </div>
+                                  <p className="text-[10px] text-muted-foreground font-medium">{new Date(acti.acted_on).toLocaleString()}</p>
+                               </div>
+                            </div>
+                         ))
+                      )}
+                   </div>
+                </ScrollArea>
+             </CardContent>
+          </Card>
 
-         {/* Project Progress Tracker */}
-         <div className="bg-[#121212]/80 backdrop-blur-xl border border-white/5 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] p-6 lg:p-8 flex flex-col h-[400px]">
-            <div className="flex items-center gap-3 mb-6 shrink-0">
-               <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl"><CheckCircle2 className="h-5 w-5" /></div>
-               <h3 className="text-lg font-bold text-white">Project Progress</h3>
+         {/* Project Progress */}
+         <Card className="p-6 flex flex-col h-[400px]">
+            <div className="flex items-center gap-3 mb-6">
+               <div className="p-2 bg-emerald-500/10 text-emerald-500 rounded-lg"><CheckCircle2 className="h-4 w-4" /></div>
+               <CardTitle className="text-base">Project Progress</CardTitle>
             </div>
 
-            <div className="overflow-y-auto custom-scrollbar flex-1 pr-2 space-y-6">
-               {progresses.length === 0 ? (
-                  <div className="text-center text-white/40 font-medium py-16">No progress data available</div>
-               ) : (
-                  progresses.map(pr => {
-                     const progressInt = parseInt(pr.progress as any);
-                     const progressColor = progressInt < 30 ? 'bg-red-500' : progressInt < 70 ? 'bg-amber-500' : progressInt < 100 ? 'bg-[#696cff]' : 'bg-emerald-500';
-                     const progressBg = progressInt < 30 ? 'bg-red-500/10' : progressInt < 70 ? 'bg-amber-500/10' : progressInt < 100 ? 'bg-[#696cff]/10' : 'bg-emerald-500/10';
-                     const progressText = progressInt < 30 ? 'text-red-400' : progressInt < 70 ? 'text-amber-400' : progressInt < 100 ? 'text-indigo-400' : 'text-emerald-400';
-
-                     return (
-                        <div key={pr.id} className="group">
-                           <div className="flex justify-between items-end mb-2">
-                              <span className="font-bold text-white/80 text-sm truncate pr-4 group-hover:text-indigo-400 transition-colors">{pr.name}</span>
-                              <span className={`text-xs font-black tracking-wider px-2 py-0.5 rounded-md ${progressBg} ${progressText} ring-1 ring-white/5`}>{progressInt}%</span>
-                           </div>
-                           <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden relative border border-white/5">
-                              <div className={`absolute top-0 bottom-0 left-0 rounded-full transition-all duration-1000 ${progressColor} shadow-[0_0_10px_currentColor]`} style={{ width: `${progressInt}%` }}>
-                                 {/* Abstract shine effect */}
-                                 <div className="absolute top-0 bottom-0 left-0 right-0 bg-gradient-to-r from-transparent via-white/20 to-transparent flex" style={{ animation: 'shimmer 2s infinite' }}></div>
+            <ScrollArea className="flex-1 -mr-2 pr-2">
+               <div className="space-y-5">
+                  {progresses.length === 0 ? (
+                     <p className="text-sm text-muted-foreground py-10 italic">No progress data available</p>
+                  ) : (
+                     progresses.map(pr => {
+                        const progressInt = parseInt(pr.progress as any);
+                        return (
+                           <div key={pr.id} className="space-y-2">
+                              <div className="flex justify-between items-end">
+                                 <span className="text-xs font-semibold truncate pr-4">{pr.name}</span>
+                                 <span className="text-[10px] font-bold text-muted-foreground">{progressInt}%</span>
                               </div>
+                              <Progress value={progressInt} className="h-1.5" />
                            </div>
-                        </div>
-                     );
-                  })
-               )}
-            </div>
-         </div>
+                        );
+                     })
+                  )}
+               </div>
+            </ScrollArea>
+         </Card>
 
       </div>
-      
-      {/* Global Styles for Scrollbar & Animations passed inline for scoped components */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 20px; }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb { background: #555; }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-      `}} />
     </div>
   );
 };

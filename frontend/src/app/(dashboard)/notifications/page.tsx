@@ -15,7 +15,9 @@ import {
   Calendar,
   User,
   Inbox,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -82,7 +84,8 @@ const NotificationsPage = () => {
           const projectsRes = await fetchApi('/api/projects');
           if (projectsRes.result) {
             let allActs: ActivityNotification[] = [];
-            for (const project of (projectsRes.data.datas || [])) {
+            const projectList = projectsRes.data.datas || [];
+            for (const project of projectList) {
               const res = await fetchApi(`/api/projects/activities/${project.id}?search&page=&perpage=`);
               if (res.result && res.data && res.data.datas) {
                 const oneWeekAgo = new Date(); oneWeekAgo.setDate(new Date().getDate() - 6);
@@ -101,14 +104,12 @@ const NotificationsPage = () => {
   const handleRequestAction = async (requestId: string, statusId: number) => {
     const isApprove = statusId === 2;
     const result = await Swal.fire({
-      title: isApprove ? "Confirm Approval" : "Confirm Rejection",
-      text: isApprove ? "Grant requested access to the user?" : "Deny the security request?",
+      title: isApprove ? "Confirm Approval?" : "Confirm Rejection?",
+      text: isApprove ? "This will grant the user their requested access." : "This will deny the security request.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: isApprove ? "#10B981" : "#EF4444",
+      confirmButtonColor: isApprove ? "#10b981" : "#ef4444",
       confirmButtonText: isApprove ? "Yes, approve" : "Yes, reject",
-      background: '#121212',
-      color: '#fff',
     });
 
     if (result.isConfirmed) {
@@ -116,7 +117,7 @@ const NotificationsPage = () => {
         const response = await fetchApi(`/api/request/password/${requestId}`, { method: 'PUT', body: JSON.stringify({ status: statusId }) });
         if (response.result) {
           await loadData();
-          Swal.fire({ icon: "success", title: "Updated", toast: true, position: "top-end", showConfirmButton: false, timer: 3000, background: '#121212', color: '#fff' });
+          Swal.fire({ icon: "success", title: "Updated successfully", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });
         }
       } catch (error) { console.error(error); }
     }
@@ -125,22 +126,22 @@ const NotificationsPage = () => {
   const renderSuperadminNotifications = (filteredRequests: NotificationRequest[]) => {
     if (loading) {
       return (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
           <Loader2 className="h-10 w-10 text-primary animate-spin" />
-          <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Streaming data...</p>
+          <p className="text-sm font-medium text-muted-foreground animate-pulse">Syncing administrative feed...</p>
         </div>
       );
     }
 
     if (filteredRequests.length === 0) {
       return (
-        <Card className="flex flex-col items-center justify-center py-20 border-dashed border-white/10 bg-transparent text-center">
-          <div className="h-16 w-16 bg-white/5 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/10 opacity-20">
-            <Inbox className="h-8 w-8" />
+        <div className="flex flex-col items-center justify-center py-24 text-center border-dashed border-2 rounded-2xl bg-muted/20">
+          <div className="p-4 bg-background rounded-full border mb-4 shadow-sm opacity-50">
+            <Inbox className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-xl font-bold mb-1">Queue Empty</h3>
-          <p className="text-muted-foreground max-w-sm font-medium">There are no administrative requests pending in this category.</p>
-        </Card>
+          <h3 className="text-lg font-bold mb-1">Queue is clear</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">No pending requests require your attention at this time.</p>
+        </div>
       );
     }
 
@@ -150,16 +151,16 @@ const NotificationsPage = () => {
     const yesterdayStr = yesterday.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
 
     return (
-      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="space-y-10 animate-in fade-in duration-500">
         {Object.entries(grouped).map(([date, notifs]) => {
           let displayDate = date === todayStr ? "Today" : date === yesterdayStr ? "Yesterday" : date;
           return (
             <div key={date} className="space-y-6">
               <div className="flex items-center gap-4">
-                <Badge variant="outline" className="px-4 h-8 bg-background border-primary/20 text-primary font-black uppercase tracking-widest text-[10px]">
-                  <Clock className="w-3.5 h-3.5 mr-2" /> {displayDate}
+                <Badge variant="secondary" className="px-3 py-1 font-bold bg-background border shadow-sm">
+                  <Clock className="w-3.5 h-3.5 mr-2 opacity-60" /> {displayDate}
                 </Badge>
-                <div className="h-px bg-white/5 flex-1" />
+                <div className="h-px bg-border flex-1" />
               </div>
 
               <div className="grid gap-4">
@@ -169,29 +170,29 @@ const NotificationsPage = () => {
 
                   return (
                     <Card key={noti.id} className={cn(
-                      "group border-white/5 transition-all overflow-hidden",
-                      isPending ? "bg-amber-500/[0.02] hover:bg-amber-500/[0.04] border-amber-500/10 hover:border-amber-500/20" :
-                        isApproved ? "bg-emerald-500/[0.02] hover:bg-emerald-500/[0.04] border-emerald-500/10 hover:border-emerald-500/20" :
-                          "bg-destructive/[0.02] hover:bg-destructive/[0.04] border-destructive/10 hover:border-destructive/20"
+                      "group border shadow-sm transition-all overflow-hidden",
+                      isPending ? "border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40" :
+                        isApproved ? "border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40" :
+                          "border-destructive/20 bg-destructive/5 hover:border-destructive/40"
                     )}>
-                      <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <CardContent className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div className="flex items-start gap-4 flex-1">
-                          <Avatar className="h-11 w-11 ring-2 ring-background shrink-0 mt-0.5">
-                            <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs uppercase">
+                          <Avatar className="h-10 w-10 border shrink-0 mt-0.5">
+                            <AvatarFallback className="bg-background text-foreground font-bold text-xs uppercase">
                               {noti.user?.first_name[0]}{noti.user?.last_name[0]}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="space-y-1.5">
+                          <div className="space-y-1.5 min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-bold text-foreground text-lg">{noti.user?.first_name} {noti.user?.last_name}</span>
+                              <span className="font-bold text-base leading-none">{noti.user?.first_name} {noti.user?.last_name}</span>
                               <Badge variant={isPending ? "outline" : isApproved ? "secondary" : "destructive"}
                                 className={cn(
-                                  "h-5 px-1.5 text-[9px] font-black uppercase tracking-tighter",
-                                  isPending ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                                    isApproved ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
-                                      "bg-red-500/10 text-red-500 border-red-500/20"
+                                  "h-5 px-1.5 text-[9px] font-bold uppercase tracking-widest leading-none",
+                                  isPending ? "text-amber-600 border-amber-600/30" :
+                                    isApproved ? "bg-emerald-600 text-white border-transparent" :
+                                      "bg-destructive text-white border-transparent"
                                 )}>
-                                {isPending ? 'Pending' : isApproved ? 'Granted' : 'Revoked'}
+                                {isPending ? 'Pending Action' : isApproved ? 'Granted' : 'Revoked'}
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-2xl">{noti.description}</p>
@@ -204,21 +205,21 @@ const NotificationsPage = () => {
                               <Button
                                 size="sm"
                                 onClick={() => handleRequestAction(noti.id, 2)}
-                                className="h-8 bg-emerald-600 hover:bg-emerald-500 font-bold text-xs gap-1.5 shadow-lg shadow-emerald-500/20"
+                                className="h-8 bg-emerald-600 hover:bg-emerald-500 font-bold px-4 text-xs gap-1.5"
                               >
                                 <Check className="w-3.5 h-3.5" /> Approve
                               </Button>
                               <Button
-                                size="sm" variant="ghost"
+                                size="sm" variant="outline"
                                 onClick={() => handleRequestAction(noti.id, 3)}
-                                className="h-8 text-destructive hover:bg-destructive/10 font-bold text-xs gap-1.5"
+                                className="h-8 border-destructive/20 text-destructive hover:bg-destructive/10 font-bold px-4 text-xs gap-1.5"
                               >
                                 <X className="w-3.5 h-3.5" /> Reject
                               </Button>
                             </div>
                           )}
-                          <div className="text-[11px] font-bold text-muted-foreground opacity-40 flex items-center gap-1.5 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-                            <Clock className="w-3 h-3" /> {formatTimeDifference(noti.created_on)}
+                          <div className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest flex items-center gap-1.5 px-2 py-1 bg-background rounded-md border shadow-sm shrink-0 tabular-nums">
+                            <Clock className="w-3 h-3 opacity-60" /> {formatTimeDifference(noti.created_on)}
                           </div>
                         </div>
                       </CardContent>
@@ -234,16 +235,16 @@ const NotificationsPage = () => {
   };
 
   const renderNormalUserActivity = () => {
-    if (loading) return <div className="flex grow flex-col items-center justify-center py-20 gap-4 opacity-50"><Loader2 className="h-8 w-8 text-primary animate-spin" /><p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Synchronizing feed...</p></div>;
+    if (loading) return <div className="grow flex flex-col items-center justify-center py-24 gap-4"><Loader2 className="h-10 w-10 text-primary animate-spin" /><p className="text-sm font-medium text-muted-foreground animate-pulse">Syncing notification stream...</p></div>;
 
     if (activities.length === 0) return (
-      <Card className="py-20 text-center border-dashed border-white/10 bg-transparent flex flex-col items-center">
-        <div className="h-16 w-16 bg-white/5 rounded-full flex items-center justify-center mb-6 ring-1 ring-white/10 opacity-20">
-          <Bell className="h-8 w-8" />
+      <div className="flex flex-col items-center justify-center py-24 text-center border-dashed border-2 rounded-2xl bg-muted/20">
+        <div className="p-4 bg-background rounded-full border mb-4 shadow-sm opacity-50">
+          <Bell className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-xl font-bold mb-1">Stay Tuned</h3>
-        <p className="text-muted-foreground max-w-sm font-medium">Any critical updates from your projects and team members will be highlighted here.</p>
-      </Card>
+        <h3 className="text-lg font-bold mb-1">Stay tuned</h3>
+        <p className="text-sm text-muted-foreground max-w-xs">Critical updates from your projects and team will appear here.</p>
+      </div>
     );
 
     const grouped = groupNotificationsByDate(activities, 'acted_on');
@@ -252,38 +253,38 @@ const NotificationsPage = () => {
     const yesterdayStr = yesterday.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
 
     return (
-      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="space-y-10 animate-in fade-in duration-500">
         {Object.entries(grouped).map(([date, acts]) => {
           let displayDate = date === todayStr ? "Today" : date === yesterdayStr ? "Yesterday" : date;
           return (
             <div key={date} className="space-y-6">
               <div className="flex items-center gap-4">
-                <Badge variant="outline" className="px-4 h-8 bg-background border-primary/20 text-primary font-black uppercase tracking-widest text-[10px]">
-                  <Calendar className="w-3.5 h-3.5 mr-2" /> {displayDate}
+                <Badge variant="secondary" className="px-3 py-1 font-bold bg-background border shadow-sm">
+                  <Calendar className="w-3.5 h-3.5 mr-2 opacity-60" /> {displayDate}
                 </Badge>
-                <div className="h-px bg-white/5 flex-1" />
+                <div className="h-px bg-border flex-1" />
               </div>
 
               <div className="grid gap-3">
                 {(acts as ActivityNotification[]).map(acti => (
-                  <Card key={acti.id} className="group border-white/5 bg-[#0a0a0a]/50 hover:bg-white/[0.04] transition-all relative overflow-hidden">
-                    <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pr-6">
+                  <Card key={acti.id} className="group border shadow-sm bg-card hover:bg-muted/5 transition-all overflow-hidden">
+                    <CardContent className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <Avatar className="h-10 w-10 ring-2 ring-background shrink-0">
-                          <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                        <Avatar className="h-9 w-9 border shrink-0">
+                          <AvatarFallback className="bg-muted text-foreground font-bold text-[10px]">
                             {acti.actor?.user?.first_name[0]}{acti.actor?.user?.last_name[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <h6 className="font-bold text-foreground text-sm group-hover:text-primary transition-colors truncate">{acti.actor?.user?.first_name} {acti.actor?.user?.last_name}</h6>
-                          <p className="text-sm text-muted-foreground font-medium m-0 leading-tight flex items-center flex-wrap gap-1.5 mt-0.5">
-                            <span>{acti.activity}</span>
-                            <Badge variant="outline" className="h-5 px-1.5 bg-primary/5 border-primary/20 text-primary text-[9px] font-black uppercase tracking-widest">{acti.project?.name}</Badge>
-                            <span className="font-bold text-foreground/70 decoration-primary/30 underline underline-offset-2 shrink-0">{acti.title}</span>
-                          </p>
+                          <h6 className="font-bold text-sm leading-tight group-hover:text-primary transition-colors truncate">{acti.actor?.user?.first_name} {acti.actor?.user?.last_name}</h6>
+                          <div className="text-sm text-muted-foreground font-medium m-0 flex items-center flex-wrap gap-1.5 mt-0.5">
+                            <span className="opacity-80">{acti.activity}</span>
+                            <Badge variant="outline" className="h-5 px-1.5 bg-muted/50 border-border text-muted-foreground text-[9px] font-bold uppercase tracking-widest">{acti.project?.name}</Badge>
+                            <span className="font-bold text-foreground/80 truncate shrink-0 px-1 bg-muted/30 rounded">{acti.title}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-[10px] font-black text-muted-foreground/30 uppercase tracking-widest sm:text-right shrink-0 ml-14 sm:ml-0 bg-white/5 px-2 py-0.5 rounded-md whitespace-nowrap">
+                      <div className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest sm:text-right shrink-0 ml-13 sm:ml-0 px-2 py-1 bg-muted/30 rounded tabular-nums">
                         {formatTimeDifference(acti.acted_on)}
                       </div>
                     </CardContent>
@@ -298,31 +299,33 @@ const NotificationsPage = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto animate-in fade-in duration-500">
+    <div className="space-y-8 max-w-5xl mx-auto animate-in fade-in duration-500 pb-20">
 
       {/* Header */}
-      <Card className="border-white/5 bg-card overflow-hidden relative">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        <CardHeader className="p-6 relative z-10">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-xl ring-1 ring-primary/20 shadow-lg shadow-primary/10">
-              <Bell className="h-6 w-6" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest text-primary">
-                <span>Notifications</span>
-                <ChevronRight className="h-3 w-3" />
-                <span className="text-foreground">Activity Stream</span>
-              </div>
-              <CardTitle className="text-2xl font-bold">Signal Feed</CardTitle>
-              <CardDescription className="text-xs font-semibold text-muted-foreground/60">Real-time collaboration updates and system alerts.</CardDescription>
-            </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-background border px-6 py-4 rounded-xl shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-primary/10 text-primary rounded-xl">
+            <Bell className="h-6 w-6" />
           </div>
-        </CardHeader>
-      </Card>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-primary">
+              <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => setActiveTab('all')}>Communications</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground">Notification Center</span>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">System Notifications</h1>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+           <Badge variant="outline" className="h-8 px-3 font-semibold text-xs gap-2 border">
+            {userRole === 1 ? <ShieldCheck className="h-3.5 w-3.5 text-primary" /> : <Inbox className="h-3.5 w-3.5 text-primary" />}
+            {userRole === 1 ? "Admin Control" : "Project Updates"}
+          </Badge>
+        </div>
+      </div>
 
       {/* Content Body */}
-      <div className="min-h-[500px] relative">
+      <div className="min-h-[500px]">
         {userRole !== 1 && (
           <div className="space-y-6">
             {renderNormalUserActivity()}
@@ -331,25 +334,25 @@ const NotificationsPage = () => {
 
         {userRole === 1 && (
           <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="h-11 bg-white/[0.03] border border-white/10 p-1 mb-8">
-              <TabsTrigger value="all" className="px-6 font-bold text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                <Inbox className="w-4 h-4" /> All Log
+            <TabsList className="h-12 w-fit bg-muted/40 border p-1 mb-8 rounded-xl shadow-inner group">
+              <TabsTrigger value="all" className="px-6 font-bold text-xs gap-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-primary">
+                <Inbox className="w-4 h-4" /> All Logs
               </TabsTrigger>
-              <TabsTrigger value="pending" className="px-6 font-bold text-xs gap-2 data-[state=active]:bg-amber-500 data-[state=active]:text-white">
-                <Clock className="w-4 h-4" /> Pending
+              <TabsTrigger value="pending" className="px-6 font-bold text-xs gap-2 rounded-lg data-[state=active]:bg-amber-100 data-[state=active]:shadow-sm data-[state=active]:text-amber-800 dark:data-[state=active]:bg-amber-900/40 dark:data-[state=active]:text-amber-400">
+                <AlertTriangle className="w-4 h-4" /> Pending Approval
               </TabsTrigger>
-              <TabsTrigger value="approved" className="px-6 font-bold text-xs gap-2 data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
-                <CheckCircle2 className="w-4 h-4" /> Granted
+              <TabsTrigger value="approved" className="px-6 font-bold text-xs gap-2 rounded-lg data-[state=active]:bg-emerald-100 data-[state=active]:shadow-sm data-[state=active]:text-emerald-800 dark:data-[state=active]:bg-emerald-900/40 dark:data-[state=active]:text-emerald-400">
+                <ShieldCheck className="w-4 h-4" /> Granted Access
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="all" className="mt-0">
+            <TabsContent value="all" className="mt-0 focus-visible:outline-none">
               {renderSuperadminNotifications(requests)}
             </TabsContent>
-            <TabsContent value="pending" className="mt-0">
+            <TabsContent value="pending" className="mt-0 focus-visible:outline-none">
               {renderSuperadminNotifications(requests.filter(r => r.status === 1))}
             </TabsContent>
-            <TabsContent value="approved" className="mt-0">
+            <TabsContent value="approved" className="mt-0 focus-visible:outline-none">
               {renderSuperadminNotifications(requests.filter(r => r.status === 2))}
             </TabsContent>
           </Tabs>

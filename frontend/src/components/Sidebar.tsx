@@ -32,6 +32,13 @@ const Sidebar = () => {
       } catch (error) { console.error(error); }
     };
     fetchData();
+
+    const handleProjectUpdate = () => {
+      fetchData();
+    };
+
+    window.addEventListener('projectUpdate', handleProjectUpdate);
+    return () => window.removeEventListener('projectUpdate', handleProjectUpdate);
   }, []);
 
   const toggleProject = (id: number) => {

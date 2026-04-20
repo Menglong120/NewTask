@@ -195,26 +195,25 @@ const AnalyticPage = () => {
    );
 
    return (
-      <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+      <div className="space-y-8 max-w-7xl mx-auto p-4 animate-in fade-in duration-500">
 
          {/* Header */}
-         <Card className="border-white/5 bg-card overflow-hidden relative">
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-            <CardHeader className="p-6 relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+         <Card className="shadow-sm border overflow-hidden">
+            <CardHeader className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 text-primary rounded-xl ring-1 ring-primary/20 shadow-lg shadow-primary/10">
+                  <div className="p-3 bg-primary/10 text-primary rounded-xl">
                      <TrendingUp className="h-6 w-6" />
                   </div>
                   <div className="space-y-1">
-                     <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                     <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                         <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Workspace</span>
                         <ChevronRight className="h-3 w-3" />
                         <span className="text-foreground">Global Analytics</span>
                      </div>
-                     <CardTitle className="text-2xl font-bold">Workspace Health Report</CardTitle>
+                     <CardTitle className="text-2xl font-bold tracking-tight">Workspace Health Report</CardTitle>
                   </div>
                </div>
-               <Badge variant="outline" className="h-9 px-4 bg-white/5 border-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px] gap-2">
+               <Badge variant="secondary" className="h-8 px-3 gap-2">
                   <Calendar className="h-3.5 w-3.5" /> Updated: {new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                </Badge>
             </CardHeader>
@@ -223,23 +222,22 @@ const AnalyticPage = () => {
          {/* KPI Grid */}
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-               { label: 'Cumulative Issues', value: totalIssues, icon: Layers, color: 'text-sky-400', bg: 'bg-sky-500/10' },
-               { label: 'Secondary Tasks', value: totalSubIssues, icon: AlertCircle, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-               { label: 'Project Members', value: totalMembers, icon: Users, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-               { label: 'Documentation', value: totalResources, icon: BookOpen, color: 'text-emerald-400', bg: 'bg-emerald-500/10' }
+               { label: 'Cumulative Issues', value: totalIssues, icon: Layers, color: 'text-sky-500', bg: 'bg-sky-500/10' },
+               { label: 'Secondary Tasks', value: totalSubIssues, icon: AlertCircle, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+               { label: 'Project Members', value: totalMembers, icon: Users, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+               { label: 'Documentation', value: totalResources, icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-500/10' }
             ].map((stat, i) => (
-               <Card key={i} className="group border-white/5 bg-card hover:bg-white/[0.04] transition-all relative overflow-hidden">
-                  <div className="absolute top-0 right-0 h-24 w-24 bg-primary/[0.03] rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none" />
-                  <CardContent className="p-6 relative z-10 flex flex-col justify-between">
+               <Card key={i} className="group shadow-sm border hover:border-primary/50 transition-all">
+                  <CardContent className="p-6 flex flex-col justify-between">
                      <div className="flex justify-between items-start">
-                        <div className={cn("p-3 rounded-xl ring-1 ring-white/5 shadow-inner transition-transform group-hover:scale-105", stat.bg, stat.color)}>
+                        <div className={cn("p-2.5 rounded-lg transition-transform group-hover:scale-105", stat.bg, stat.color)}>
                            <stat.icon className="h-5 w-5" />
                         </div>
                         <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                      </div>
                      <div className="mt-6">
-                        <div className="text-3xl font-black text-foreground">{stat.value}</div>
-                        <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1 opacity-70">{stat.label}</div>
+                        <div className="text-3xl font-black">{stat.value}</div>
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{stat.label}</div>
                      </div>
                   </CardContent>
                </Card>
@@ -247,58 +245,55 @@ const AnalyticPage = () => {
          </div>
 
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-white/5 bg-card overflow-hidden h-[420px] flex flex-col relative">
-               <div className="absolute top-0 right-0 h-32 w-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+            <Card className="shadow-sm border h-[420px] flex flex-col">
                <CardHeader className="pb-0 shrink-0">
                   <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                     <CircleDot className="h-4 w-4 text-primary" /> Global Status Distribution
+                     <CircleDot className="h-4 w-4 text-primary" /> Status Distribution
                   </CardTitle>
                </CardHeader>
-               <CardContent className="flex-1 flex items-center justify-center pt-6">
+               <CardContent className="flex-1 flex items-center justify-center mt-4">
                   {statusChart ? (
                      <Chart options={statusChart.options as any} series={statusChart.series} type="donut" width="100%" height={320} />
                   ) : (
-                     <div className="flex flex-col items-center justify-center text-muted-foreground opacity-30">
-                        <Activity className="h-12 w-12 mb-3" />
-                        <p className="font-bold text-sm uppercase">Data Unavailable</p>
+                     <div className="flex flex-col items-center justify-center text-muted-foreground/30">
+                        <Activity className="h-10 w-10 mb-2" />
+                        <p className="text-xs font-bold uppercase">No data</p>
                      </div>
                   )}
                </CardContent>
             </Card>
 
-            <Card className="border-white/5 bg-card overflow-hidden h-[420px] flex flex-col relative">
-               <div className="absolute bottom-0 right-0 h-32 w-32 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+            <Card className="shadow-sm border h-[420px] flex flex-col">
                <CardHeader className="pb-0 shrink-0">
                   <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                      <AlertCircle className="h-4 w-4 text-amber-500" /> Complexity Spread
                   </CardTitle>
                </CardHeader>
-               <CardContent className="flex-1 pt-6 px-2">
+               <CardContent className="flex-1 mt-4 px-2">
                   {priorityChart ? (
                      <Chart options={priorityChart.options as any} series={priorityChart.series} type="bar" height={320} />
                   ) : (
-                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-30">
-                        <Activity className="h-12 w-12 mb-3" />
-                        <p className="font-bold text-sm uppercase">Priority Data missing</p>
+                     <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30">
+                        <Activity className="h-10 w-10 mb-2" />
+                        <p className="text-xs font-bold uppercase">No data</p>
                      </div>
                   )}
                </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2 border-white/5 bg-card overflow-hidden relative">
-               <div className="absolute inset-0 bg-gradient-to-tr from-primary/[0.01] to-transparent pointer-events-none" />
+            <Card className="lg:col-span-2 shadow-sm border">
                <CardHeader>
                   <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                     <Activity className="h-4 w-4 text-emerald-500" /> Multi-Month Trend Analysis
+                     <Activity className="h-4 w-4 text-emerald-500" /> Monthly Trend Analysis
                   </CardTitle>
                </CardHeader>
                <CardContent className="h-[380px] pb-6">
                   {monthChart ? (
                      <Chart options={monthChart.options as any} series={monthChart.series} type="bar" height="100%" />
                   ) : (
-                     <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-2xl text-muted-foreground opacity-30">
-                        <Activity className="h-12 w-12 mb-3" />
-                        <p className="font-bold text-sm uppercase">Seasonal Trends Loading...</p>
+                     <div className="h-full flex flex-col items-center justify-center border-2 border-dashed rounded-xl text-muted-foreground/30">
+                        <Activity className="h-10 w-10 mb-2" />
+                        <p className="text-xs font-bold uppercase">Loading trends...</p>
                      </div>
                   )}
                </CardContent>
@@ -306,16 +301,16 @@ const AnalyticPage = () => {
          </div>
 
          {/* Member Performance Section */}
-         <Card className="border-white/5 bg-card overflow-hidden">
-            <CardHeader className="bg-white/[0.01] border-b border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-5">
+         <Card className="shadow-sm border overflow-hidden">
+            <CardHeader className="border-b bg-muted/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 py-5">
                <CardTitle className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <Activity className="h-4 w-4 text-rose-500" /> Performance Tracking & Assignments
+                  <Activity className="h-4 w-4 text-rose-500" /> Performance Tracking
                </CardTitle>
                <div className="relative w-full md:w-80">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                     placeholder="Filter by name, role, or category..."
-                     className="pl-10 h-10 bg-background border-white/10 text-foreground text-sm font-medium"
+                     placeholder="Filter by personnel or target..."
+                     className="pl-10 h-9 text-xs"
                      value={searchMember}
                      onChange={(e) => setSearchMember(e.target.value)}
                   />
@@ -323,68 +318,63 @@ const AnalyticPage = () => {
             </CardHeader>
             <div className="w-full overflow-x-auto">
                <Table>
-                  <TableHeader className="bg-[#0a0a0a]">
-                     <TableRow className="border-white/5 hover:bg-transparent">
-                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Team Member</TableHead>
-                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Workspace Role</TableHead>
-                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Current Target</TableHead>
-                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Velocity</TableHead>
-                        <TableHead className="py-4 px-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right">Status</TableHead>
+                  <TableHeader className="bg-muted/30">
+                     <TableRow>
+                        <TableHead className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest">Team Member</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest">Workspace Role</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest">Current Target</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-center">Velocity</TableHead>
+                        <TableHead className="py-4 px-6 text-[10px] font-bold uppercase tracking-widest text-right">Status</TableHead>
                         <TableHead className="w-[50px]"></TableHead>
                      </TableRow>
                   </TableHeader>
                   <TableBody>
                      {filteredPerformances.length === 0 ? (
                         <TableRow>
-                           <TableCell colSpan={6} className="py-20 text-center">
-                              <Users className="h-10 w-10 mx-auto opacity-10 mb-3" />
-                              <p className="text-muted-foreground font-medium text-sm">No member rankings found matching your query.</p>
+                           <TableCell colSpan={6} className="py-16 text-center text-muted-foreground">
+                              <Users className="h-10 w-10 mx-auto opacity-10 mb-2" />
+                              <p className="text-sm font-medium">No performance records found.</p>
                            </TableCell>
                         </TableRow>
                      ) : filteredPerformances.map((mem, i) => (
-                        <TableRow key={i} onClick={() => goToIssueDetail(mem.assignee.mainissueid)} className="border-white/5 hover:bg-white/[0.01] group/row transition-all cursor-pointer">
+                        <TableRow key={i} onClick={() => goToIssueDetail(mem.assignee.mainissueid)} className="group cursor-pointer">
                            <TableCell className="py-4 px-6">
                               <div className="flex items-center gap-3">
-                                 <Avatar className="h-10 w-10 ring-2 ring-background ring-offset-2 ring-offset-white/5 group-hover/row:ring-primary/40 transition-all">
-                                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                                 <Avatar className="h-9 w-9 border">
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs uppercase">
                                        {(mem.assignee.dis_name || mem.assignee.email)[0]}
                                     </AvatarFallback>
                                  </Avatar>
                                  <div className="flex flex-col">
-                                    <span className="font-bold text-sm text-foreground group-hover/row:text-primary transition-colors">{mem.assignee.dis_name || 'Anonymous User'}</span>
-                                    <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[150px]">{mem.assignee.email}</span>
+                                    <span className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{mem.assignee.dis_name || 'Anonymous User'}</span>
+                                    <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{mem.assignee.email}</span>
                                  </div>
                               </div>
                            </TableCell>
                            <TableCell className="py-4 px-6">
-                              <Badge variant="outline" className="px-2 py-0.5 text-[9px] font-black uppercase tracking-tighter bg-indigo-500/5 text-indigo-400 border-indigo-500/20">
-                                 {mem.assignee.role?.name || 'Observer'}
+                              <Badge variant="secondary" className="px-2 h-5 text-[9px] font-bold uppercase tracking-tight">
+                                 {mem.assignee.role?.name || 'Personnel'}
                               </Badge>
                            </TableCell>
                            <TableCell className="py-4 px-6">
-                              <div className="flex flex-col gap-1 max-w-[200px]">
-                                 <span className="text-sm font-bold text-foreground truncate">{mem.assignee.issuename}</span>
-                                 <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest truncate">{mem.assignee.mainissue}</span>
+                              <div className="flex flex-col gap-0.5 max-w-[200px]">
+                                 <span className="text-sm font-semibold truncate">{mem.assignee.issuename}</span>
+                                 <span className="text-[9px] font-bold text-muted-foreground uppercase truncate tracking-tighter">{mem.assignee.mainissue}</span>
                               </div>
                            </TableCell>
                            <TableCell className="py-4 px-6">
                               <div className="flex items-center gap-3 justify-center max-w-[120px] mx-auto">
                                  <Progress value={Number(mem.assignee.progress)} className="h-1.5 flex-1" />
-                                 <span className="text-xs font-black text-foreground/70 w-8">{mem.assignee.progress}%</span>
+                                 <span className="text-[10px] font-bold w-8">{mem.assignee.progress}%</span>
                               </div>
                            </TableCell>
                            <TableCell className="py-4 px-6 text-right">
-                              <Badge className={cn(
-                                 "px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest",
-                                 mem.status?.name === 'Done' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                    mem.status?.name === 'In Progress' ? 'bg-sky-500/10 text-sky-400 border border-sky-500/20' :
-                                       'bg-white/5 text-muted-foreground border border-white/10'
-                              )}>
-                                 {mem.status?.name || 'Unknown'}
+                              <Badge variant={mem.status?.name === 'Done' ? 'default' : mem.status?.name === 'In Progress' ? 'secondary' : 'outline'} className="text-[9px] font-bold uppercase tracking-widest px-2 h-5">
+                                 {mem.status?.name || 'Pending'}
                               </Badge>
                            </TableCell>
                            <TableCell className="text-right pr-6">
-                              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover/row:opacity-100 group-hover/row:translate-x-1 transition-all" />
+                              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                            </TableCell>
                         </TableRow>
                      ))}

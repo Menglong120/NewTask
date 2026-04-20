@@ -42,22 +42,18 @@ const Topbar = () => {
 
   return (
     <div
-      className="relative w-full h-full border-b border-white/5 flex items-center justify-between px-6 lg:px-10 z-50 dark"
-      style={{ backgroundColor: '#0a0a0a' }}
+      className="relative w-full h-16 border-b border-border flex items-center justify-between px-6 lg:px-10 z-50 bg-background"
     >
-      {/* Gradient accent line */}
-      <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent pointer-events-none" />
-
       {/* Search */}
       <div className="flex-1 max-w-xl relative group">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
         <Input
           type="text"
           placeholder="Search projects, issues, users..."
-          className="pl-9 pr-16 bg-white/5 border-white/10 hover:border-white/20 focus-visible:border-primary/50 focus-visible:ring-primary/20 text-white placeholder:text-white/30 rounded-xl h-10"
+          className="pl-9 pr-16"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hidden sm:flex">
-          <kbd className="px-1.5 py-0.5 bg-white/5 border border-white/10 rounded text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-[10px] font-medium uppercase tracking-widest">
             Ctrl K
           </kbd>
         </div>
@@ -69,35 +65,35 @@ const Topbar = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-10 w-10 text-white/40 hover:text-indigo-400 bg-white/5 hover:bg-indigo-500/10 border border-white/5 hover:border-indigo-500/20 rounded-xl"
+          className="relative"
         >
           <Bell className="h-4.5 w-4.5" />
-          <span className="absolute top-2 right-2 h-2 w-2 bg-red-500 rounded-full border border-[#0a0a0a] shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+          <span className="absolute top-2 right-2 h-2 w-2 bg-destructive rounded-full border-2 border-background" />
         </Button>
 
-        <div className="h-6 w-px bg-white/8 hidden sm:block" />
+        <div className="h-6 w-px bg-border hidden sm:block" />
 
         {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex items-center gap-2.5 pl-1.5 pr-3 h-11 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-all"
+              className="flex items-center gap-2.5 px-2 h-10"
             >
-              <Avatar className="h-8 w-8 border border-white/10">
+              <Avatar className="h-8 w-8 border">
                 <AvatarImage
                   src={profile?.avarta ? `/upload/${profile.avarta}` : undefined}
                   onError={(e) => { (e.target as HTMLImageElement).src = '/img/default-avatar.png'; }}
                 />
-                <AvatarFallback className="bg-indigo-600/30 text-indigo-300 text-xs font-bold">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <div className="hidden md:flex flex-col items-start">
-                <span className="text-sm font-semibold text-white leading-tight">
+              <div className="hidden md:flex flex-col items-start text-left">
+                <span className="text-sm font-semibold leading-tight">
                   {profile ? `${profile.first_name} ${profile.last_name}` : 'Loading...'}
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+                <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                   {profile?.role?.name ?? 'Administrator'}
                 </span>
               </div>
@@ -106,35 +102,35 @@ const Topbar = () => {
 
           <DropdownMenuContent
             align="end"
-            className="w-60 bg-[#121212] border-white/10 rounded-2xl p-1 shadow-[0_10px_40px_rgba(0,0,0,0.8)] dark"
+            className="w-60"
           >
             <DropdownMenuLabel className="flex flex-col gap-0.5 px-3 py-2.5">
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-bold">
                 {profile ? `${profile.first_name} ${profile.last_name}` : 'User Account'}
               </span>
-              <span className="text-xs text-indigo-400 font-medium truncate">
+              <span className="text-xs text-muted-foreground truncate">
                 {profile?.email ?? ''}
               </span>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-white/5" />
-            <DropdownMenuItem asChild className="rounded-xl gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 focus:bg-white/5 cursor-pointer">
-              <Link href="/settings/profile">
-                <UserCircle className="h-4 w-4 text-white/30" />
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/settings/profile" className="flex items-center w-full">
+                <UserCircle className="mr-2 h-4 w-4 opacity-70" />
                 My Profile
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="rounded-xl gap-3 px-3 py-2.5 text-white/70 hover:text-white hover:bg-white/5 focus:bg-white/5 cursor-pointer">
-              <Link href="/settings/password">
-                <Settings className="h-4 w-4 text-white/30" />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link href="/settings/password" className="flex items-center w-full">
+                <Settings className="mr-2 h-4 w-4 opacity-70" />
                 Account Settings
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-white/5" />
+            <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={handleLogout}
-              className="rounded-xl gap-3 px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 focus:bg-red-500/10 focus:text-red-300 cursor-pointer"
+              className="text-destructive focus:text-destructive cursor-pointer"
             >
-              <LogOut className="h-4 w-4 text-red-400/60" />
+              <LogOut className="mr-2 h-4 w-4 opacity-70" />
               Sign Out
             </DropdownMenuItem>
           </DropdownMenuContent>

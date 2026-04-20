@@ -13,18 +13,27 @@ import {
   FolderOpen,
   Loader2,
   Edit2,
-  Calendar
+  Calendar,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Category {
   id: number;
@@ -39,33 +48,81 @@ const ProjectCategoriesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [activeModal, setActiveModal] = useState<'create' | 'edit' | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [formName, setFormName] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [projectRes, categoryRes] = await Promise.all([
+        fetchApi(`/api/projects`),
+        fetchApi(`/api/categories/${id}`)
+      ]);
+
+      if (projectRes.result) {
+        const project = projectRes.data.datas.find((p: any) => p.id === Number(id));
+        if (project) setProjectName(project.name);
+      }
+
+      if (categoryRes.result) {
+        setCategories(categoryRes.data?.categories || categoryRes.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [projectRes, categoryRes] = await Promise.all([
-          fetchApi(`/api/projects`),
-          fetchApi(`/api/categories/${id}`)
-        ]);
-
-        if (projectRes.result) {
-          const project = projectRes.data.datas.find((p: any) => p.id === Number(id));
-          if (project) setProjectName(project.name);
-        }
-
-        if (categoryRes.result) {
-          setCategories(categoryRes.data?.categories || categoryRes.data || []);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (id) fetchData();
   }, [id]);
+
+  const handleOpenCreate = () => {
+    setFormName('');
+    setFormDescription('');
+    setActiveModal('create');
+  };
+
+  const handleOpenEdit = (category: Category) => {
+    setSelectedCategory(category);
+    setFormName(category.name);
+    setFormDescription(category.description);
+    setActiveModal('edit');
+  };
+
+  const handleSubmit = async () => {
+    if (!formName) return;
+    try {
+      setSubmitting(true);
+      const url = activeModal === 'create' ? `/api/category/${id}` : `/api/category-update/${selectedCategory?.id}`;
+      const method = activeModal === 'create' ? 'POST' : 'PUT';
+
+      const res = await fetchApi(url, {
+        method,
+        body: JSON.stringify({ name: formName, description: formDescription })
+      });
+
+      if (res.result) {
+        setActiveModal(null);
+        fetchData();
+      }
+    } catch (error) {
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (categoryId: number) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    try {
+      const res = await fetchApi(`/api/category/${categoryId}`, { method: 'DELETE' });
+      if (res.result) fetchData();
+    } catch (error) { }
+  };
 
   const handleCategoryClick = (categoryId: number) => {
     localStorage.setItem('categoryID', categoryId.toString());
@@ -73,101 +130,153 @@ const ProjectCategoriesPage = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto animate-in fade-in duration-500">
+    <div className="space-y-8 max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-500">
 
-      {/* Header */}
-      <Card className="border-white/5 bg-card overflow-hidden relative">
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 h-48 w-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-        <CardHeader className="p-6 relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-background border px-6 py-4 rounded-xl shadow-sm">
+        <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+          <div className="p-3 bg-primary/10 text-primary rounded-xl">
+            <LayoutGrid className="h-6 w-6" />
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
               <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Projects</span>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-foreground font-bold">{projectName || 'Project'}</span>
+              <span className="text-foreground/60">{projectName || 'Current Project'}</span>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-foreground">Categories</span>
             </div>
-            <CardTitle className="text-2xl font-bold">Issue Categories</CardTitle>
-            <CardDescription className="text-muted-foreground">Organize your project issues into logical categories</CardDescription>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground normal-case">Issue Categories</h1>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-white font-bold h-10 px-5 shadow-lg shadow-primary/20">
-            <Plus className="h-4 w-4 mr-1.5" /> Add Category
+        </div>
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <Button variant="outline" size="sm" onClick={() => router.push(`/projects/${id}/settings`)} className="gap-2 h-9 border">
+            <Settings className="h-4 w-4" /> Configure
           </Button>
-        </CardHeader>
-      </Card>
-
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="h-48 border-white/5 bg-white/[0.02] animate-pulse" />
-          ))}
+          <Button onClick={handleOpenCreate} size="sm" className="gap-2 h-9 shadow-sm">
+            <Plus className="h-4 w-4" /> Add Category
+          </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categories.map((category) => (
-            <Card
-              key={category.id}
-              className="group border-white/5 bg-card hover:border-primary/30 transition-all duration-300 cursor-pointer overflow-hidden relative hover:-translate-y-1 shadow-sm hover:shadow-xl hover:shadow-primary/5"
-              onClick={() => handleCategoryClick(category.id)}
-            >
-              <div className="absolute top-0 right-0 -mr-8 -mt-8 h-24 w-24 bg-primary/5 rounded-full blur-2xl pointer-events-none group-hover:bg-primary/10 transition-colors" />
+      </div>
 
-              <CardHeader className="p-6 pb-2 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="p-3 bg-primary/10 text-primary rounded-xl ring-1 ring-primary/20 shadow-inner group-hover:scale-110 transition-transform duration-300">
-                    <LayoutGrid className="h-6 w-6" />
+      {/* Main Grid Content */}
+      <div className="min-h-[400px]">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(i => (
+              <Card key={i} className="h-48 border shadow-sm animate-pulse bg-muted/20" />
+            ))}
+          </div>
+        ) : categories.length === 0 ? (
+          <Card className="border-dashed border-2 bg-muted/10 py-24 rounded-2xl">
+            <CardContent className="flex flex-col items-center justify-center text-center space-y-4">
+              <div className="p-4 rounded-full bg-background border shadow-sm">
+                <FolderOpen className="h-8 w-8 text-muted-foreground opacity-50" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold">No categories found</h3>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto">Group your project issues into categories to keep work organized.</p>
+              </div>
+              <Button onClick={handleOpenCreate} size="sm" variant="outline" className="gap-2 mt-2">
+                <Plus className="h-4 w-4" /> Initial category
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {categories.map((category) => (
+              <Card
+                key={category.id}
+                className="group flex flex-col border shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer overflow-hidden rounded-2xl"
+                onClick={() => handleCategoryClick(category.id)}
+              >
+                <CardHeader className="p-5 pb-2">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="p-2.5 bg-primary/5 text-primary rounded-xl border border-primary/10 group-hover:bg-primary group-hover:text-white transition-colors duration-300">
+                      <LayoutGrid className="h-4 w-4" />
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleOpenEdit(category); }} className="gap-2">
+                          <Edit2 className="h-3.5 w-3.5" /> Modify
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(category.id); }} className="text-destructive focus:text-destructive gap-2">
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
+                  <CardTitle className="text-lg font-bold truncate">{category.name}</CardTitle>
+                </CardHeader>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-lg" onClick={(e) => e.stopPropagation()}>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-white/10 dark w-40">
-                      <DropdownMenuItem className="gap-2 cursor-pointer font-semibold">
-                        <Edit2 className="h-3.5 w-3.5" /> Edit Category
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2 cursor-pointer font-semibold text-red-400 focus:text-red-400 focus:bg-red-500/10">
-                        <Trash2 className="h-3.5 w-3.5" /> Delete Category
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">{category.name}</CardTitle>
-              </CardHeader>
+                <CardContent className="p-5 pt-2 flex-1 flex flex-col justify-between">
+                  <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed mb-6">
+                    {category.description || 'No description provided for this cluster.'}
+                  </p>
 
-              <CardContent className="p-6 pt-0">
-                <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px] leading-relaxed">
-                  {category.description || 'Define specific workflows and task types for this category area.'}
-                </p>
-                <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3 w-3 opacity-50" />
-                    <span>Created {new Date(category.created_on).toLocaleDateString()}</span>
+                  <div className="pt-4 border-t flex justify-between items-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 opacity-60" />
+                      {new Date(category.created_on).toLocaleDateString()}
+                    </div>
+                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
-          {categories.length === 0 && (
-            <Card className="col-span-full border-dashed border-white/10 bg-transparent py-20">
-              <CardContent className="flex flex-col items-center justify-center text-center space-y-4">
-                <div className="p-4 rounded-full bg-white/5 border border-white/10">
-                  <FolderOpen className="h-12 w-12 text-muted-foreground opacity-20" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-foreground">No categories found</h3>
-                  <p className="text-muted-foreground max-w-sm mx-auto">There are no categories set up for this project yet.</p>
-                </div>
-                <Button variant="outline" className="border-white/10 hover:bg-white/5 text-primary font-bold">
-                  <Plus className="h-4 w-4 mr-1.5" /> Create first category
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
+      <Dialog open={!!activeModal} onOpenChange={(open) => !open && setActiveModal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                <LayoutGrid className="h-5 w-5" />
+              </div>
+              {activeModal === 'create' ? 'Add New Category' : 'Edit Category'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-6 py-4">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Category Name</Label>
+              <Input
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="e.g., Development, Operations..."
+                className="h-10 font-medium"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</Label>
+              <Textarea
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Provide details about this cluster..."
+                className="min-h-[120px] font-medium resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setActiveModal(null)}>Cancel</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : activeModal === 'create' ? 'Create Cluster' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
