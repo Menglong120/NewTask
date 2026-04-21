@@ -33,7 +33,9 @@ const projectSchema = Joi.object({
         .allow(null, '')
         .optional(),
     status_id: Joi.number(),
-    estimated_date: Joi.date()
+    start_date: Joi.date().allow(null, '').optional(),
+    end_date: Joi.date().allow(null, '').optional(),
+    members: Joi.array().optional()
 });
 
 const projectStatusSchema = Joi.object({

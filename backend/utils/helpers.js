@@ -106,7 +106,8 @@ const constructProjects = (data, members) => ({
     members : members,
     created_on : data.created_on,
     updated_on : data.updated_on,
-    estimated_date : data.estimated_date
+    start_date : data.start_date,
+    end_date : data.end_date
 });
 
 const constructProjectResource = (data) => ({

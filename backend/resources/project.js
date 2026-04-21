@@ -80,9 +80,56 @@ const createProject = async (token, body) => {
     const validationError = handleValidations(projectValidator(body));
     if(validationError) return handleResponses.errorResponse(400, "Invalid Data", validationError, body);
     const decodedToken = await jwt.verifyToken(token);
-    const projectCreated = await projectModels.createProject([body.name, body.description, body.status_id,body.estimated_date]);
+    const projectCreated = await projectModels.createProject([
+        body.name, 
+        body.description || null, 
+        body.status_id, 
+        body.start_date || null, 
+        body.end_date || null
+    ]);
     const projectId = projectCreated.insertId;
     await projectModels.createProjectMember([decodedToken.id, projectId, 1]);
+    
+    if (body.members && Array.isArray(body.members)) {
+        for (let userId of body.members) {
+            if (userId !== decodedToken.id) {
+                await projectModels.createProjectMember([userId, projectId, 2]);
+            }
+        }
+    }
+
+    // Auto-create default items
+    const issueModels = require('../models/issueModel');
+    
+    // Default Statuses
+    const statuses = ['To Do', 'In Progress', 'Done'];
+    for (let status of statuses) {
+        await issueModels.createStatus([projectId, status, `Default ${status} status`]);
+    }
+    
+    // Default Labels
+    const labels = ['Frontend', 'Backend', 'Design'];
+    for (let label of labels) {
+        await issueModels.createLabel([projectId, label, `Default ${label} label`]);
+    }
+    
+    // Default Priorities
+    const priorities = ['Low', 'Medium', 'High'];
+    for (let priority of priorities) {
+        await issueModels.createPriority([projectId, priority, `Default ${priority} priority`]);
+    }
+    
+    // Default Trackers
+    const trackers = ['Bug Tracker', 'Feature Tracker', 'Task Tracker'];
+    for (let tracker of trackers) {
+        await issueModels.createTracker([projectId, tracker, `Default ${tracker}`]);
+    }
+    
+    // Default Categories
+    const categories = ['UI/UX', 'API', 'Database'];
+    for (let category of categories) {
+        await issueModels.createCategory([projectId, category, `Default ${category} category`]);
+    }
     const projectRes = await projectModels.getAllProjectsById(projectId);
     for( i = 0; i < projectRes.length; i++ ){
         let projectMember = [];
@@ -98,7 +145,13 @@ const createProject = async (token, body) => {
 const editProject = async (id, body) => {
     const validationError = handleValidations(projectValidator(body));
     if(validationError) return handleResponses.errorResponse(400, "Invalid Data", validationError, body);
-    await projectModels.updateProject([body.name, body.description,body.estimated_date, id]);
+    await projectModels.updateProject([
+        body.name, 
+        body.description || null, 
+        body.start_date || null, 
+        body.end_date || null, 
+        id
+    ]);
     return handleResponses.successResponse(200, "Project updated successfully.", [], null);
 }
 

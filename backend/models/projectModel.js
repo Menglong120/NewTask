@@ -8,7 +8,7 @@ const createStatus = async (values) => {
 }
 
 const createProject = async (values) => {
-    const sql = "INSERT INTO `tbl_project`(`name`, `description`, `status_id`, `estimated_date`) VALUES (?,?,?,?)";
+    const sql = "INSERT INTO `tbl_project`(`name`, `description`, `status_id`, `start_date`, `end_date`) VALUES (?,?,?,?,?)";
     return await query(sql, values);
 }
 
@@ -39,7 +39,7 @@ const updateStatus = async (values) => {
 }
 
 const updateProject = async (values) => {
-    const sql = "UPDATE `tbl_project` SET `name` = ?, `description` = ?, `estimated_date` = ?  WHERE `id` = ?";
+    const sql = "UPDATE `tbl_project` SET `name` = ?, `description` = ?, `start_date` = ?, `end_date` = ? WHERE `id` = ?";
     return await query(sql, values);
 }
 
@@ -140,7 +140,8 @@ const getAllProjects = async (search, page, perpage, id) => {
             tbl_project.description AS 'description',
             tbl_project.created_on AS 'created_on',
             tbl_project.updated_on AS 'updated_on',
-            tbl_project.estimated_date AS 'estimated_date',
+            tbl_project.start_date AS 'start_date',
+            tbl_project.end_date AS 'end_date',
             tbl_project_status.id AS 'status_id',
             tbl_project_status.title AS 'status_title',
             tbl_project_status.description AS 'status_description',
@@ -173,7 +174,8 @@ const getAllProjectsNoCheck = async (search, page, perpage) => {
             tbl_project.description AS 'description',
             tbl_project.created_on AS 'created_on',
             tbl_project.updated_on AS 'updated_on',
-            tbl_project.estimated_date AS 'estimated_date',
+            tbl_project.start_date AS 'start_date',
+            tbl_project.end_date AS 'end_date',
             tbl_project_status.id AS 'status_id',
             tbl_project_status.title AS 'status_title',
             tbl_project_status.description AS 'status_description',
@@ -203,6 +205,8 @@ const getAllProjectsById = async (id) => {
             tbl_project.description AS 'description',
             tbl_project.created_on AS 'created_on',
             tbl_project.updated_on AS 'updated_on',
+            tbl_project.start_date AS 'start_date',
+            tbl_project.end_date AS 'end_date',
             tbl_project_status.id AS 'status_id',
             tbl_project_status.title AS 'status_title',
             tbl_project_status.description AS 'status_description',

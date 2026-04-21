@@ -138,7 +138,7 @@ const getAllSubIssue = async (search, page, perpage, issueId) => {
             WHERE sub_issues.issue_id = ?
         `;
     values.push(issueId);
-    if(search.length > 0){
+    if(search && search.length > 0){
         sql += ` AND (
                 sub_issues.id = ? AND
                 sub_issues.progress = ? AND
@@ -155,8 +155,8 @@ const getAllSubIssue = async (search, page, perpage, issueId) => {
                 t.name = ? AND
                 l.name = ?                
             )`;
-        values.push(search, search, search, search, search, search
-                    `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`
+        values.push(search, search, search, search, search, search,
+                    `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`,
                     `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
     if(perpage != 0 && page != 0) {
@@ -261,7 +261,7 @@ const countAllSubIssue = async (search, issueId) => {
             WHERE sub_issues.issue_id = ?
         `;
     values.push(issueId);
-    if(search.length > 0){
+    if(search && search.length > 0){
         sql += ` AND (
                 sub_issues.id = ? AND
                 sub_issues.progress = ? AND
@@ -278,8 +278,8 @@ const countAllSubIssue = async (search, issueId) => {
                 t.name = ? AND
                 l.name = ?                
             )`;
-        values.push(search, search, search, search, search, search
-                    `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`
+        values.push(search, search, search, search, search, search,
+                    `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`,
                     `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
     return await query(sql, values);
