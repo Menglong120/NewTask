@@ -7,17 +7,12 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import {
   MoreVertical,
-  Calendar,
   Layers,
   Edit2,
   CheckCircle2,
   Trash2,
   Clock,
-  ArrowRight,
   Target,
-  ChevronRight,
-  ShieldCheck,
-  Zap,
   Activity
 } from 'lucide-react';
 import {
@@ -37,16 +32,21 @@ interface Project {
   description: string;
   start_date?: string;
   end_date?: string;
+  department?: { id: number; name: string; } | null;
   status: { id: number; title: string; };
   members: Array<{ user: { id: string; display_name?: string; dis_name?: string; avarta: string; }; }>;
 }
 
 interface ProjectProgress { id: number; progress: number; issue: { total: string }; }
+interface Status {
+  id: number;
+  title: string;
+}
 
 interface ProjectKanbanBoardProps {
   projects: Project[];
   progressData: ProjectProgress[];
-  statuses: any[];
+  statuses: Status[];
   onEdit: (project: Project) => void;
   onUpdateStatus: (project: Project) => void;
   onStatusChange: (projectId: number, newStatusId: string) => void;
@@ -89,7 +89,7 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
     // Optimistic Update
     const updatedProjects = localProjects.map((p: Project) => {
       if (p.id === projectId) {
-        const newStatus = statuses.find((s: any) => s.id === newStatusId);
+        const newStatus = statuses.find((s) => s.id === newStatusId);
         return { ...p, status: newStatus || p.status };
       }
       return p;
@@ -104,11 +104,11 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
     <ScrollArea className="w-full whitespace-nowrap rounded-lg border bg-muted/20">
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="flex p-4 gap-4 h-[calc(100vh-280px)] min-h-[650px]">
-          {statuses.map((status: any) => {
+          {statuses.map((status) => {
             const statusProjects = localProjects.filter((p: Project) => p.status.id === status.id);
 
             return (
-              <div key={status.id} className="flex flex-col w-72 shrink-0 group/column">
+              <div key={status.id} className="flex flex-col flex-1 min-w-[280px] lg:min-w-0 group/column transition-all duration-500">
                 {/* Column Header */}
                 <div className="flex items-center justify-between mb-4 px-3 h-10 shrink-0 bg-muted/50 border rounded-md relative overflow-hidden group/header w-full">
                   <div className="absolute top-0 left-0 w-1 h-full bg-primary/40 group-hover/header:bg-primary transition-all duration-300" />
@@ -161,7 +161,7 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                                       "group/card bg-card border-border hover:border-primary/50 transition-all duration-200 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md relative overflow-hidden flex flex-col h-auto w-full",
                                       snapshot.isDragging ? "shadow-lg border-primary" : ""
                                     )}
-                                    onClick={() => window.location.href = `/projects/${project.id}`}
+                                    onClick={() => window.location.href = `/projects/${project.id}/settings`}
                                   >
                                     <CardHeader className="p-4 pb-0 space-y-3 relative z-10">
                                       <div className="flex justify-between items-start">
@@ -199,10 +199,20 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                                         {project.description || 'No description available.'}
                                       </p>
 
+                                      <div className="flex items-center justify-between gap-2 text-[10px]">
+                                        <Badge variant="outline" className="max-w-full truncate">
+                                          {project.department?.name || 'No Department'}
+                                        </Badge>
+                                        <div className="flex items-center gap-1 text-muted-foreground">
+                                          <Activity className="h-3 w-3" />
+                                          <span>{issuesCount} issues</span>
+                                        </div>
+                                      </div>
+
                                       <div className="space-y-2">
                                         <div className="flex justify-between items-center">
                                           <div className="flex -space-x-1.5">
-                                            {project.members.slice(0, 3).map((m: any, i: number) => (
+                                            {project.members.slice(0, 3).map((m, i: number) => (
                                               <Avatar key={i} className="h-6 w-6 ring-2 ring-background">
                                                 <AvatarImage src={`/upload/${m.user?.avarta}`} className="object-cover" />
                                                 <AvatarFallback className="text-[8px] font-bold">
@@ -233,7 +243,7 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                                         {daysRemaining < 0 ? `${Math.abs(daysRemaining)}d overdue` : daysRemaining === 0 ? 'Due today' : `${daysRemaining}d left`}
                                       </div>
                                       <div className="flex items-center gap-1.5 opacity-70">
-                                        <Layers className="h-3.5 w-3.5" /> {issuesCount}
+                                        <Layers className="h-3.5 w-3.5" /> {project.department?.name || 'General'}
                                       </div>
                                     </CardFooter>
                                   </Card>

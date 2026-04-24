@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { format } from 'date-fns';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,11 +67,10 @@ interface Issue {
   subIssues?: SubIssue[];
 }
 
-const IssuesCategoryPage = () => {
+const ProjectIssuesPage = () => {
   const { id } = useParams();
   const router = useRouter();
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [categoryName, setCategoryName] = useState('');
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -105,21 +105,18 @@ const IssuesCategoryPage = () => {
   const fetchCategoryAndIssues = React.useCallback(async () => {
     try {
       setLoading(true);
-      const [cateRes, issuesRes] = await Promise.all([
-        fetchApi(`/api/category/${id}`),
-        fetchApi(`/api/category/issues/${id}?search=${search}&page=&perpage=`)
+      const [projectRes, issuesRes] = await Promise.all([
+        fetchApi(`/api/projects`),
+        fetchApi(`/api/projects/issues/${id}?search=${search}&page=&perpage=`)
       ]);
 
-      let projId = null;
-
-      if (cateRes.result) {
-        setCategoryName(cateRes.data.category?.name || cateRes.data.name);
-        setProjectName(cateRes.data.project?.name);
-        projId = cateRes.data.project?.id;
+      if (projectRes.result) {
+        const project = projectRes.data?.datas?.find((p: any) => p.id === Number(id));
+        if (project) setProjectName(project.name);
       }
 
       if (issuesRes.result) {
-        const baseIssues = issuesRes.data.issues?.datas || issuesRes.data.issues || [];
+        const baseIssues = issuesRes.data.issues?.datas || issuesRes.data.issues || issuesRes.data || [];
         // Fetch sub-issues for each issue
         const issuesWithSubs = await Promise.all(baseIssues.map(async (issue: Issue) => {
           const subRes = await fetchApi(`/api/sub/issues/${issue.id}?search=&page=1&perpage=`);
@@ -131,22 +128,21 @@ const IssuesCategoryPage = () => {
         setIssues(issuesWithSubs);
       }
 
-      if (projId) {
-        setProjectId(projId);
-        const [statusRes, priorityRes, trackerRes, labelRes, memberRes] = await Promise.all([
-          fetchApi(`/api/projects/issue/statuses/${projId}`),
-          fetchApi(`/api/projects/issue/priorities/${projId}`),
-          fetchApi(`/api/projects/issue/trackers/${projId}`),
-          fetchApi(`/api/projects/issue/labels/${projId}`),
-          fetchApi(`/api/projects/members/${projId}?search=&page=&perpage=`)
-        ]);
+      setProjectId(Number(id));
+      const [statusRes, priorityRes, trackerRes, labelRes, memberRes] = await Promise.all([
+        fetchApi(`/api/projects/issue/statuses/${id}`),
+        fetchApi(`/api/projects/issue/priorities/${id}`),
+        fetchApi(`/api/projects/issue/trackers/${id}`),
+        fetchApi(`/api/projects/issue/labels/${id}`),
+        fetchApi(`/api/projects/members/${id}?search=&page=&perpage=`)
+      ]);
 
-        if (statusRes.result) setStatuses(statusRes.data.statuses);
-        if (priorityRes.result) setPriorities(priorityRes.data.priorities);
-        if (trackerRes.result) setTrackers(trackerRes.data.trackers);
-        if (labelRes.result) setLabels(labelRes.data.labels);
-        if (memberRes.result) setMembers(memberRes.data.datas || memberRes.data);
-      }
+      if (statusRes.result) setStatuses(statusRes.data.statuses || []);
+      if (priorityRes.result) setPriorities(priorityRes.data.priorities || []);
+      if (trackerRes.result) setTrackers(trackerRes.data.trackers || []);
+      if (labelRes.result) setLabels(labelRes.data.labels || []);
+      if (memberRes.result) setMembers(memberRes.data.datas || memberRes.data || []);
+
     } catch (error) {
       console.error(error);
     } finally {
@@ -177,7 +173,7 @@ const IssuesCategoryPage = () => {
       if (!endpoint) return;
 
       const isDate = field === 'start_date' || field === 'due_date';
-      const finalValue = isDate && valueId instanceof Date ? valueId.toISOString() : valueId;
+      const finalValue = isDate && valueId instanceof Date ? format(valueId, 'yyyy-MM-dd HH:mm:ss') : valueId;
       const payload = isDate ? { date: finalValue } : { item: valueId };
 
       const res = await fetchApi(`/api/issue/edit/${endpoint}/${issueId}`, {
@@ -186,7 +182,6 @@ const IssuesCategoryPage = () => {
       });
 
       if (res.result) {
-        // Create activity logs like the old code
         await fetchApi(`/api/issue/activity/${issueId}`, {
           method: 'POST',
           body: JSON.stringify({
@@ -238,24 +233,29 @@ const IssuesCategoryPage = () => {
     try {
       setSubmitting(true);
       const payload = {
-        ...newIssue,
-        start_date: newIssue.start_date?.toISOString(),
-        due_date: newIssue.due_date?.toISOString(),
-        assignee: newIssue.assignee_id
+        name: newIssue.name,
+        description: newIssue.description || '',
+        tracker_id: Number(newIssue.tracker_id),
+        status_id: Number(newIssue.status_id),
+        priority_id: Number(newIssue.priority_id),
+        label_id: newIssue.label_id ? Number(newIssue.label_id) : null,
+        assignee: newIssue.assignee_id ? Number(newIssue.assignee_id) : null,
+        start_date: newIssue.start_date ? format(newIssue.start_date, 'yyyy-MM-dd HH:mm:ss') : null,
+        due_date: newIssue.due_date ? format(newIssue.due_date, 'yyyy-MM-dd HH:mm:ss') : null,
       };
-      const res = await fetchApi(`/api/category/issue/${id}`, {
+      const res = await fetchApi(`/api/projects/issue/${id}`, {
         method: 'POST',
         body: JSON.stringify(payload)
       });
       if (res.result) {
-        // Create activity logs like the old code
-        await fetchApi(`/api/issue/activity/${res.data.id}`, {
+        await fetchApi(`/api/issue/activity/${res.data?.id || res.data?.insertId || 0}`, {
           method: 'POST',
           body: JSON.stringify({
             title: 'Issue Action',
             activity: `created an new issue - ${newIssue.name}`
           })
         });
+        console.log('res', res);
 
         setIsCreateModalOpen(false);
         setNewIssue({ name: '', tracker_id: '', status_id: '', priority_id: '', label_id: '', assignee_id: '', start_date: undefined, due_date: undefined, description: '' });
@@ -264,7 +264,9 @@ const IssuesCategoryPage = () => {
       } else {
         Swal.fire({ title: 'Error', text: res.msg || 'Failed to create issue', icon: 'error', background: '#121212', color: '#fff' });
       }
-    } catch (e) { } finally { setSubmitting(false); }
+    } catch (e: any) {
+      Swal.fire({ title: 'Network Error', text: e?.message || 'Could not reach the server. Is the backend running?', icon: 'error', background: '#121212', color: '#fff' });
+    } finally { setSubmitting(false); }
   };
 
   return (
@@ -272,7 +274,7 @@ const IssuesCategoryPage = () => {
 
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-background border px-6 py-4 rounded-xl shadow-sm">
-        <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+        <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground  tracking-widest">
           <div className="p-3 bg-primary/10 text-primary rounded-xl">
             <ClipboardList className="h-6 w-6" />
           </div>
@@ -280,11 +282,9 @@ const IssuesCategoryPage = () => {
             <div className="flex items-center gap-2 truncate">
               <span className="hover:text-primary cursor-pointer transition-colors" onClick={() => router.push('/projects')}>Projects</span>
               <ChevronRight className="h-3 w-3" />
-              <span className="text-foreground/60 truncate max-w-[150px]">{projectName || 'Project'}</span>
-              <ChevronRight className="h-3 w-3" />
-              <span className="text-foreground truncate">{categoryName || 'Category'}</span>
+              <span className="text-foreground truncate">{projectName || 'Project'}</span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground normal-case">Issue Directory</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground normal-case">Issues</h1>
           </div>
         </div>
 
@@ -300,8 +300,8 @@ const IssuesCategoryPage = () => {
           </div>
           <Tabs value={viewMode} onValueChange={(val: any) => setViewMode(val)} className="w-[150px]">
             <TabsList className="grid w-full grid-cols-2 h-9 p-1">
-              <TabsTrigger value="list" className="text-[10px] uppercase font-bold">List</TabsTrigger>
-              <TabsTrigger value="board" className="text-[10px] uppercase font-bold">Board</TabsTrigger>
+              <TabsTrigger value="list" className="text-[10px]  font-bold">List</TabsTrigger>
+              <TabsTrigger value="board" className="text-[10px]  font-bold">Board</TabsTrigger>
             </TabsList>
           </Tabs>
           <Button onClick={() => setIsCreateModalOpen(true)} size="sm" className="gap-2 h-9 shadow-sm">
@@ -315,7 +315,7 @@ const IssuesCategoryPage = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4 opacity-50">
             <Loader2 className="h-10 w-10 text-primary animate-spin" />
-            <p className="text-xs font-bold uppercase tracking-widest">Loading directory...</p>
+            <p className="text-xs font-bold  tracking-widest">Loading directory...</p>
           </div>
         ) : issues.length === 0 ? (
           <Card className="border-dashed border-2 bg-muted/10 py-32 rounded-2xl flex flex-col items-center justify-center text-center space-y-6">
@@ -324,7 +324,7 @@ const IssuesCategoryPage = () => {
             </div>
             <div className="space-y-1">
               <h3 className="text-xl font-bold">No issues found</h3>
-              <p className="text-sm text-muted-foreground max-w-sm mx-auto">This category is currently empty. <br />Create a new issue to begin tracking your objectives.</p>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">This project is currently empty. <br />Create a new issue to begin tracking your objectives.</p>
             </div>
             <Button onClick={() => setIsCreateModalOpen(true)} size="sm" variant="outline" className="gap-2">
               <Plus className="h-4 w-4" /> Initialize Mission
@@ -371,7 +371,7 @@ const IssuesCategoryPage = () => {
                         )}
                       </Button>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">#{issue.id}</span>
+                        <span className="text-[10px] font-bold text-muted-foreground/60  tracking-widest">#{issue.id}</span>
                         <h3 className="font-bold text-lg tracking-tight truncate group-hover:text-primary transition-colors">
                           {issue.name}
                         </h3>
@@ -398,15 +398,15 @@ const IssuesCategoryPage = () => {
                       {/* State Dropdown */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest border shadow-none bg-muted/20">
+                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold  tracking-widest border shadow-none bg-muted/20">
                             <CircleDot className="h-3.5 w-3.5 text-sky-500" />
                             {issue.status?.name || 'Status'}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                          <DropdownMenuLabel className="text-[9px] uppercase font-bold text-muted-foreground px-3">Update Status</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-[9px]  font-bold text-muted-foreground px-3">Update Status</DropdownMenuLabel>
                           {statuses.map(s => (
-                            <DropdownMenuItem key={s.id} onClick={() => handleUpdateIssueField(issue.id, 'status', s.id)} className="text-[10px] font-bold uppercase py-2">
+                            <DropdownMenuItem key={s.id} onClick={() => handleUpdateIssueField(issue.id, 'status', s.id)} className="text-[10px] font-bold  py-2">
                               {s.name}
                             </DropdownMenuItem>
                           ))}
@@ -416,15 +416,15 @@ const IssuesCategoryPage = () => {
                       {/* Labels Dropdown */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest border shadow-none bg-muted/20">
+                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold  tracking-widest border shadow-none bg-muted/20">
                             <Tag className="h-3.5 w-3.5 text-blue-500" />
                             {issue.label?.name || 'Label'}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                          <DropdownMenuLabel className="text-[9px] uppercase font-bold text-muted-foreground px-3">Update Label</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-[9px]  font-bold text-muted-foreground px-3">Update Label</DropdownMenuLabel>
                           {labels.map(l => (
-                            <DropdownMenuItem key={l.id} onClick={() => handleUpdateIssueField(issue.id, 'label', l.id)} className="text-[10px] font-bold uppercase py-2">
+                            <DropdownMenuItem key={l.id} onClick={() => handleUpdateIssueField(issue.id, 'label', l.id)} className="text-[10px] font-bold  py-2">
                               {l.name}
                             </DropdownMenuItem>
                           ))}
@@ -434,15 +434,15 @@ const IssuesCategoryPage = () => {
                       {/* Priority Dropdown */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold uppercase tracking-widest border shadow-none bg-muted/20">
+                          <Button variant="outline" size="sm" className="h-8 px-3 gap-2 text-[10px] font-bold  tracking-widest border shadow-none bg-muted/20">
                             <Flag className={cn("h-3.5 w-3.5", issue.priority?.name?.toLowerCase().includes('high') ? "text-red-500" : "text-orange-500")} />
                             {issue.priority?.name || 'Priority'}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                          <DropdownMenuLabel className="text-[9px] uppercase font-bold text-muted-foreground px-3">Update Priority</DropdownMenuLabel>
+                          <DropdownMenuLabel className="text-[9px]  font-bold text-muted-foreground px-3">Update Priority</DropdownMenuLabel>
                           {priorities.map(p => (
-                            <DropdownMenuItem key={p.id} onClick={() => handleUpdateIssueField(issue.id, 'priority', p.id)} className="text-[10px] font-bold uppercase py-2">
+                            <DropdownMenuItem key={p.id} onClick={() => handleUpdateIssueField(issue.id, 'priority', p.id)} className="text-[10px] font-bold  py-2">
                               {p.name}
                             </DropdownMenuItem>
                           ))}
@@ -464,14 +464,14 @@ const IssuesCategoryPage = () => {
                           onSelect={(value) => handleUpdateIssueField(issue.id, 'start_date', value)}
                           placeholder="Start"
                           dateFormat="PP"
-                          className="w-[110px] h-8 px-2 text-[10px] font-bold uppercase"
+                          className="w-[110px] h-8 px-2 text-[10px] font-bold "
                         />
                         <DatePicker
                           selected={issue.due_date ? new Date(issue.due_date) : undefined}
                           onSelect={(value) => handleUpdateIssueField(issue.id, 'due_date', value)}
                           placeholder="Due"
                           dateFormat="PP"
-                          className="w-[110px] h-8 px-2 text-[10px] font-bold uppercase"
+                          className="w-[110px] h-8 px-2 text-[10px] font-bold "
                         />
                       </div>
 
@@ -495,9 +495,9 @@ const IssuesCategoryPage = () => {
                         <div className="flex items-center gap-4">
                           <span className="text-[9px] font-black text-muted-foreground/40 shrink-0">#{sub.id}</span>
                           <div>
-                            <p className="text-xs font-bold text-foreground/90 uppercase tracking-tight">{sub.name}</p>
+                            <p className="text-xs font-bold text-foreground/90  tracking-tight">{sub.name}</p>
                             <div className="flex items-center gap-3 mt-1">
-                              <Badge variant="outline" className="text-[8px] font-bold h-4 px-1.5 uppercase tracking-widest bg-background">
+                              <Badge variant="outline" className="text-[8px] font-bold h-4 px-1.5  tracking-widest bg-background">
                                 {sub.status?.name}
                               </Badge>
                               <div className="flex items-center gap-2">
@@ -535,7 +535,7 @@ const IssuesCategoryPage = () => {
                 <Plus className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest leading-none mb-1">Issue Directory</p>
+                <p className="text-xs font-bold text-muted-foreground  tracking-widest leading-none mb-1">Issue Directory</p>
                 <p>Initialize New Issue</p>
               </div>
             </DialogTitle>
@@ -543,7 +543,7 @@ const IssuesCategoryPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 py-4 overflow-y-auto max-h-[60vh] px-1">
             <div className="space-y-2 md:col-span-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Title</Label>
+              <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Title</Label>
               <Input
                 placeholder="Brief objective title..."
                 value={newIssue.name}
@@ -554,49 +554,49 @@ const IssuesCategoryPage = () => {
 
             <div className="grid grid-cols-2 gap-4 md:col-span-2">
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tracker</Label>
+                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Tracker</Label>
                 <Select value={newIssue.tracker_id} onValueChange={(v) => setNewIssue({ ...newIssue, tracker_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                  <SelectTrigger className="h-10 text-xs font-bold w-full">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {trackers.map(t => <SelectItem key={t.id} value={String(t.id)} className="text-[10px] font-bold uppercase">{t.name}</SelectItem>)}
+                    {trackers.map(t => <SelectItem key={t.id} value={String(t.id)} className="text-[10px] font-bold ">{t.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Status</Label>
+                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Status</Label>
                 <Select value={newIssue.status_id} onValueChange={(v) => setNewIssue({ ...newIssue, status_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                  <SelectTrigger className="h-10 text-xs font-bold w-full">
                     <SelectValue placeholder="Select State" />
                   </SelectTrigger>
                   <SelectContent>
-                    {statuses.map(s => <SelectItem key={s.id} value={String(s.id)} className="text-[10px] font-bold uppercase">{s.name}</SelectItem>)}
+                    {statuses.map(s => <SelectItem key={s.id} value={String(s.id)} className="text-[10px] font-bold ">{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Priority</Label>
+                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Priority</Label>
                 <Select value={newIssue.priority_id} onValueChange={(v) => setNewIssue({ ...newIssue, priority_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                  <SelectTrigger className="h-10 text-xs font-bold w-full">
                     <SelectValue placeholder="Select Impact" />
                   </SelectTrigger>
                   <SelectContent>
-                    {priorities.map(p => <SelectItem key={p.id} value={String(p.id)} className="text-[10px] font-bold uppercase">{p.name}</SelectItem>)}
+                    {priorities.map(p => <SelectItem key={p.id} value={String(p.id)} className="text-[10px] font-bold ">{p.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Label</Label>
+                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Label</Label>
                 <Select value={newIssue.label_id} onValueChange={(v) => setNewIssue({ ...newIssue, label_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold uppercase">
+                  <SelectTrigger className="h-10 text-xs font-bold w-full">
                     <SelectValue placeholder="Select Tag" />
                   </SelectTrigger>
                   <SelectContent>
-                    {labels.map(l => <SelectItem key={l.id} value={String(l.id)} className="text-[10px] font-bold uppercase">{l.name}</SelectItem>)}
+                    {labels.map(l => <SelectItem key={l.id} value={String(l.id)} className="text-[10px] font-bold ">{l.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -604,7 +604,7 @@ const IssuesCategoryPage = () => {
 
             <div className="grid grid-cols-2 gap-4 md:col-span-2">
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Start Date</Label>
+                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Start Date</Label>
                 <DatePicker
                   selected={newIssue.start_date}
                   onSelect={(v) => setNewIssue({ ...newIssue, start_date: v })}
@@ -612,7 +612,7 @@ const IssuesCategoryPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Due Date</Label>
+                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Due Date</Label>
                 <DatePicker
                   selected={newIssue.due_date}
                   onSelect={(v) => setNewIssue({ ...newIssue, due_date: v })}
@@ -622,7 +622,7 @@ const IssuesCategoryPage = () => {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Assigned Team Member</Label>
+              <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Assigned Team Member</Label>
               <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y">
                 {members.map((m) => {
                   const isSelected = String(m.id) === newIssue.assignee_id;
@@ -644,7 +644,7 @@ const IssuesCategoryPage = () => {
                         <AvatarFallback className="text-[8px] font-bold">{name[0]}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="text-[11px] font-bold truncate uppercase">{name}</p>
+                        <p className="text-[11px] font-bold truncate ">{name}</p>
                         <p className="text-[9px] text-muted-foreground truncate">{m.email}</p>
                       </div>
                     </div>
@@ -654,7 +654,7 @@ const IssuesCategoryPage = () => {
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Description</Label>
+              <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Description</Label>
               <Textarea
                 placeholder="Tactical objectives and requirements..."
                 rows={3}
@@ -688,4 +688,4 @@ const IssuesCategoryPage = () => {
   );
 };
 
-export default IssuesCategoryPage;
+export default ProjectIssuesPage;

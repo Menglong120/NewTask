@@ -12,11 +12,10 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     };
 
     const response = await fetch(url, defaultOptions);
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.msg || 'Something went wrong');
-    }
-
-    return response.json();
+    const data = await response.json().catch(() => ({
+        result: false,
+        msg: 'Invalid or empty server response',
+        data: []
+    }));
+    return data;
 }

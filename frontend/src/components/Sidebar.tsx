@@ -167,7 +167,7 @@ const Sidebar = () => {
                       {[
                         { name: 'Settings', href: `/projects/${project.id}/settings`, icon: Settings },
                         { name: 'Knowledge Base', href: `/projects/${project.id}/resources`, icon: LayoutGrid },
-                        { name: 'Category Ideas', href: `/projects/${project.id}/category`, icon: BarChart3 }
+                        { name: 'Task Board', href: `/projects/${project.id}/issues`, icon: CheckSquare }
                       ].map(sub => {
                         const isSubActive = pathname === sub.href;
                         return (

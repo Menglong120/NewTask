@@ -1,31 +1,20 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { DatePicker } from '@/components/ui/datepicker';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   FolderOpen,
   Search,
   Plus,
-  MoreVertical,
   Edit2,
-  Trash2,
   CheckCircle2,
   XCircle,
   Loader2,
-  Calendar,
   ChevronDown
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -44,8 +33,6 @@ import { Label } from "@/components/ui/label";
 import { fetchApi } from '@/lib/api';
 import ProjectKanbanBoard from '@/components/ProjectKanbanBoard';
 import Swal from 'sweetalert2';
-import { cn } from '@/lib/utils';
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface Project {
   id: number;
@@ -53,53 +40,80 @@ interface Project {
   description: string;
   start_date?: string;
   end_date?: string;
+  department?: { id: number; name: string; } | null;
   status: { id: number; title: string; };
   members: Array<{ user: { id: string; display_name?: string; dis_name?: string; avarta: string; }; }>;
 }
 
 interface ProjectProgress { id: number; progress: number; issue: { total: string }; }
+interface StatusOption {
+  id: number;
+  title: string;
+}
+interface DepartmentOption {
+  id: number;
+  name: string;
+}
+interface ProfileData {
+  id: string;
+  role?: { id: number; name: string };
+}
+
+const getProfileFromResponse = (response: { data?: unknown }) => {
+  const profile = Array.isArray(response?.data)
+    ? response.data[0] as Record<string, unknown> | undefined
+    : response?.data as Record<string, unknown> | undefined;
+
+  if (!profile) return null;
+
+  const role = profile.role as Record<string, unknown> | undefined;
+  const rawRoleId = role?.id ?? profile.role_id ?? null;
+  const roleId = Number(rawRoleId);
+
+  return {
+    id: String(profile.id ?? ''),
+    role: Number.isFinite(roleId) ? { id: roleId, name: String(role?.name ?? '') } : undefined,
+  } as ProfileData;
+};
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [progressData, setProgressData] = useState<ProjectProgress[]>([]);
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState<StatusOption[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-
-  // Filters
   const [search, setSearch] = useState('');
-
-  // Modals
   const [activeModal, setActiveModal] = useState<'create' | 'edit' | 'status' | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  // Forms
-  const [newProject, setNewProject] = useState({ 
-    name: '', 
-    status_id: '', 
-    start_date: undefined as Date | undefined, 
-    end_date: undefined as Date | undefined, 
-    description: '', 
-    members: [] as string[] 
+  const [newProject, setNewProject] = useState({
+    name: '',
+    status_id: '',
+    department_id: 'none',
+    start_date: undefined as Date | undefined,
+    end_date: undefined as Date | undefined,
+    description: '',
   });
-  const [editForm, setEditForm] = useState({ 
-    name: '', 
-    description: '', 
-    start_date: undefined as Date | undefined, 
-    end_date: undefined as Date | undefined 
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    department_id: 'none',
+    start_date: undefined as Date | undefined,
+    end_date: undefined as Date | undefined
   });
   const [statusForm, setStatusForm] = useState({ status_id: '' });
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [projectRes, progressRes, statusRes, userRes, profileRes] = await Promise.allSettled([
+      const [projectRes, progressRes, statusRes, profileRes, departmentRes] = await Promise.allSettled([
         fetchApi('/api/projects'),
         fetchApi('/api/analyst/dashboard/allprogress'),
         fetchApi('/api/projects/status'),
-        fetchApi('/api/users?search=&role=0&page=1&perpage=1000'),
-        fetchApi('/api/profile')
+        fetchApi('/api/profile'),
+        fetchApi('/api/departments?search=')
       ]);
 
       if (projectRes.status === 'fulfilled' && projectRes.value.result) {
@@ -111,21 +125,11 @@ export default function ProjectsPage() {
       if (statusRes.status === 'fulfilled' && statusRes.value.result) {
         setStatuses(statusRes.value.data.datas || statusRes.value.data);
       }
-      let loggedInUserId = null;
-      if (profileRes.status === 'fulfilled' && profileRes.value.result && profileRes.value.data.length > 0) {
-        loggedInUserId = profileRes.value.data[0].id;
+      if (profileRes.status === 'fulfilled' && profileRes.value.result) {
+        setProfile(getProfileFromResponse(profileRes.value));
       }
-
-      if (userRes.status === 'fulfilled' && userRes.value.result) {
-        let fetchedUsers = userRes.value.data.datas || userRes.value.data;
-        fetchedUsers = fetchedUsers.filter((u: any) =>
-          Number(u.role?.id) !== 1 &&
-          Number(u.role_id) !== 1
-        );
-        if (loggedInUserId) {
-          fetchedUsers = fetchedUsers.filter((u: any) => u.id !== loggedInUserId);
-        }
-        setUsers(fetchedUsers);
+      if (departmentRes.status === 'fulfilled' && departmentRes.value.result) {
+        setDepartments(departmentRes.value.data);
       }
     } catch (error) {
       console.error('Fetch error:', error);
@@ -146,23 +150,32 @@ export default function ProjectsPage() {
       setSubmitting(true);
       const payload = {
         ...newProject,
+        department_id: newProject.department_id === 'none' ? null : Number(newProject.department_id),
         start_date: newProject.start_date?.toISOString(),
         end_date: newProject.end_date?.toISOString()
       };
       const res = await fetchApi('/api/project', { method: 'POST', body: JSON.stringify(payload) });
       if (res.result) {
         setActiveModal(null);
-        setNewProject({ name: '', status_id: statuses.length > 0 ? String(statuses[0].id) : '', start_date: undefined, end_date: undefined, description: '', members: [] });
+        setNewProject({
+          name: '',
+          status_id: statuses.length > 0 ? String(statuses[0].id) : '',
+          department_id: 'none',
+          start_date: undefined,
+          end_date: undefined,
+          description: '',
+        });
         fetchData();
         window.dispatchEvent(new Event('projectUpdate'));
         Swal.fire({ icon: 'success', title: 'Project created!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
-      } else { 
-        Swal.fire({ title: 'Error', text: res.msg || 'Failed to create project', icon: 'error', background: '#121212', color: '#fff' }); 
+      } else {
+        Swal.fire({ title: 'Error', text: res.msg || 'Failed to create project', icon: 'error', background: '#121212', color: '#fff' });
       }
-    } catch (error: any) { 
-      Swal.fire({ title: 'System Error', text: error.message || 'An unexpected error occurred', icon: 'error', background: '#121212', color: '#fff' });
-    } finally { 
-      setSubmitting(false); 
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+      Swal.fire({ title: 'System Error', text: message, icon: 'error', background: '#121212', color: '#fff' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -172,22 +185,24 @@ export default function ProjectsPage() {
       setSubmitting(true);
       const payload = {
         ...editForm,
+        department_id: editForm.department_id === 'none' ? null : Number(editForm.department_id),
         start_date: editForm.start_date?.toISOString(),
         end_date: editForm.end_date?.toISOString()
       };
-      const res = await fetchApi(`/api/projects/${selectedProject.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      const res = await fetchApi(`/api/project/${selectedProject.id}`, { method: 'PUT', body: JSON.stringify(payload) });
       if (res.result) {
         setActiveModal(null);
         fetchData();
         window.dispatchEvent(new Event('projectUpdate'));
         Swal.fire({ icon: 'success', title: 'Updated!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
-      } else { 
-        Swal.fire({ title: 'Error', text: res.msg || 'Failed to update project', icon: 'error', background: '#121212', color: '#fff' }); 
+      } else {
+        Swal.fire({ title: 'Error', text: res.msg || 'Failed to update project', icon: 'error', background: '#121212', color: '#fff' });
       }
-    } catch (error: any) {
-      Swal.fire({ title: 'System Error', text: error.message || 'Failed to update project', icon: 'error', background: '#121212', color: '#fff' });
-    } finally { 
-      setSubmitting(false); 
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update project';
+      Swal.fire({ title: 'System Error', text: message, icon: 'error', background: '#121212', color: '#fff' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -211,20 +226,22 @@ export default function ProjectsPage() {
           fetchData();
           window.dispatchEvent(new Event('projectUpdate'));
           Swal.fire({ icon: 'success', title: 'Deleted!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
-        } else { 
-          Swal.fire({ title: 'Error', text: res.msg || 'Failed to delete project', icon: 'error', background: '#121212', color: '#fff' }); 
+        } else {
+          Swal.fire({ title: 'Error', text: res.msg || 'Failed to delete project', icon: 'error', background: '#121212', color: '#fff' });
         }
-      } catch (error: any) {
-        Swal.fire({ title: 'System Error', text: error.message || 'Failed to delete project', icon: 'error', background: '#121212', color: '#fff' });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to delete project';
+        Swal.fire({ title: 'System Error', text: message, icon: 'error', background: '#121212', color: '#fff' });
       }
     }
   };
 
   const openEditModal = (project: Project) => {
     setSelectedProject(project);
-    setEditForm({ 
-      name: project.name, 
-      description: project.description || '', 
+    setEditForm({
+      name: project.name,
+      description: project.description || '',
+      department_id: project.department ? String(project.department.id) : 'none',
       start_date: project.start_date ? new Date(project.start_date) : undefined,
       end_date: project.end_date ? new Date(project.end_date) : undefined
     });
@@ -249,13 +266,14 @@ export default function ProjectsPage() {
         fetchData();
         window.dispatchEvent(new Event('projectUpdate'));
         Swal.fire({ icon: 'success', title: 'Status updated!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
-      } else { 
-        Swal.fire({ title: 'Error', text: res.msg || 'Failed to update status', icon: 'error', background: '#121212', color: '#fff' }); 
+      } else {
+        Swal.fire({ title: 'Error', text: res.msg || 'Failed to update status', icon: 'error', background: '#121212', color: '#fff' });
       }
-    } catch (error: any) {
-      Swal.fire({ title: 'System Error', text: error.message || 'Failed to update status', icon: 'error', background: '#121212', color: '#fff' });
-    } finally { 
-      setSubmitting(false); 
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update status';
+      Swal.fire({ title: 'System Error', text: message, icon: 'error', background: '#121212', color: '#fff' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -278,24 +296,21 @@ export default function ProjectsPage() {
   };
 
   const filteredProjects = useMemo(() => {
-    return projects.filter(p => {
-      return p.name.toLowerCase().includes(search.toLowerCase());
-    });
+    return projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
   }, [projects, search]);
 
+  const canManageProjects = profile?.role?.id === 1 || profile?.role?.id === 2;
+
   const openCreateModal = (statusId?: string) => {
-    if (statusId) {
-      setNewProject(prev => ({ ...prev, status_id: statusId }));
-    } else if (statuses.length > 0 && !newProject.status_id) {
-      setNewProject(prev => ({ ...prev, status_id: String(statuses[0].id) }));
-    }
+    setNewProject(prev => ({
+      ...prev,
+      status_id: statusId || prev.status_id || (statuses.length > 0 ? String(statuses[0].id) : ''),
+    }));
     setActiveModal('create');
   };
 
   return (
     <div className="space-y-12 w-full px-4 lg:px-8 py-8 animate-in fade-in duration-700">
-
-      {/* Header section */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-card border p-6 rounded-lg relative overflow-hidden shadow-sm">
         <div className="flex items-center gap-4 relative z-10">
           <div className="p-3 bg-primary/10 text-primary rounded-xl">
@@ -329,9 +344,11 @@ export default function ProjectsPage() {
             </Button>
           )}
 
-          <Button onClick={() => openCreateModal()} className="h-10 px-4">
-            <Plus className="h-4 w-4 mr-2" /> New Project
-          </Button>
+          {canManageProjects && (
+            <Button onClick={() => openCreateModal()} className="h-10 px-4">
+              <Plus className="h-4 w-4 mr-2" /> New Project
+            </Button>
+          )}
         </div>
       </div>
 
@@ -368,7 +385,6 @@ export default function ProjectsPage() {
         />
       )}
 
-      {/* Modals */}
       <Dialog open={activeModal === 'create'} onOpenChange={(open) => !open && setActiveModal(null)}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader className="mb-4">
@@ -380,15 +396,15 @@ export default function ProjectsPage() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-5 py-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Mission Name</Label>
+              <Input value={newProject.name} onChange={(e) => setNewProject({ ...newProject, name: e.target.value })} placeholder="Project name" className="h-10" />
+            </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold">Mission Name</Label>
-                <Input value={newProject.name} onChange={(e) => setNewProject({ ...newProject, name: e.target.value })} placeholder="Project name" className="h-10" />
-              </div>
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Status</Label>
                 <Select value={newProject.status_id} onValueChange={(val) => setNewProject({ ...newProject, status_id: val })}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className="h-10 w-full">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -398,8 +414,20 @@ export default function ProjectsPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Department</Label>
+                <Select value={newProject.department_id} onValueChange={(val) => setNewProject({ ...newProject, department_id: val })}>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Department</SelectItem>
+                    {departments.map((department) => (
+                      <SelectItem key={department.id} value={String(department.id)}>{department.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Start Date</Label>
                 <DatePicker selected={newProject.start_date} onSelect={(value) => setNewProject({ ...newProject, start_date: value })} className="w-full" />
@@ -412,34 +440,6 @@ export default function ProjectsPage() {
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Description</Label>
               <Input value={newProject.description} onChange={(e) => setNewProject({ ...newProject, description: e.target.value })} placeholder="Strategic objectives..." className="h-10" />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Team Members</Label>
-              <Card className="p-2 max-h-48 overflow-y-auto">
-                <div className="space-y-1">
-                  {users.map((user) => (
-                    <div key={user.id} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted transition-colors cursor-pointer" onClick={() => {
-                      const isChecked = newProject.members.includes(user.id);
-                      const updated = !isChecked ? [...newProject.members, user.id] : newProject.members.filter(id => id !== user.id);
-                      setNewProject({ ...newProject, members: updated });
-                    }}>
-                      <Checkbox
-                        id={`user-${user.id}`}
-                        checked={newProject.members.includes(user.id)}
-                        onCheckedChange={() => {}} // Controlled by div click for better UX in list
-                      />
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={`/upload/${user.avarta}`} className="object-cover" />
-                        <AvatarFallback className="text-[10px] font-bold">{user.display_name?.[0] || user.first_name?.[0] || 'U'}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col min-w-0">
-                        <Label className="text-xs font-bold leading-none cursor-pointer truncate">{user.display_name || user.dis_name || `${user.first_name} ${user.last_name}`}</Label>
-                        <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
             </div>
           </div>
           <DialogFooter className="mt-6 gap-2">
@@ -470,6 +470,20 @@ export default function ProjectsPage() {
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Description</Label>
               <Input value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} className="h-10" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Department</Label>
+              <Select value={editForm.department_id} onValueChange={(val) => setEditForm({ ...editForm, department_id: val })}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Select department" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Department</SelectItem>
+                  {departments.map((department) => (
+                    <SelectItem key={department.id} value={String(department.id)}>{department.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -505,7 +519,7 @@ export default function ProjectsPage() {
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Strategic Status</Label>
               <Select value={statusForm.status_id} onValueChange={(val) => setStatusForm({ ...statusForm, status_id: val })}>
-                <SelectTrigger className="h-10">
+                <SelectTrigger className="h-10 w-full">
                   <SelectValue placeholder="Transition to..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -524,7 +538,6 @@ export default function ProjectsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { fetchApi } from '@/lib/api';
 import Swal from 'sweetalert2';
 import {
   Search, UserPlus, Eye, KeyRound, Edit2, Trash2, Filter,
-  ChevronLeft, ChevronRight, CheckCircle2, ShieldAlert, Mail,
+  ChevronLeft, ChevronRight, ShieldAlert, Mail,
   User, Shield, Briefcase, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
+import { Card, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface UserData {
   id: string;
@@ -30,14 +32,13 @@ interface UserData {
   description: string;
   avarta: string;
   created_on: string;
+  department: { id: number; name: string; } | null;
   role: { id: number; name: string; };
 }
 interface ProjectData { id: number; name: string; members: { user: { id: string } }[]; }
 interface Paginate { page: number; perpage: number; total: number; pages: number; }
-
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
+interface DepartmentData { id: number; name: string; }
+interface RoleData { id: number; name: string; }
 
 const UsersPage = () => {
   const [users, setUsers] = useState<UserData[]>([]);
@@ -45,13 +46,15 @@ const UsersPage = () => {
   const [paginate, setPaginate] = useState<Paginate | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<number>(3);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [roles, setRoles] = useState<RoleData[]>([]);
+  const [departments, setDepartments] = useState<DepartmentData[]>([]);
   const [searchInput, setSearchInput] = useState('');
   const [filters, setFilters] = useState({ search: '', role: '0', rowsPerPage: 5 });
 
   const [activeModal, setActiveModal] = useState<'view' | 'edit' | 'password' | 'create' | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [editRoleId, setEditRoleId] = useState<number>(0);
+  const [editDepartmentId, setEditDepartmentId] = useState<string>('none');
   const [changePw, setChangePw] = useState('');
   const [showPw, setShowPw] = useState(false);
 
@@ -63,7 +66,7 @@ const UsersPage = () => {
     const getProfile = async () => {
       try {
         const res = await fetchApi('/api/profile');
-        if (res.result && res.data.length > 0) setCurrentUserRole(res.data[0].role.id);
+        if (res.result && res.data.length > 0) setCurrentUserRole(Number(res.data[0].role.id));
       } catch { }
     };
     const getProjects = async () => {
@@ -78,18 +81,24 @@ const UsersPage = () => {
         if (res.result) setRoles(res.data);
       } catch { }
     };
-    getProfile(); getProjects(); getRoles();
+    const getDepartments = async () => {
+      try {
+        const res = await fetchApi('/api/departments?search=');
+        if (res.result) setDepartments(res.data);
+      } catch { }
+    };
+    getProfile(); getProjects(); getRoles(); getDepartments();
   }, []);
 
-  const fetchUsers = async (page = 1) => {
+  const fetchUsers = useCallback(async (page = 1) => {
     try {
       setLoading(true);
       const res = await fetchApi(`/api/users?search=${filters.search}&role=${filters.role}&page=${page}&perpage=${filters.rowsPerPage}`);
       if (res.result) { setUsers(res.data.datas); setPaginate(res.data.paginate); }
     } catch { } finally { setLoading(false); }
-  };
+  }, [filters.role, filters.rowsPerPage, filters.search]);
 
-  useEffect(() => { fetchUsers(1); }, [filters.role, filters.rowsPerPage, filters.search]);
+  useEffect(() => { fetchUsers(1); }, [fetchUsers]);
 
   const handleSearch = () => setFilters(prev => ({ ...prev, search: searchInput }));
 
@@ -119,9 +128,15 @@ const UsersPage = () => {
   const handleEditSave = async () => {
     if (!selectedUser) return;
     try {
-      const res = await fetchApi(`/api/user/${selectedUser.id}`, { method: 'PUT', body: JSON.stringify({ new_role_id: editRoleId }) });
+      const res = await fetchApi(`/api/user/${selectedUser.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          new_role_id: editRoleId,
+          department_id: editDepartmentId === 'none' ? null : Number(editDepartmentId),
+        })
+      });
       if (res.result) {
-        Swal.fire({ icon: 'success', title: 'Role updated', position: 'top-end', toast: true, timer: 3000, showConfirmButton: false });
+        Swal.fire({ icon: 'success', title: 'User updated', position: 'top-end', toast: true, timer: 3000, showConfirmButton: false });
         fetchUsers(paginate?.page ?? 1); setActiveModal(null);
       }
     } catch { }
@@ -147,7 +162,7 @@ const UsersPage = () => {
     setActiveModal(null);
   };
 
-  const roleVariant = (roleId: number) => {
+  const roleVariant = (roleId: number): 'destructive' | 'secondary' | 'outline' => {
     if (roleId === 1) return 'destructive';
     if (roleId === 2) return 'secondary';
     return 'outline';
@@ -225,6 +240,7 @@ const UsersPage = () => {
                 <TableHead className="w-16">Profile</TableHead>
                 <TableHead>User Details</TableHead>
                 <TableHead className="hidden md:table-cell">Contact</TableHead>
+                <TableHead className="hidden lg:table-cell">Department</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className="hidden lg:table-cell">Active Projects</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -233,14 +249,14 @@ const UsersPage = () => {
             <TableBody>
               {loading && users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-40 text-center">
+                  <TableCell colSpan={7} className="h-40 text-center">
                     <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-primary" />
                     <span className="text-sm text-muted-foreground font-medium">Loading user data...</span>
                   </TableCell>
                 </TableRow>
               ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-40 text-center">
+                  <TableCell colSpan={7} className="h-40 text-center">
                     <div className="flex flex-col items-center justify-center opacity-40">
                       <User className="h-10 w-10 mb-2" />
                       <p className="text-sm font-bold">No users matches found</p>
@@ -276,8 +292,13 @@ const UsersPage = () => {
                         <Mail className="h-3 w-3" /> {user.email}
                       </div>
                     </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <Badge variant="outline" className="text-[10px]">
+                        {user.department?.name || 'Unassigned'}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
-                      <Badge variant={roleVariant(user.role.id) as any} className="text-[10px] tracking-wide h-5">
+                      <Badge variant={roleVariant(user.role.id)} className="text-[10px] tracking-wide h-5">
                         {isSA ? <ShieldAlert className="h-3 w-3 mr-1" /> : <Shield className="h-3 w-3 mr-1" />}
                         {user.role.name}
                       </Badge>
@@ -302,7 +323,12 @@ const UsersPage = () => {
                         )}
                         {canEdit && (
                           <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-indigo-500"
-                            onClick={() => { setSelectedUser(user); setEditRoleId(user.role.id); setActiveModal('edit'); }}>
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setEditRoleId(user.role.id);
+                              setEditDepartmentId(user.department ? String(user.department.id) : 'none');
+                              setActiveModal('edit');
+                            }}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
                         )}
@@ -380,6 +406,7 @@ const UsersPage = () => {
               <div className="w-full space-y-4 rounded-lg bg-muted/30 p-4 border">
                 {[
                   { label: 'Email', value: selectedUser.email },
+                  { label: 'Department', value: selectedUser.department?.name || 'Unassigned' },
                   { label: 'Role', value: selectedUser.role.name },
                   { label: 'Joined', value: new Date(selectedUser.created_on).toLocaleDateString() },
                   { label: 'Projects', value: getUserProjects(selectedUser.id) },
@@ -422,12 +449,26 @@ const UsersPage = () => {
               <div className="space-y-2">
                 <Label className="text-xs font-semibold">Assign Role</Label>
                 <Select value={String(editRoleId)} onValueChange={(v) => setEditRoleId(Number(v))}>
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger className="h-10 w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {roles.filter(r => r.id !== 1).map(r => (
                       <SelectItem key={r.id} value={String(r.id)}>{r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Assign Department</Label>
+                <Select value={editDepartmentId} onValueChange={setEditDepartmentId}>
+                  <SelectTrigger className="h-10 w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Department</SelectItem>
+                    {departments.map((department) => (
+                      <SelectItem key={department.id} value={String(department.id)}>{department.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -516,7 +557,7 @@ const UsersPage = () => {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Assign Role</Label>
               <Select value={String(createForm.roleId)} onValueChange={(v) => setCreateForm(f => ({ ...f, roleId: Number(v) }))}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-9 w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

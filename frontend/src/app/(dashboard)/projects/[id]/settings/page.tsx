@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { fetchApi } from '@/lib/api';
 import Swal from 'sweetalert2';
 import {
   Users, Loader2, Tag, Flag, Target, LayoutGrid,
-  Search, Plus, MoreVertical, Trash2, Edit2, Shield,
-  Mail, Calendar, X, Settings, ChevronRight, Check
+  Search, Plus, MoreVertical, Trash2, Edit2,
+  Mail, Settings, ChevronRight, Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,13 +20,6 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -59,6 +52,7 @@ interface Member {
     first_name: string;
     last_name: string;
     dis_name: string;
+    display_name?: string;
     email: string;
     avarta: string;
     role: { name: string; id: number };
@@ -66,11 +60,26 @@ interface Member {
   created_on: string;
 }
 
+interface ProjectSummary {
+  id: number;
+  name: string;
+}
+
 interface ItemState {
   id: number;
   name: string;
   description?: string;
 }
+interface AvailableUser {
+  id: number;
+  first_name: string;
+  last_name: string;
+  display_name?: string;
+  dis_name: string;
+  avarta: string;
+  role: { id: number; name: string };
+}
+type TabIcon = React.ComponentType<{ className?: string }>;
 
 const ProjectSettingsPage = () => {
   const { id } = useParams();
@@ -84,35 +93,35 @@ const ProjectSettingsPage = () => {
   const [trackers, setTrackers] = useState<ItemState[]>([]);
   const [categories, setCategories] = useState<ItemState[]>([]);
   const [projectName, setProjectName] = useState('');
-
   const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
 
   // Modal State
-  const [activeModal, setActiveModal] = useState<'status' | 'label' | 'priority' | 'tracker' | 'category' | 'member' | null>(null);
+  const [activeModal, setActiveModal] = useState<'status' | 'label' | 'priority' | 'tracker' | 'member' | null>(null);
   const [modalInput, setModalInput] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Available users for member add
-  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
   const [selectedNewMembers, setSelectedNewMembers] = useState<string[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [projectRes, memberRes, statusRes, labelRes, priorityRes, trackerRes, categoryRes] = await Promise.all([
+      const [projectRes, memberRes, statusRes, labelRes, priorityRes, trackerRes] = await Promise.all([
         fetchApi(`/api/projects`),
         fetchApi(`/api/projects/members/${id}?search=${searchInput}&page=1&perpage=100`),
         fetchApi(`/api/projects/issue/statuses/${id}`),
         fetchApi(`/api/projects/issue/labels/${id}`),
         fetchApi(`/api/projects/issue/priorities/${id}`),
-        fetchApi(`/api/projects/issue/trackers/${id}`),
-        fetchApi(`/api/categories/${id}`)
+        fetchApi(`/api/projects/issue/trackers/${id}`)
       ]);
 
       if (projectRes.result) {
-        const project = projectRes.data.datas.find((p: any) => p.id === Number(id));
-        if (project) setProjectName(project.name);
+        const project = (projectRes.data.datas as ProjectSummary[]).find((p) => p.id === Number(id));
+        if (project) {
+          setProjectName(project.name);
+        }
       }
 
       if (memberRes.result) setMembers(memberRes.data.datas || memberRes.data || []);
@@ -120,35 +129,30 @@ const ProjectSettingsPage = () => {
       if (labelRes.result) setLabels(labelRes.data.labels || labelRes.data || []);
       if (priorityRes.result) setPriorities(priorityRes.data.priorities || priorityRes.data || []);
       if (trackerRes.result) setTrackers(trackerRes.data.trackers || trackerRes.data || []);
-      if (categoryRes.result) setCategories(categoryRes.data.categories || categoryRes.data || []);
-
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, searchInput]);
 
   useEffect(() => {
     if (id) fetchData();
-  }, [id, searchInput]);
+  }, [id, fetchData]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       if (activeModal === 'member') {
         try {
-          const res = await fetchApi('/api/users?search=&role=0&page=1&perpage=1000');
-          if (res.result) {
-            // Filter out users who are already members
-            const existingMemberIds = new Set(members.map(m => m.user.id.toString()));
-            const filtered = (res.data.datas || res.data).filter((u: any) =>
-              !existingMemberIds.has(u.id.toString()) &&
-              Number(u.role?.id) !== 1 &&
-              Number(u.role_id) !== 1
+          const existingMemberIds = new Set(members.map(m => m.user.id.toString()));
+          const usersRes = await fetchApi('/api/users?search=&role=0&page=1&perpage=999');
+          if (usersRes.result) {
+            const filtered = (usersRes.data.datas || []).filter((user: AvailableUser) =>
+              !existingMemberIds.has(String(user.id))
             );
             setAvailableUsers(filtered);
           }
-        } catch (err) { console.error(err); }
+        } catch (error) { console.error(error); }
       }
     };
     fetchUsers();
@@ -167,10 +171,7 @@ const ProjectSettingsPage = () => {
     else if (activeModal === 'label') endpoint = 'label';
     else if (activeModal === 'priority') endpoint = 'priority';
     else if (activeModal === 'tracker') endpoint = 'tracker';
-    else if (activeModal === 'category') {
-      endpoint = 'category';
-      categoryPrefix = '/api/';
-    }
+
 
     try {
       setIsSaving(true);
@@ -184,7 +185,7 @@ const ProjectSettingsPage = () => {
         setActiveModal(null);
         fetchData();
       }
-    } catch (err) { } finally { setIsSaving(false); }
+    } catch { } finally { setIsSaving(false); }
   };
 
   const handleAddMember = async () => {
@@ -205,8 +206,8 @@ const ProjectSettingsPage = () => {
         setActiveModal(null);
         fetchData();
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsSaving(false);
     }
@@ -232,7 +233,7 @@ const ProjectSettingsPage = () => {
       else if (type === 'label') endpoint = `/api/label/${item.id}`;
       else if (type === 'priority') endpoint = `/api/priority/${item.id}`;
       else if (type === 'tracker') endpoint = `/api/issue/tracker/${item.id}`;
-      else if (type === 'category') endpoint = `/api/category/${item.id}`;
+
 
       try {
         const res = await fetchApi(endpoint, {
@@ -243,7 +244,7 @@ const ProjectSettingsPage = () => {
           Swal.fire({ icon: 'success', title: 'Updated successfully', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
           fetchData();
         }
-      } catch (err) { }
+      } catch { }
     }
   };
 
@@ -266,7 +267,7 @@ const ProjectSettingsPage = () => {
       else if (type === 'label') endpoint = `/api/label/${id}`;
       else if (type === 'priority') endpoint = `/api/priority/${id}`;
       else if (type === 'tracker') endpoint = `/api/issue/tracker/${id}`;
-      else if (type === 'category') endpoint = `/api/category/${id}`;
+
 
       try {
         const res = await fetchApi(endpoint, { method: 'DELETE' });
@@ -274,7 +275,7 @@ const ProjectSettingsPage = () => {
           Swal.fire({ icon: 'success', title: 'Deleted successfully', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
           fetchData();
         }
-      } catch (err) { }
+      } catch { }
     }
   };
 
@@ -297,7 +298,7 @@ const ProjectSettingsPage = () => {
           Swal.fire({ icon: 'success', title: 'Member removed', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
           fetchData();
         }
-      } catch (err) { }
+      } catch { }
     }
   };
 
@@ -307,10 +308,9 @@ const ProjectSettingsPage = () => {
     { id: 'labels', label: 'Labels', icon: Tag, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     { id: 'priorities', label: 'Priority', icon: Flag, color: 'text-amber-400', bg: 'bg-amber-500/10' },
     { id: 'trackers', label: 'Trackers', icon: Target, color: 'text-purple-400', bg: 'bg-purple-500/10' },
-    { id: 'categories', label: 'Categories', icon: LayoutGrid, color: 'text-rose-400', bg: 'bg-rose-500/10' },
   ];
 
-  const renderGenericList = (items: ItemState[], type: 'status' | 'label' | 'priority' | 'tracker' | 'category', Icon: any, colorCls: string, bgCls: string) => {
+  const renderGenericList = (items: ItemState[], type: 'status' | 'label' | 'priority' | 'tracker', Icon: TabIcon, colorCls: string, bgCls: string) => {
     const safeItems = Array.isArray(items) ? items : [];
     return (
       <div className="space-y-4 animate-in fade-in duration-300">
@@ -393,141 +393,128 @@ const ProjectSettingsPage = () => {
         </Badge>
       </header>
 
-      <main>
-        <Tabs defaultValue="members" onValueChange={setActiveTab} orientation="vertical" className="w-full">
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* Sidebar Navigation */}
-            <aside className="w-full lg:w-72 shrink-0 space-y-4">
-              <Card className="p-1.5 shadow-sm border bg-card/50 backdrop-blur-sm">
-                <TabsList className="bg-transparent flex flex-col h-auto w-full space-y-1 items-stretch p-0 border-none shadow-none">
-                  {tabs.map((tab) => (
-                    <TabsTrigger
-                      key={tab.id}
-                      value={tab.id}
-                      className={cn(
-                        "w-full flex items-center justify-start gap-4 px-4 py-3 rounded-xl font-bold transition-all border-none shadow-none",
-                        "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:border-none"
-                      )}
-                    >
-                      <div className={cn(
-                        "p-2 rounded-lg shrink-0",
-                        activeTab === tab.id ? tab.bg : "bg-muted/50"
-                      )}>
-                        <tab.icon className={cn("h-4 w-4", activeTab === tab.id ? tab.color : "text-muted-foreground")} />
-                      </div>
-                      <span className="text-sm tracking-tight">{tab.label}</span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Card>
-
-              <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 hidden lg:block relative overflow-hidden group">
-                <div className="absolute top-0 right-0 h-20 w-20 bg-primary/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3 flex items-center gap-2">
-                  <Shield className="h-3.5 w-3.5" /> Project Framework
-                </h4>
-                <p className="text-[11px] leading-relaxed text-muted-foreground font-semibold">
-                  Configure core mission parameters including lifecycle stages, priority levels, and tactical trackers unique to this project instance.
-                </p>
-              </div>
-            </aside>
-
-            {/* Content Area */}
-            <Card className="flex-1 shadow-sm border overflow-hidden">
-              <CardContent className="p-6">
-                <TabsContent value="members" className="mt-0 space-y-6">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
-                    <div>
-                      <h2 className="text-lg font-bold">Project Members</h2>
-                      <p className="text-sm text-muted-foreground">Manage user access and permissions</p>
-                    </div>
-                    <div className="flex w-full sm:w-auto items-center gap-2">
-                      <div className="relative flex-1 sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Search members..."
-                          className="pl-9 h-9 text-sm"
-                          value={searchInput}
-                          onChange={e => setSearchInput(e.target.value)}
-                        />
-                      </div>
-                      <Button onClick={() => { setActiveModal('member'); setSelectedNewMembers([]); }} className="h-9">
-                        <Plus className="h-4 w-4 mr-2" /> Add Member
-                      </Button>
-                    </div>
+      <main className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <Tabs defaultValue="members" onValueChange={setActiveTab} orientation="horizontal" className="w-full space-y-6">
+          {/* Horizontal Navigation */}
+          <Card className="p-1.5 shadow-sm border bg-card/50 backdrop-blur-sm top-[72px] z-20">
+            <TabsList className="bg-transparent flex h-auto w-full gap-1 p-0 border-none shadow-none overflow-x-auto scrollbar-hide">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className={cn(
+                    "flex items-center gap-3 px-5 py-2.5 rounded-xl font-bold transition-all border-none shadow-none whitespace-nowrap",
+                    "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none"
+                  )}
+                >
+                  <div className={cn(
+                    "p-1.5 rounded-lg shrink-0",
+                    activeTab === tab.id ? tab.bg : "bg-muted/50"
+                  )}>
+                    <tab.icon className={cn("h-3.5 w-3.5", activeTab === tab.id ? tab.color : "text-muted-foreground")} />
                   </div>
+                  <span className="text-xs tracking-tight">{tab.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Card>
 
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader className="bg-muted/50">
-                        <TableRow>
-                          <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Member</TableHead>
-                          <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Contact</TableHead>
-                          <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Role</TableHead>
-                          <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Joined</TableHead>
-                          <TableHead className="text-right py-3"></TableHead>
+          {/* Content Area */}
+          <Card className="shadow-sm border overflow-hidden min-h-[600px] bg-card w-full">
+            <CardContent className="p-6">
+              <TabsContent value="members" className="mt-0 space-y-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+                  <div>
+                    <h2 className="text-lg font-bold">Project Members</h2>
+                    <p className="text-sm text-muted-foreground">Manage user access and permissions</p>
+                  </div>
+                  <div className="flex w-full sm:w-auto items-center gap-2">
+                    <div className="relative flex-1 sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search members..."
+                        className="pl-9 h-9 text-sm"
+                        value={searchInput}
+                        onChange={e => setSearchInput(e.target.value)}
+                      />
+                    </div>
+                    <Button onClick={() => { setActiveModal('member'); setSelectedNewMembers([]); }} className="h-9">
+                      <Plus className="h-4 w-4 mr-2" /> Add Member
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Member</TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Contact</TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Role</TableHead>
+                        <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Joined</TableHead>
+                        <TableHead className="text-right py-3"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading && members.length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></TableCell></TableRow>
+                      ) : members.length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground font-medium">No project members found.</TableCell></TableRow>
+                      ) : members.map((mem) => (
+                        <TableRow key={mem.id} className="group">
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9 border">
+                                <AvatarImage src={`/upload/${mem.user.avarta}`} className="object-cover" />
+                                <AvatarFallback className="bg-muted text-xs font-bold">
+                                  {mem.user.first_name?.[0]}{mem.user.last_name?.[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-bold text-sm tracking-tight truncate">{mem.user.first_name} {mem.user.last_name}</span>
+                                <span className="text-[10px] text-muted-foreground font-medium truncate italic">@{mem.user.dis_name || mem.user.display_name}</span>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Mail className="h-3.5 w-3.5" />
+                              <span className="truncate">{mem.user.email}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={mem.user.role.id === 1 ? 'destructive' : mem.user.role.id === 2 ? 'secondary' : 'outline'} className="text-[9px] font-bold uppercase tracking-wide px-2 h-5">
+                              {mem.user.role.name}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-[10px] font-medium text-muted-foreground">
+                            {new Date(mem.created_on).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right pr-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteMember(mem.id)}
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {loading && members.length === 0 ? (
-                          <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></TableCell></TableRow>
-                        ) : members.length === 0 ? (
-                          <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground font-medium">No project members found.</TableCell></TableRow>
-                        ) : members.map((mem) => (
-                          <TableRow key={mem.id} className="group">
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9 border">
-                                  <AvatarImage src={`/upload/${mem.user.avarta}`} className="object-cover" />
-                                  <AvatarFallback className="bg-muted text-xs font-bold">
-                                    {mem.user.first_name?.[0]}{mem.user.last_name?.[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col min-w-0">
-                                  <span className="font-bold text-sm tracking-tight truncate">{mem.user.first_name} {mem.user.last_name}</span>
-                                  <span className="text-[10px] text-muted-foreground font-medium truncate italic">@{mem.user.dis_name || (mem.user as any).display_name}</span>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Mail className="h-3.5 w-3.5" />
-                                <span className="truncate">{mem.user.email}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={mem.user.role.id === 1 ? 'destructive' : mem.user.role.id === 2 ? 'secondary' : 'outline'} className="text-[9px] font-bold uppercase tracking-wide px-2 h-5">
-                                {mem.user.role.name}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-[10px] font-medium text-muted-foreground">
-                              {new Date(mem.created_on).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-right pr-4">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteMember(mem.id)}
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TabsContent>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
 
-                <TabsContent value="status" className="mt-0">{renderGenericList(statuses, 'status', Loader2, 'text-primary', 'bg-primary/10')}</TabsContent>
-                <TabsContent value="labels" className="mt-0">{renderGenericList(labels, 'label', Tag, 'text-emerald-500', 'bg-emerald-500/10')}</TabsContent>
-                <TabsContent value="priorities" className="mt-0">{renderGenericList(priorities, 'priority', Flag, 'text-orange-500', 'bg-orange-500/10')}</TabsContent>
-                <TabsContent value="trackers" className="mt-0">{renderGenericList(trackers, 'tracker', Target, 'text-purple-500', 'bg-purple-500/10')}</TabsContent>
-                <TabsContent value="categories" className="mt-0">{renderGenericList(categories, 'category', LayoutGrid, 'text-pink-500', 'bg-pink-500/10')}</TabsContent>
-              </CardContent>
-            </Card>
-          </div>
+              <TabsContent value="status" className="mt-0">{renderGenericList(statuses, 'status', Loader2, 'text-primary', 'bg-primary/10')}</TabsContent>
+              <TabsContent value="labels" className="mt-0">{renderGenericList(labels, 'label', Tag, 'text-emerald-500', 'bg-emerald-500/10')}</TabsContent>
+              <TabsContent value="priorities" className="mt-0">{renderGenericList(priorities, 'priority', Flag, 'text-orange-500', 'bg-orange-500/10')}</TabsContent>
+              <TabsContent value="trackers" className="mt-0">{renderGenericList(trackers, 'tracker', Target, 'text-purple-500', 'bg-purple-500/10')}</TabsContent>
+
+            </CardContent>
+          </Card>
+
         </Tabs>
       </main>
 
@@ -555,12 +542,12 @@ const ProjectSettingsPage = () => {
                         const idStr = user.id.toString();
                         const isSelected = selectedNewMembers.includes(idStr);
                         return (
-                          <div 
-                            key={user.id} 
+                          <div
+                            key={user.id}
                             className={cn(
                               "flex items-center gap-3 p-2.5 rounded-lg transition-all cursor-pointer border border-transparent",
                               isSelected ? "bg-primary/10 border-primary/20" : "hover:bg-muted/50"
-                            )} 
+                            )}
                             onClick={() => {
                               if (isSelected) {
                                 setSelectedNewMembers(selectedNewMembers.filter(id => id !== idStr));

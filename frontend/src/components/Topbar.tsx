@@ -31,7 +31,7 @@ const Topbar = () => {
 
   const handleLogout = async () => {
     try {
-      await fetchApi('/api/logout', { method: 'POST' });
+      await fetchApi('/api/logout', { method: 'DELETE' });
       window.location.href = '/login';
     } catch (error) { console.error(error); }
   };
