@@ -1,5 +1,6 @@
 const { values } = require('lodash');
 const { query } = require('../config/db');
+const { isDepartmentSchemaError } = require('../utils/dbCompat');
 
 // Insert
 
@@ -58,6 +59,11 @@ const updateRole = async (values) => {
     return await query(sql, values);
 }
 
+const updateUserRoleAndDepartment = async (values) => {
+    const sql = "UPDATE `tbl_users` SET `role_id` = ?, `department_id` = ? WHERE `id` = ?";
+    return await query(sql, values);
+}
+
 // Get
 
 const getAllUsers = async () => {
@@ -85,9 +91,16 @@ const getAllUsersWithDetails = async (search, role, page, perpage) => {
             tbl_roles.name AS 'role_name',
             tbl_roles.description AS 'role_description',
             tbl_roles.created_on AS 'role_created_on',
-            tbl_roles.updated_on AS 'role_updated_on'
+            tbl_roles.updated_on AS 'role_updated_on',
+            tbl_departments.id AS 'department_id',
+            tbl_departments.name AS 'department_name',
+            tbl_departments.description AS 'department_description',
+            tbl_departments.created_on AS 'department_created_on',
+            tbl_departments.updated_on AS 'department_updated_on'
         FROM tbl_users
-        INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id WHERE tbl_users.status = 1
+        INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+        LEFT JOIN tbl_departments ON tbl_departments.id = tbl_users.department_id
+        WHERE tbl_users.status = 1
     `;
     if(search.length > 0 && role == 0){
         sql += ` AND (
@@ -97,9 +110,10 @@ const getAllUsersWithDetails = async (search, role, page, perpage) => {
             tbl_users.dis_name LIKE ? OR 
             tbl_users.email LIKE ? OR 
             tbl_users.status LIKE ? OR
-            tbl_roles.name LIKE ?
+            tbl_roles.name LIKE ? OR
+            tbl_departments.name LIKE ?
         )`;
-        values.push(search, search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        values.push(search, search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
     if(role !== 0){
         sql += `AND tbl_roles.id = ?`;
@@ -112,16 +126,78 @@ const getAllUsersWithDetails = async (search, role, page, perpage) => {
                 tbl_users.dis_name LIKE ? OR 
                 tbl_users.email LIKE ? OR 
                 tbl_users.status LIKE ? OR
-                tbl_roles.name LIKE ?
+                tbl_roles.name LIKE ? OR
+                tbl_departments.name LIKE ?
             )`;
-            values.push(search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+            values.push(search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
         }
     }
     if(perpage !== 0 && page != 0){
         sql += ' LIMIT ? OFFSET ?';
         values.push(perpage, (page - 1) * perpage);
     }
-    return await query(sql, values);
+    try {
+        return await query(sql, values);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        values = [];
+        sql = ` 
+            SELECT 
+                tbl_users.id AS 'id',
+                tbl_users.first_name AS 'first_name',
+                tbl_users.last_name AS 'last_name',
+                tbl_users.dis_name AS 'dis_name',
+                tbl_users.email AS 'email',
+                tbl_users.password AS 'password',
+                tbl_users.avarta AS 'avarta',
+                tbl_users.description AS 'description',
+                tbl_users.last_login_on AS 'last_login_on',
+                tbl_users.status AS 'status',
+                tbl_users.created_on AS 'created_on',
+                tbl_users.updated_on AS 'updated_on',
+                tbl_roles.id AS 'role_id',
+                tbl_roles.name AS 'role_name',
+                tbl_roles.description AS 'role_description',
+                tbl_roles.created_on AS 'role_created_on',
+                tbl_roles.updated_on AS 'role_updated_on'
+            FROM tbl_users
+            INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id WHERE tbl_users.status = 1
+        `;
+        if(search.length > 0 && role == 0){
+            sql += ` AND (
+                tbl_users.id = ? OR tbl_roles.id = ? OR
+                tbl_users.first_name LIKE ? OR 
+                tbl_users.last_name LIKE ? OR 
+                tbl_users.dis_name LIKE ? OR 
+                tbl_users.email LIKE ? OR 
+                tbl_users.status LIKE ? OR
+                tbl_roles.name LIKE ?
+            )`;
+            values.push(search, search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
+        if(role !== 0){
+            sql += `AND tbl_roles.id = ?`;
+            values.push(role);
+            if(search.length > 0){
+                sql += ` AND (
+                    tbl_users.id = ? OR
+                    tbl_users.first_name LIKE ? OR 
+                    tbl_users.last_name LIKE ? OR 
+                    tbl_users.dis_name LIKE ? OR 
+                    tbl_users.email LIKE ? OR 
+                    tbl_users.status LIKE ? OR
+                    tbl_roles.name LIKE ?
+                )`;
+                values.push(search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+            }
+        }
+        if(perpage !== 0 && page != 0){
+            sql += ' LIMIT ? OFFSET ?';
+            values.push(perpage, (page - 1) * perpage);
+        }
+        return await query(sql, values);
+    }
 }
 
 const getUserById = async (userId) => {
@@ -158,12 +234,47 @@ const getUserWithRoleById = async (userId) => {
             tbl_roles.name AS 'role_name',
             tbl_roles.description AS 'role_description',
             tbl_roles.created_on AS 'role_created_on',
-            tbl_roles.updated_on AS 'role_updated_on'
+            tbl_roles.updated_on AS 'role_updated_on',
+            tbl_departments.id AS 'department_id',
+            tbl_departments.name AS 'department_name',
+            tbl_departments.description AS 'department_description',
+            tbl_departments.created_on AS 'department_created_on',
+            tbl_departments.updated_on AS 'department_updated_on'
         FROM tbl_users
         INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+        LEFT JOIN tbl_departments ON tbl_departments.id = tbl_users.department_id
         WHERE tbl_users.id = ?;
     `
-    return await query(sql, [userId]);
+    try {
+        return await query(sql, [userId]);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        const fallbackSql = `
+            SELECT 
+                tbl_users.id AS 'id',
+                tbl_users.first_name AS 'first_name',
+                tbl_users.last_name AS 'last_name',
+                tbl_users.dis_name AS 'dis_name',
+                tbl_users.email AS 'email',
+                tbl_users.password AS 'password',
+                tbl_users.avarta AS 'avarta',
+                tbl_users.description AS 'description',
+                tbl_users.last_login_on AS 'last_login_on',
+                tbl_users.status AS 'status',
+                tbl_users.created_on AS 'created_on',
+                tbl_users.updated_on AS 'updated_on',
+                tbl_roles.id AS 'role_id',
+                tbl_roles.name AS 'role_name',
+                tbl_roles.description AS 'role_description',
+                tbl_roles.created_on AS 'role_created_on',
+                tbl_roles.updated_on AS 'role_updated_on'
+            FROM tbl_users
+            INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+            WHERE tbl_users.id = ?;
+        `;
+        return await query(fallbackSql, [userId]);
+    }
 }
 
 const getUserWithRoleByEmail = async (dis_name) => {
@@ -185,13 +296,49 @@ const getUserWithRoleByEmail = async (dis_name) => {
             tbl_roles.name AS 'role_name',
             tbl_roles.description AS 'role_description',
             tbl_roles.created_on AS 'role_created_on',
-            tbl_roles.updated_on AS 'role_updated_on'
+            tbl_roles.updated_on AS 'role_updated_on',
+            tbl_departments.id AS 'department_id',
+            tbl_departments.name AS 'department_name',
+            tbl_departments.description AS 'department_description',
+            tbl_departments.created_on AS 'department_created_on',
+            tbl_departments.updated_on AS 'department_updated_on'
         FROM tbl_users
         INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+        LEFT JOIN tbl_departments ON tbl_departments.id = tbl_users.department_id
         WHERE tbl_users.dis_name = ?
         AND tbl_users.status = 1;
     `;
-    return await query(sql, [dis_name]);
+    try {
+        return await query(sql, [dis_name]);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        const fallbackSql = `
+            SELECT 
+                tbl_users.id AS 'id',
+                tbl_users.first_name AS 'first_name',
+                tbl_users.last_name AS 'last_name',
+                tbl_users.dis_name AS 'dis_name',
+                tbl_users.email AS 'email',
+                tbl_users.password AS 'password',
+                tbl_users.avarta AS 'avarta',
+                tbl_users.description AS 'description',
+                tbl_users.last_login_on AS 'last_login_on',
+                tbl_users.status AS 'status',
+                tbl_users.created_on AS 'created_on',
+                tbl_users.updated_on AS 'updated_on',
+                tbl_roles.id AS 'role_id',
+                tbl_roles.name AS 'role_name',
+                tbl_roles.description AS 'role_description',
+                tbl_roles.created_on AS 'role_created_on',
+                tbl_roles.updated_on AS 'role_updated_on'
+            FROM tbl_users
+            INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+            WHERE tbl_users.dis_name = ?
+            AND tbl_users.status = 1;
+        `;
+        return await query(fallbackSql, [dis_name]);
+    }
 };
 
 const getRoleById = async (roleId) => {
@@ -262,6 +409,7 @@ const countAllUsers = async (search, role) => {
             COUNT(tbl_users.id) AS 'total'
         FROM tbl_users
         INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+        LEFT JOIN tbl_departments ON tbl_departments.id = tbl_users.department_id
     `;
     if(search.length > 0 && role <= 0){
         sql += ` WHERE (
@@ -271,9 +419,10 @@ const countAllUsers = async (search, role) => {
             tbl_users.dis_name LIKE ? OR 
             tbl_users.email LIKE ? OR 
             tbl_users.status LIKE ? OR
-            tbl_roles.name LIKE ?
+            tbl_roles.name LIKE ? OR
+            tbl_departments.name LIKE ?
         )`;
-        values.push(search, search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        values.push(search, search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
     if(role !== 0){
         sql += ` WHERE tbl_roles.id = ?`;
@@ -286,12 +435,54 @@ const countAllUsers = async (search, role) => {
                 tbl_users.dis_name LIKE ? OR 
                 tbl_users.email LIKE ? OR 
                 tbl_users.status LIKE ? OR
-                tbl_roles.name LIKE ?
+                tbl_roles.name LIKE ? OR
+                tbl_departments.name LIKE ?
             )`;
-            values.push(search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+            values.push(search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
         }
     }
-    return await query(sql, values);
+    try {
+        return await query(sql, values);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        values = [];
+        sql = ` 
+            SELECT 
+                COUNT(tbl_users.id) AS 'total'
+            FROM tbl_users
+            INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+        `;
+        if(search.length > 0 && role <= 0){
+            sql += ` WHERE (
+                tbl_users.id = ? OR tbl_roles.id = ? OR
+                tbl_users.first_name LIKE ? OR 
+                tbl_users.last_name LIKE ? OR 
+                tbl_users.dis_name LIKE ? OR 
+                tbl_users.email LIKE ? OR 
+                tbl_users.status LIKE ? OR
+                tbl_roles.name LIKE ?
+            )`;
+            values.push(search, search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
+        if(role !== 0){
+            sql += ` WHERE tbl_roles.id = ?`;
+            values.push(role);
+            if(search.length > 0){
+                sql += ` AND (
+                    tbl_users.id = ? OR
+                    tbl_users.first_name LIKE ? OR 
+                    tbl_users.last_name LIKE ? OR 
+                    tbl_users.dis_name LIKE ? OR 
+                    tbl_users.email LIKE ? OR 
+                    tbl_users.status LIKE ? OR
+                    tbl_roles.name LIKE ?
+                )`;
+                values.push(search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+            }
+        }
+        return await query(sql, values);
+    }
 }
 
 // Delete
@@ -321,6 +512,7 @@ module.exports = {
     updateUserProfileImage,
     changePassword,
     changeUserRole,
+    updateUserRoleAndDepartment,
     updateRole,
     getAllUsers,
     getAllUsersWithDetails,

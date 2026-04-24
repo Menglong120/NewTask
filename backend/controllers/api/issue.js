@@ -2,51 +2,6 @@ const { get } = require('lodash');
 const issueResource = require('../../resources/issue');
 const handleResponses = require('../../utils/handleResponses');
 
-// Category
-const createCategory = async (req, res) => {
-    try{
-        const data = await issueResource.createCategory(req.params.id, req.body);
-        res.status(data.status).json(data.body);
-    }catch(err){
-        res.status(400).json(handleResponses.catchErrorResponse(err));
-    }     
-}
-
-const getAllCategory = async (req, res) => {
-    try{
-        const data = await issueResource.getAllCategory(req.params.id);
-        res.status(data.status).json(data.body);
-    }catch(err){
-        res.status(400).json(handleResponses.catchErrorResponse(err));
-    }
-}
-
-const getCategory = async (req, res) => {
-    try{
-        const data = await issueResource.getCategory(req.params.id);
-        res.status(data.status).json(data.body);
-    } catch(err) {
-        res.status(400).json(handleResponses.catchErrorResponse(err));
-    }
-}
-
-const editCategory = async (req, res) => {
-    try{
-        const data = await issueResource.editCategory(req.params.id, req.body);
-        res.status(data.status).json(data.body);
-    } catch(err) {
-        res.status(400).json(handleResponses.catchErrorResponse(err));
-    }
-}
-
-const deleteCategory = async (req, res) => {
-    try{
-        const data = await issueResource.deleteCategory(req.params.id);
-        res.status(data.status).json(data.body);
-    } catch(err) {
-        res.status(400).json(handleResponses.catchErrorResponse(err));
-    }
-}
 
 // Issue_Label
 const createLabel = async (req, res) => {
@@ -245,9 +200,9 @@ const createIssue = async (req, res) => {
     }
 }
 
-const getAllIssueInCategory = async (req, res) => {
+const getAllIssueInProject = async (req, res) => {
     try{
-        const data = await issueResource.getAllIssueInCategory(req.query.search, req.query.page, req.query.perpage, req.params.id);
+        const data = await issueResource.getAllIssueInProject(req.query.search, req.query.page, req.query.perpage, req.params.id);
         res.status(data.status).json(data.body);
     } catch(err) {
         res.status(400).json(handleResponses.catchErrorResponse(err));
@@ -463,12 +418,11 @@ const issueGetDetailActivity = async (req, res) => {
 }
 
 module.exports = {
-    createCategory, getAllCategory, getCategory, editCategory, deleteCategory,
     createLabel, getAllLabels, getLabel, editLabel, deleteLabel,
     createPriority, getAllPriorities, getPriority, editPriority, deletePriority,
     createStatus, getAllStatus, getStatus, editStatus, deleteStatus,
     createTracker, getAllTrackers, getTracker, editTracker, deleteTracker,
-    createIssue, getAllIssueInCategory, getIssue, deleteIssue, editIssue,
+    createIssue, getAllIssueInProject, getIssue, deleteIssue, editIssue,
     createIssueNote, getAllNote, getNoteById, editNote, deleteNote,
     issueEditLabelOnly, issueEditPriorityOnly, issueEditStatusOnly, issueEditAssignee,
     issueEditTrackerOnly, issueEditStartDateOnly, issueEditDueDateOnly, issueEditProgressOnly,

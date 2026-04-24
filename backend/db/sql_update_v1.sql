@@ -163,3 +163,27 @@ ALTER TABLE `tbl_issue_activity`
 
 -- 23 Mar 2025
 ALTER TABLE `tbl_project_files` ADD COLUMN `file_name` VARCHAR(1000); 
+
+
+-- 22 Apr 2026
+CREATE TABLE `tbl_departments` (
+    `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `description` TEXT DEFAULT NULL,
+    `created_on` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_on` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+ALTER TABLE `tbl_users`
+    ADD COLUMN `department_id` BIGINT UNSIGNED NULL AFTER `role_id`;
+
+ALTER TABLE `tbl_users`
+    ADD CONSTRAINT `USER_DEPARTMENT_ID_FK` FOREIGN KEY (`department_id`)
+    REFERENCES `tbl_departments`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `tbl_project`
+    ADD COLUMN `department_id` BIGINT UNSIGNED NULL AFTER `status_id`;
+
+ALTER TABLE `tbl_project`
+    ADD CONSTRAINT `PROJECT_DEPARTMENT_ID_FK` FOREIGN KEY (`department_id`)
+    REFERENCES `tbl_departments`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;

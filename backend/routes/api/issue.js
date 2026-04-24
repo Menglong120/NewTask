@@ -1,17 +1,10 @@
 const express = require('express');
 const issueController = require('../../controllers/api/issue');
 const { requireProjectMember } = require('../../middleware/project');
-const { checkCategory, checkLabel, checkPriority, checkStatus, checkTracker, checkIssue, checkNote, checkIssueLabelId, checkIssuePriorityId, checkIssueStatusId, checkIssueTrackerId } = require('../../middleware/issue');
+const { checkLabel, checkPriority, checkStatus, checkTracker, checkIssue, checkNote, checkIssueLabelId, checkIssuePriorityId, checkIssueStatusId, checkIssueTrackerId } = require('../../middleware/issue');
 const { requireAuth } = require('../../middleware/auth');
 
 const router = express.Router();
-
-// Category
-router.post('/category/:id', requireProjectMember, issueController.createCategory); // params project id
-router.get('/categories/:id',requireProjectMember, issueController.getAllCategory); // params project id
-router.get('/category/:id',requireAuth, checkCategory, issueController.getCategory); // params category id
-router.put('/category/:id', requireAuth, checkCategory, issueController.editCategory); // params category id
-router.delete('/category/:id', requireAuth, checkCategory, issueController.deleteCategory); // params category id
 
 // Issue_Label
 router.post('/projects/issue/label/:id', requireProjectMember, issueController.createLabel); // params project id
@@ -42,8 +35,8 @@ router.put('/issue/tracker/:id', requireAuth, checkTracker, issueController.edit
 router.delete('/issue/tracker/:id', requireAuth, checkTracker, issueController.deleteTracker); // params tracker id
 
 // Issue
-router.post('/category/issue/:id', requireAuth, checkCategory, issueController.createIssue); // params category id
-router.get('/category/issues/:id', requireAuth, checkCategory, issueController.getAllIssueInCategory); // params category id
+router.post('/projects/issue/:id', requireProjectMember, issueController.createIssue); // params project id
+router.get('/projects/issues/:id', requireProjectMember, issueController.getAllIssueInProject); // params project id
 router.get('/issue/:id', requireAuth, checkIssue, issueController.getIssue); // params issue id
 router.delete('/issue/:id', requireAuth, checkIssue, issueController.deleteIssue); // params issue id
 router.put('/issue/:id', requireAuth, checkIssue, issueController.editIssue); // params issue id

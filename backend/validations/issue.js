@@ -1,6 +1,6 @@
 const Joi = require('joi');
 
-const validator = (schema) => (payload) => schema.validate(payload, { abortEarly: false });
+const validator = (schema) => (payload) => schema.validate(payload, { abortEarly: false, stripUnknown: true });
 
 const issueItemSchema = Joi.object({
     name: Joi.string()
@@ -46,10 +46,10 @@ const issueSchema = Joi.object({
         .messages({
             "string.pattern.base": "Due Date must be in format YYYY-MM-DD or YYYY-MM-DD HH:mm:ss"
         }),
-    status_id: Joi.number(),
-    priority_id: Joi.number(),
-    tracker_id: Joi.number(),
-    label_id: Joi.number(),
+    status_id: Joi.number().optional(),
+    priority_id: Joi.number().optional(),
+    tracker_id: Joi.number().optional(),
+    label_id: Joi.number().allow(null, '').optional(),
     assignee: Joi.number()
         .allow(null, '')
         .optional(),
@@ -83,10 +83,10 @@ const updateIssueSchema = Joi.object({
         .messages({
             "string.pattern.base": "Due Date must be in format YYYY-MM-DD or YYYY-MM-DD HH:mm:ss"
         }),
-    status_id: Joi.number(),
-    priority_id: Joi.number(),
-    tracker_id: Joi.number(),
-    label_id: Joi.number(),
+    status_id: Joi.number().optional(),
+    priority_id: Joi.number().optional(),
+    tracker_id: Joi.number().optional(),
+    label_id: Joi.number().allow(null, '').optional(),
     assignee: Joi.number()
         .allow(null, '')
         .optional(),

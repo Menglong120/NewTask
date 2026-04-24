@@ -1,6 +1,6 @@
 const catchErrorResponse = (err) => ({
     result: false,
-    msg: "Something went wrong",
+    msg: err?.sqlMessage || err?.message || "Something went wrong",
     error: err,
     data: []
 });

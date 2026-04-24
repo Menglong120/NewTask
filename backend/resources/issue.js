@@ -10,61 +10,6 @@ const { activity } = require('../controllers/web/superadmin');
 const { result } = require('lodash');
 const { query } = require('../config/db');
 
-// Category
-const createCategory = async (projectId, body) => {
-    projectId = Number(projectId);
-    const validationError = handleValidations(issueItemValidator(body));
-    if(validationError) return handleResponses.errorResponse(400, "Invalid Data", validationError, body);
-    const categoryCreated = await issueModels.createCategory([projectId, body.name, body.description]);
-    const categoryId = categoryCreated.insertId;
-    const categoryRes = await issueModels.getCategoryById(categoryId);
-    const constructCategory = helperUtils.constructIssueItem(categoryRes[0]);
-    const result = helperUtils.constructIssueItemWithProject(categoryRes[0], constructCategory, "category");
-    return handleResponses.successResponse(200, "Created a category successfully.", result, null);
-}
-
-const getAllCategory = async (projectId) => {
-    projectId = Number(projectId);
-    const categoryRes = await issueModels.getAllCategory(projectId);
-    let constructCategory = [], result = {};
-    if(categoryRes.length > 0){
-        categoryRes.forEach((element) => {
-            constructCategory.push(helperUtils.constructIssueItem(element));
-        });
-        result = helperUtils.constructIssueItemWithProject(categoryRes[0], constructCategory, "categories");
-    }
-    return handleResponses.successResponse(200, "Get all categories in this project successfully.", result, null);
-}
-
-const getCategory = async (categoryId) => {
-    categoryId = Number(categoryId);
-    const categoryRes = await issueModels.getCategoryById(categoryId);
-    if(categoryRes.length <= 0) return handleResponses.errorResponse(400, "Cannot get all categories.", null, []);
-    const constructCategory = helperUtils.constructIssueItem(categoryRes[0]);
-    const result = helperUtils.constructIssueItemWithProject(categoryRes[0], constructCategory, "category");
-    return handleResponses.successResponse(200, "Get details a category successfully.", result, null);
-}
-
-const editCategory = async (categoryId, body) => {
-    categoryId = Number(categoryId);
-    const validationError = handleValidations(issueItemValidator(body));
-    if(validationError) return handleResponses.errorResponse(400, "Invalid Data", validationError, body);
-    await issueModels.updateCategory([body.name, body.description, categoryId]);
-    return handleResponses.successResponse(200, "Edited a category successfully.", [], null);
-}
-
-const deleteCategory = async (categoryId) => {
-    categoryId = Number(categoryId);
-
-    const categoryUsage = await issueModels.isActiveCategory(categoryId)
-    if(categoryUsage.isUsed){
-        const issues = await issueModels.getIssueUsingCategory(categoryId);
-        return handleResponses.errorResponse(400, `Cannot delete: This category is assigned to ${categoryUsage.count} issue.`, null, issues);
-    }
-   
-    await issueModels.deleteCategory(categoryId);
-    return handleResponses.successResponse(200, "Deleted a category successfully.", [], null);
-}
 
 // Issue_Labels
 const createLabel = async (projectId, body) => {
@@ -264,15 +209,19 @@ const deleteTracker = async (trackerId) => {
 }
 
 // Issue
-const createIssue = async (categoryId, body, token) => {
-    categoryId = Number(categoryId);
+const createIssue = async (projectId, body, token) => {
+    projectId = Number(projectId);
     const validationError = handleValidations(issueValidator(body));
     if(validationError) return handleResponses.errorResponse(400, "Invalid data.", validationError, body);
     const decodedToken = await jwt.verifyToken(token);
-    const start_date = body.start_date == "" ? null : body.start_date;
-    const due_date = body.due_date == "" ? null : body.due_date;
-    const assignee = body.assignee == "" ? null : body.assignee;
-    const issueCreated = await issueModels.createIssue([categoryId, body.name, body.description, start_date, due_date, body.status_id, body.priority_id, body.tracker_id, body.label_id, assignee, decodedToken.id, decodedToken.id]);
+    const start_date = body.start_date == "" || body.start_date == null ? null : body.start_date;
+    const due_date = body.due_date == "" || body.due_date == null ? null : body.due_date;
+    const assignee = body.assignee == "" || body.assignee == null ? null : Number(body.assignee);
+    const label_id = body.label_id == "" || body.label_id == null ? null : Number(body.label_id);
+    const status_id = body.status_id ? Number(body.status_id) : null;
+    const priority_id = body.priority_id ? Number(body.priority_id) : null;
+    const tracker_id = body.tracker_id ? Number(body.tracker_id) : null;
+    const issueCreated = await issueModels.createIssue([projectId, body.name, body.description, start_date, due_date, status_id, priority_id, tracker_id, label_id, assignee, decodedToken.id, decodedToken.id]);
     if (!issueCreated.insertId) {
         return handleResponses.errorResponse(500, "Failed to create issue.", null, []);
     }
@@ -282,17 +231,17 @@ const createIssue = async (categoryId, body, token) => {
     return handleResponses.successResponse(200, "Created an issue successfully.", result, null);
 }
 
-const getAllIssueInCategory = async (search, page, perpage, categoryId) => {
-    categoryId = Number(categoryId);
+const getAllIssueInProject = async (search, page, perpage, projectId) => {
+    projectId = Number(projectId);
     page = Number(page);
     perpage = Number(perpage);
     let resultTemp = [];
-    const issueRes = await issueModels.getAllIssueByCatId(search, page, perpage, categoryId);
+    const issueRes = await issueModels.getAllIssueByProjectId(search, page, perpage, projectId);
     if(issueRes.length <= 0) return handleResponses.errorResponse(200, "Cannot get issues data.", null, []);
     issueRes.forEach((element) => {
         resultTemp.push(helperUtils.constructIssue(element));
     });
-    const countAllIssue = await issueModels.countAllIssueInCat(search, categoryId);
+    const countAllIssue = await issueModels.countAllIssueInProject(search, projectId);
     const totalPages = Math.ceil(countAllIssue[0].total / perpage);
     const constructWithPaginate = helperUtils.constructDataWithPaginate(resultTemp, countAllIssue[0].total, page, perpage, totalPages);
     const result = {
@@ -302,7 +251,7 @@ const getAllIssueInCategory = async (search, page, perpage, categoryId) => {
         },
         issues : constructWithPaginate
     }
-    return handleResponses.successResponse(200, "Get all issues in a category successfully.", result, null);
+    return handleResponses.successResponse(200, "Get all issues in a project successfully.", result, null);
 }
 
 const getIssue = async (issueId) => {
@@ -485,12 +434,11 @@ const issueGetDetailActivity = async (activityId) => {
 }
 
 module.exports = {
-    createCategory, getAllCategory, getCategory, editCategory, deleteCategory,
     createLabel, getAllLabels, getLabel, editLabel, deleteLabel,
     createPriority, getAllPriorities, getPriority, editPriority, deletePriority,
     createStatus, getAllStatus, getStatus, editStatus, deleteStatus,
     createTracker, getAllTrackers, getTracker, editTracker, deleteTracker,
-    createIssue, getAllIssueInCategory, getIssue, deleteIssue, editIssue,
+    createIssue, getAllIssueInProject, getIssue, deleteIssue, editIssue,
     createIssueNote, getAllNote, getNoteById, editNote, deleteNote, 
     issueEditLabelOnly, issueEditPriorityOnly, issueEditStatusOnly, issueEditAssignee,
     issueEditTrackerOnly, issueEditStartDateOnly, issueEditDueDateOnly, issueEditProgressOnly,

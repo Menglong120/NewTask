@@ -1,5 +1,4 @@
 const { update } = require("lodash");
-// const project = require("../validations/project");
 
 const constructUserRole = (role) => ({
     id : role.id,
@@ -21,6 +20,13 @@ const constructUserProfile = (data, token) => ({
     last_login_on : data.last_login_on,
     status : data.status,
     msg_status : "1 for active & 2 for inactive",
+    department : data.department_id ? {
+        id : data.department_id,
+        name : data.department_name,
+        description : data.department_description,
+        created_on : data.department_created_on,
+        updated_on : data.department_updated_on
+    } : null,
     role : {
         id : data.role_id,
         name : data.role_name,
@@ -45,6 +51,13 @@ const constructUserWithPassword = (data, token, password) => ({
     last_login_on : data.last_login_on,
     status : data.status,
     msg_status : "1 for active & 2 for inactive",
+    department : data.department_id ? {
+        id : data.department_id,
+        name : data.department_name,
+        description : data.department_description,
+        created_on : data.department_created_on,
+        updated_on : data.department_updated_on
+    } : null,
     role : {
         id : data.role_id,
         name : data.role_name,
@@ -79,12 +92,19 @@ const constructProjectMembers = (data) => ({
         description: data.user_description,
         status: data.user_status,
         msg_status: "1 for active & 2 for inactive",
+        department: data.user_department_id ? {
+            id: data.user_department_id,
+            name: data.user_department_name,
+            description: data.user_department_description,
+            created_on: data.user_department_created_on,
+            updated_on: data.user_department_updated_on
+        } : null,
         role: {
             id: data.user_role_id,
             name: data.user_role_name,
             description: data.user_role_description,
             created_on: data.user_role_created_on,
-            updated_on: data.user_role_updated_on 
+            updated_on: data.user_role_updated_on
         },
         created_on: data.user_created_on,
         updated_on: data.user_updated_on
@@ -96,6 +116,13 @@ const constructProjects = (data, members) => ({
     id : data.id,
     name : data.name,
     description : data.description,
+    department : data.department_id ? {
+        id : data.department_id,
+        name : data.department_name,
+        description : data.department_description,
+        created_on : data.department_created_on,
+        updated_on : data.department_updated_on
+    } : null,
     status : {
         id : data.status_id,
         title: data.status_title,
@@ -239,10 +266,6 @@ const constructIssue = (data) => ({
     progress : data.progress,
     start_date : data.start_date,
     due_date : data.due_date,
-    category : {
-        id : data.category_id,
-        name : data.category_name,
-    },
     status : {
         id : data.status_id,
         name : data.status_name,
@@ -307,11 +330,6 @@ const constructIssueDetail = (data) => ({
     progress : data.progress,
     start_date : data.start_date,
     due_date : data.due_date,
-    category : {
-        id : data.category_id,
-        name : data.category_name,
-        description : data.category_description
-    },
     status : {
         id : data.status_id,
         name : data.status_name,
@@ -380,11 +398,6 @@ const constructSubIssueDetail = (data) => ({
     progress : data.progress,
     start_date : data.start_date,
     due_date : data.due_date,
-    category : {
-        id : data.category_id,
-        name : data.category_name,
-        description : data.category_description
-    },
     status : {
         id : data.status_id,
         name : data.status_name,
@@ -466,7 +479,6 @@ const constructIssueNote = (data) => ({
 });
 
 function formatDataForChart(data, status) {
-    
     let result = [];
     status.forEach((stat) => {
         let stemp = [];
@@ -477,9 +489,9 @@ function formatDataForChart(data, status) {
                     total_issues : element.count
                 })
             }
-        })        
+        })
 
-        let temp = { 
+        let temp = {
             status : {
                 id : stat.id,
                 name : stat.name,

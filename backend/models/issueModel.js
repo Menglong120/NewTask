@@ -2,10 +2,7 @@ const { values } = require('lodash');
 const { query } = require('../config/db');
 
 // Create
-const createCategory = async (values) => {
-    const sql = 'INSERT INTO `tbl_issue_categories`(`project_id`, `name`, `description`) VALUES (?,?,?)';
-    return await query(sql, values);
-}
+
 
 const createLabel = async (values) => {
     const sql = 'INSERT INTO `tbl_issue_labels`(`project_id`, `name`, `description`) VALUES (?,?,?)';
@@ -28,7 +25,7 @@ const createTracker = async (values) => {
 }
 
 const createIssue = async (values) => {
-    const sql = "INSERT INTO `tbl_issues`(`category_id`, `name`, `description`, `start_date`, `due_date`, `status_id`, `priority_id`, `tracker_id`, `label_id`, `assignee`, `created_by`, `updated_by`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+    const sql = "INSERT INTO `tbl_issues`(`project_id`, `name`, `description`, `start_date`, `due_date`, `status_id`, `priority_id`, `tracker_id`, `label_id`, `assignee`, `created_by`, `updated_by`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
     return await query(sql, values);
 }
 
@@ -43,10 +40,7 @@ const createIssueActivity = async (values) => {
 }
 
 // Update
-const updateCategory = async (values) => { 
-    const sql = 'UPDATE `tbl_issue_categories` SET `name` = ?, `description` = ? WHERE `id` = ?';
-    return await query(sql, values);
-}
+
 
 const updateLabel = async (values) => {
     const sql = 'UPDATE `tbl_issue_labels` SET `name` = ?, `description` = ? WHERE `id` = ?';
@@ -119,43 +113,9 @@ const issueUpdateAssignee = async (values) => {
 }
 
 // Get
-const getAllCategory = async (projectId) => {
-    const sql = `SELECT 
-            tbl_issue_categories.id AS 'id',
-            tbl_issue_categories.name AS 'name',
-            tbl_issue_categories.description AS 'description',
-            tbl_issue_categories.created_on AS 'created_on',
-            tbl_issue_categories.updated_on AS 'updated_on',
-            tbl_project.id AS 'project_id',
-            tbl_project.name AS 'project_name',
-            tbl_project.description AS 'project_description',
-            tbl_project.created_on AS 'project_created_on',
-            tbl_project.updated_on AS 'project_updated_on'
-            FROM tbl_issue_categories
-            LEFT JOIN tbl_project ON tbl_project.id = tbl_issue_categories.project_id
-            WHERE tbl_issue_categories.project_id = ?
-        `;
-    return await query(sql, [projectId]);
-}
 
-const getCategoryById = async (categoryId) => {
-    const sql = `SELECT
-            tbl_issue_categories.id AS 'id',
-            tbl_issue_categories.name AS 'name',
-            tbl_issue_categories.description AS 'description',
-            tbl_issue_categories.created_on AS 'created_on',
-            tbl_issue_categories.updated_on AS 'updated_on',
-            tbl_project.id AS 'project_id',
-            tbl_project.name AS 'project_name',
-            tbl_project.description AS 'project_description',
-            tbl_project.created_on AS 'project_created_on',
-            tbl_project.updated_on AS 'project_updated_on'
-            FROM tbl_issue_categories
-            LEFT JOIN tbl_project ON tbl_project.id = tbl_issue_categories.project_id
-            WHERE tbl_issue_categories.id = ?
-        `;
-    return await query(sql, [categoryId]);
-}
+
+
 
 const getAllLabels = async (projectId) => {
     const sql = ` SELECT
@@ -315,7 +275,7 @@ const getTrackerById = async (trackerId) => {
     return await query(sql, [trackerId]);
 }
 
-const getAllIssueByCatId = async (search, page, perpage, categoryId) => {
+const getAllIssueByProjectId = async (search, page, perpage, projectId) => {
     let values = [];
     let sql = ` SELECT
                 i.id AS id,
@@ -328,8 +288,7 @@ const getAllIssueByCatId = async (search, page, perpage, categoryId) => {
                 i.updated_on AS updated_on,
 
                 -- Category Info
-                c.id AS category_id,
-                c.name AS category_name,
+                
 
                 -- Status Info
                 s.id AS status_id,
@@ -384,8 +343,7 @@ const getAllIssueByCatId = async (search, page, perpage, categoryId) => {
                 pro.name AS project_name
 
             FROM tbl_issues AS i
-            LEFT JOIN tbl_issue_categories AS c ON i.category_id = c.id
-            LEFT JOIN tbl_project AS pro ON c.project_id = pro.id
+            LEFT JOIN tbl_project AS pro ON i.project_id = pro.id
             LEFT JOIN tbl_issue_status AS s ON i.status_id = s.id
             LEFT JOIN tbl_issue_priorities AS p ON i.priority_id = p.id
             LEFT JOIN tbl_users AS a ON i.assignee = a.id
@@ -397,9 +355,9 @@ const getAllIssueByCatId = async (search, page, perpage, categoryId) => {
             LEFT JOIN tbl_issue_trackers AS t ON i.tracker_id = t.id
             LEFT JOIN tbl_issue_labels AS l ON i.label_id = l.id
 
-            WHERE i.category_id = ?
+            WHERE i.project_id = ?
         `;
-    values.push(categoryId)
+    values.push(projectId)
     if(search.length > 0){
         sql += ` AND (
                 i.id = ? AND
@@ -438,11 +396,6 @@ const getIssueById = async (issueId) => {
                 i.due_date AS due_date,
                 i.created_on AS created_on,
                 i.updated_on AS updated_on,
-
-                -- Category Info
-                c.id AS category_id,
-                c.name AS category_name,
-                c.description AS category_description,
 
                 -- Status Info
                 s.id AS status_id,
@@ -500,8 +453,7 @@ const getIssueById = async (issueId) => {
                 pro.name AS project_name
 
             FROM tbl_issues AS i
-            LEFT JOIN tbl_issue_categories AS c ON i.category_id = c.id
-            LEFT JOIN tbl_project AS pro ON c.project_id = pro.id
+            LEFT JOIN tbl_project AS pro ON i.project_id = pro.id
             LEFT JOIN tbl_issue_status AS s ON i.status_id = s.id
             LEFT JOIN tbl_issue_priorities AS p ON i.priority_id = p.id
             LEFT JOIN tbl_users AS a ON i.assignee = a.id
@@ -613,19 +565,19 @@ const getDetailIssueActivity = async (activityId) => {
 }
 
 // Count
-const countAllIssueInCat = async (search, categoryId) => {
+const countAllIssueInProject = async (search, projectId) => {
     let values = [];
     let sql = `SELECT count(i.id) AS 'total' 
             FROM tbl_issues AS i
-            LEFT JOIN tbl_issue_categories AS c ON i.category_id = c.id
+            LEFT JOIN tbl_project AS pro ON i.project_id = pro.id
             LEFT JOIN tbl_issue_status AS s ON i.status_id = s.id
             LEFT JOIN tbl_issue_priorities AS p ON i.priority_id = p.id
             LEFT JOIN tbl_users AS a ON i.assignee = a.id
             LEFT JOIN tbl_issue_trackers AS t ON i.tracker_id = t.id
             LEFT JOIN tbl_issue_labels AS l ON i.label_id = l.id
-            WHERE i.category_id = ?
+            WHERE i.project_id = ?
         `;
-    values.push(categoryId);
+    values.push(projectId);
     if(search.length > 0){
         sql += ` AND (
                 i.id = ? AND
@@ -652,26 +604,7 @@ const countAllIssueInCat = async (search, categoryId) => {
 
 // Delete
 
-// category active
 
-const getIssueUsingCategory = async (categoryId) => {
-    const sql = `SELECT id, name FROM tbl_issues WHERE category_id = ? `;
-    const result = await query(sql,categoryId);
-    return result;
-}
-
-const isActiveCategory = async(categoryId) => {
-    const sql = "SELECT COUNT(*) AS count FROM tbl_issues WHERE category_id = ? "
-    const result = await query(sql, categoryId);
-   return {
-        isUsed: result[0].count > 0,
-        count: result[0].count
-   }; 
-}
-const deleteCategory = async (categoryId) => {
-    const sql = 'DELETE FROM tbl_issue_categories WHERE `id` = ?';
-    return await query(sql, [categoryId]);
-}
 
 // label active
 const getIssueUsingLabel = async (labelId) =>{
@@ -766,8 +699,7 @@ const deleteNote = async (noteId) => {
     return await query(sql, [noteId]);
 }
 
-module.exports = {
-    createCategory, 
+module.exports = { 
     createLabel,
     createPriority,
     createStatus,
@@ -775,8 +707,6 @@ module.exports = {
     createIssue,
     createIssueNote,
     createIssueActivity,
-
-    updateCategory,
     updateLabel,
     updatePriority,
     updateStatus,
@@ -791,17 +721,15 @@ module.exports = {
     issueUpdateDueDateOnly,
     issueUpdateProgressOnly,
     issueUpdateAssignee,
-
-    getAllCategory, getCategoryById,
     getAllLabels, getLabelById,
     getAllPriorities, getPriorityById,
     getAllStatus, getStatusById,
     getAllTrackers, getTrackerById,
-    getAllIssueByCatId, getIssueById,
+    getAllIssueByProjectId, getIssueById,
     getAllNoteByIssueId, getNoteById,
     getAllIssueActivity, getDetailIssueActivity,
 
-    deleteCategory,
+
     deleteLabel,
     deletePriority,
     deleteStatus,
@@ -813,13 +741,12 @@ module.exports = {
     isActiveTracker,
     isActivePriority,
     isActiveLabel,
-    isActiveCategory,
 
-    getIssueUsingCategory,
+
     getIssueUsingLabel,
     getIssueUsingPriority,
     getIssueUsingStatus,
     getIssueUsingTracker,
 
-    countAllIssueInCat,
+    countAllIssueInProject,
 }

@@ -3,41 +3,99 @@ const issueModel = require('../models/issueModel');
 const subIssueModel = require('../models/subIssueModel');
 const projectModel = require('../models/projectModel');
 const userModel = require('../models/userModel');
-const { result } = require('lodash');
 
-const checkCategory = async (req, res, next) => {
-    const categoryRes = await issueModel.getCategoryById(req.params.id);
-    if(categoryRes.length <= 0){
-        return res.status(400).json({
-            result : false,
-            msg : "Invalid category id",
-            data : []
+const getDecodedUser = (req) => new Promise((resolve, reject) => {
+    const token = req.cookies.jwtToken;
+    if (!token) {
+        return reject({
+            status: 400,
+            body: {
+                result: false,
+                msg: 'You need to login!',
+                data: []
+            }
         });
     }
-    const token = req.cookies.jwtToken;
-    jwt.verify(token, 'kot secret', async (err, decodedToken) => {
-        const memberRes = await projectModel.getAllProjectMembers(categoryRes[0].project_id);
 
-        let userCheck = false;
-        memberRes.forEach((element) => {
-            if(element.user_id == decodedToken.id){
-                userCheck = true;
-            }
-        })
-        if(!userCheck){
-            const userRes = await userModel.getUserById(decodedToken.id);
-            if(userRes[0].role_id == 1){
-                return next();
-            }
-            return res.status(400).json({
+    jwt.verify(token, 'kot secret', async (err, decodedToken) => {
+        if (err) {
+            return reject({
+                status: 400,
+                body: {
+                    result: false,
+                    msg: 'You need to login!',
+                    data: []
+                }
+            });
+        }
+
+        const userRes = await userModel.getUserById(decodedToken.id);
+        if (!userRes || userRes.length <= 0) {
+            return reject({
+                status: 404,
+                body: {
+                    result: false,
+                    msg: 'User not found.',
+                    data: []
+                }
+            });
+        }
+
+        resolve(userRes[0]);
+    });
+});
+
+const canAccessProject = async (projectId, user) => {
+    const projectRes = await projectModel.getProjectById(projectId);
+    if (!projectRes || projectRes.length <= 0) {
+        return {
+            status: 400,
+            body: {
                 result: false,
-                msg: 'You are not in this project.',
+                msg: 'This project is not existed..!',
                 data: []
-            })
+            }
+        };
+    }
+
+    if (Number(user.role_id) === 1) {
+        return null;
+    }
+
+    const memberRes = await projectModel.getAllProjectMembers(projectId);
+    const isMember = memberRes.some((member) => Number(member.user_id) === Number(user.id));
+    if (isMember) {
+        return null;
+    }
+
+    return {
+        status: 400,
+        body: {
+            result: false,
+            msg: 'You are not allowed to access this project.',
+            data: []
+        }
+    };
+};
+
+const guardProjectAccess = async (req, res, next, getProjectId) => {
+    try {
+        const user = await getDecodedUser(req);
+        const projectId = await getProjectId();
+        const denied = await canAccessProject(projectId, user);
+        if (denied) {
+            return res.status(denied.status).json(denied.body);
         }
         next();
-    });
-}
+    } catch (error) {
+        res.status(error.status || 400).json(error.body || {
+            result: false,
+            msg: 'You need to login!',
+            data: []
+        });
+    }
+};
+
 
 const checkLabel = async (req, res, next) => {
     const labelRes = await issueModel.getLabelById(req.params.id);
@@ -48,29 +106,8 @@ const checkLabel = async (req, res, next) => {
             data : []
         });
     }
-    const token = req.cookies.jwtToken;
-    jwt.verify(token, 'kot secret', async (err, decodedToken) => {
-        const memberRes = await projectModel.getAllProjectMembers(labelRes[0].project_id);
 
-        let userCheck = false;
-        memberRes.forEach((element) => {
-            if(element.user_id == decodedToken.id){
-                userCheck = true;
-            }
-        })
-        if(!userCheck){
-            const userRes = await userModel.getUserById(decodedToken.id);
-            if(userRes[0].role_id == 1){
-                return next();
-            }
-            return res.status(400).json({
-                result: false,
-                msg: 'You are not in this project.',
-                data: []
-            })
-        }
-        next();
-    });
+    return guardProjectAccess(req, res, next, async () => labelRes[0].project_id);
 }
 
 const checkPriority = async (req, res, next) => {
@@ -82,29 +119,8 @@ const checkPriority = async (req, res, next) => {
             data : []
         });
     }
-    const token = req.cookies.jwtToken;
-    jwt.verify(token, 'kot secret', async (err, decodedToken) => {
-        const memberRes = await projectModel.getAllProjectMembers(priorityRes[0].project_id);
 
-        let userCheck = false;
-        memberRes.forEach((element) => {
-            if(element.user_id == decodedToken.id){
-                userCheck = true;
-            }
-        })
-        if(!userCheck){
-            const userRes = await userModel.getUserById(decodedToken.id);
-            if(userRes[0].role_id == 1){
-                return next();
-            }
-            return res.status(400).json({
-                result: false,
-                msg: 'You are not in this project.',
-                data: []
-            })
-        }
-        next();
-    });
+    return guardProjectAccess(req, res, next, async () => priorityRes[0].project_id);
 }
 
 const checkStatus = async (req, res, next) => {
@@ -116,29 +132,8 @@ const checkStatus = async (req, res, next) => {
             data : []
         });
     }
-    const token = req.cookies.jwtToken;
-    jwt.verify(token, 'kot secret', async (err, decodedToken) => {
-        const memberRes = await projectModel.getAllProjectMembers(statusRes[0].project_id);
 
-        let userCheck = false;
-        memberRes.forEach((element) => {
-            if(element.user_id == decodedToken.id){
-                userCheck = true;
-            }
-        })
-        if(!userCheck){
-            const userRes = await userModel.getUserById(decodedToken.id);
-            if(userRes[0].role_id == 1){
-                return next();
-            }
-            return res.status(400).json({
-                result: false,
-                msg: 'You are not in this project.',
-                data: []
-            })
-        }
-        next();
-    });
+    return guardProjectAccess(req, res, next, async () => statusRes[0].project_id);
 }
 
 const checkTracker = async (req, res, next) => {
@@ -150,29 +145,8 @@ const checkTracker = async (req, res, next) => {
             data : []
         });
     }
-    const token = req.cookies.jwtToken;
-    jwt.verify(token, 'kot secret', async (err, decodedToken) => {
-        const memberRes = await projectModel.getAllProjectMembers(trackerRes[0].project_id);
 
-        let userCheck = false;
-        memberRes.forEach((element) => {
-            if(element.user_id == decodedToken.id){
-                userCheck = true;
-            }
-        })
-        if(!userCheck){
-            const userRes = await userModel.getUserById(decodedToken.id);
-            if(userRes[0].role_id == 1){
-                return next();
-            }
-            return res.status(400).json({
-                result: false,
-                msg: 'You are not in this project.',
-                data: []
-            })
-        }
-        next();
-    });
+    return guardProjectAccess(req, res, next, async () => trackerRes[0].project_id);
 }
 
 const checkIssue = async (req, res, next) => {
@@ -184,29 +158,9 @@ const checkIssue = async (req, res, next) => {
             data : []
         });
     }
-    const token = req.cookies.jwtToken;
-    jwt.verify(token, 'kot secret', async (err, decodedToken) => {
-        const catRes = await issueModel.getCategoryById(issueRes[0].category_id);
-        const memberRes = await projectModel.getAllProjectMembers(catRes[0].project_id);
 
-        let userCheck = false;
-        memberRes.forEach((element) => {
-            if(element.user_id == decodedToken.id){
-                userCheck = true;
-            }
-        })
-        if(!userCheck){
-            const userRes = await userModel.getUserById(decodedToken.id);
-            if(userRes[0].role_id == 1){
-                return next();
-            }
-            return res.status(400).json({
-                result: false,
-                msg: 'You are not in this project.',
-                data: []
-            })
-        }
-        next();
+    return guardProjectAccess(req, res, next, async () => {
+        return issueRes[0].project_id;
     });
 }
 
@@ -283,7 +237,6 @@ const checkSubIssue = async (req, res, next) => {
 }
 
 module.exports = {
-    checkCategory,
     checkLabel,
     checkPriority,
     checkStatus,

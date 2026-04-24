@@ -1,5 +1,5 @@
-const { values } = require('lodash');
 const { query } = require('../config/db');
+const { isDepartmentSchemaError } = require('../utils/dbCompat');
 
 // Create
 const createStatus = async (values) => {
@@ -8,7 +8,7 @@ const createStatus = async (values) => {
 }
 
 const createProject = async (values) => {
-    const sql = "INSERT INTO `tbl_project`(`name`, `description`, `status_id`, `start_date`, `end_date`) VALUES (?,?,?,?,?)";
+    const sql = "INSERT INTO `tbl_project`(`name`, `description`, `status_id`, `department_id`, `start_date`, `end_date`) VALUES (?,?,?,?,?,?)";
     return await query(sql, values);
 }
 
@@ -39,7 +39,7 @@ const updateStatus = async (values) => {
 }
 
 const updateProject = async (values) => {
-    const sql = "UPDATE `tbl_project` SET `name` = ?, `description` = ?, `start_date` = ?, `end_date` = ? WHERE `id` = ?";
+    const sql = "UPDATE `tbl_project` SET `name` = ?, `description` = ?, `department_id` = ?, `start_date` = ?, `end_date` = ? WHERE `id` = ?";
     return await query(sql, values);
 }
 
@@ -74,13 +74,8 @@ const isStatusUsed = async (statusId) => {
 }
 const deleteStatus = async (statusId) => {
     const sql = "DELETE FROM tbl_project_status WHERE id = ?";
-    return await query(sql, statusId); 
+    return await query(sql, statusId);
 };
-
-// const deleteStatus = async (values) => {
-//     const sql = "DELETE FROM `tbl_project_status` WHERE `id` = ?";
-//     return await query(sql, values);
-// }
 
 const deleteProject = async (values) => {
     const sql = "DELETE FROM `tbl_project` WHERE `id` = ?";
@@ -142,6 +137,11 @@ const getAllProjects = async (search, page, perpage, id) => {
             tbl_project.updated_on AS 'updated_on',
             tbl_project.start_date AS 'start_date',
             tbl_project.end_date AS 'end_date',
+            tbl_departments.id AS 'department_id',
+            tbl_departments.name AS 'department_name',
+            tbl_departments.description AS 'department_description',
+            tbl_departments.created_on AS 'department_created_on',
+            tbl_departments.updated_on AS 'department_updated_on',
             tbl_project_status.id AS 'status_id',
             tbl_project_status.title AS 'status_title',
             tbl_project_status.description AS 'status_description',
@@ -149,9 +149,10 @@ const getAllProjects = async (search, page, perpage, id) => {
             tbl_project_status.updated_on AS 'status_updated_on'
             FROM tbl_project
             LEFT JOIN tbl_project_status ON tbl_project_status.id = tbl_project.status_id
+            LEFT JOIN tbl_departments ON tbl_departments.id = tbl_project.department_id
             LEFT JOIN tbl_members ON tbl_members.project_id = tbl_project.id
             INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
-            WHERE (tbl_members.user_id = ?)
+            WHERE tbl_members.user_id = ?
         `;
     values.push(id);
     if(search && search.length > 0){
@@ -163,7 +164,43 @@ const getAllProjects = async (search, page, perpage, id) => {
         sql += ' LIMIT ? OFFSET ?';
         values.push(perpage, (page - 1) * perpage);
     }
-    return await query(sql, values);
+    try {
+        return await query(sql, values);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        values = [];
+        sql = `SELECT 
+                tbl_project.id AS 'id',
+                tbl_project.name AS 'name',
+                tbl_project.description AS 'description',
+                tbl_project.created_on AS 'created_on',
+                tbl_project.updated_on AS 'updated_on',
+                tbl_project.start_date AS 'start_date',
+                tbl_project.end_date AS 'end_date',
+                tbl_project_status.id AS 'status_id',
+                tbl_project_status.title AS 'status_title',
+                tbl_project_status.description AS 'status_description',
+                tbl_project_status.created_on AS 'status_created_on',
+                tbl_project_status.updated_on AS 'status_updated_on'
+                FROM tbl_project
+                LEFT JOIN tbl_project_status ON tbl_project_status.id = tbl_project.status_id
+                LEFT JOIN tbl_members ON tbl_members.project_id = tbl_project.id
+                INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+                WHERE tbl_members.user_id = ?
+            `;
+        values.push(id);
+        if(search && search.length > 0){
+            sql += 'AND (`tbl_project`.`id` = ? OR `tbl_project`.`name` LIKE ?)';
+            values.push(search, `%${search}%`);
+        }
+        sql += ` GROUP BY tbl_project.id`;
+        if(perpage && page){
+            sql += ' LIMIT ? OFFSET ?';
+            values.push(perpage, (page - 1) * perpage);
+        }
+        return await query(sql, values);
+    }
 }
 
 const getAllProjectsNoCheck = async (search, page, perpage) => {
@@ -176,6 +213,11 @@ const getAllProjectsNoCheck = async (search, page, perpage) => {
             tbl_project.updated_on AS 'updated_on',
             tbl_project.start_date AS 'start_date',
             tbl_project.end_date AS 'end_date',
+            tbl_departments.id AS 'department_id',
+            tbl_departments.name AS 'department_name',
+            tbl_departments.description AS 'department_description',
+            tbl_departments.created_on AS 'department_created_on',
+            tbl_departments.updated_on AS 'department_updated_on',
             tbl_project_status.id AS 'status_id',
             tbl_project_status.title AS 'status_title',
             tbl_project_status.description AS 'status_description',
@@ -183,11 +225,10 @@ const getAllProjectsNoCheck = async (search, page, perpage) => {
             tbl_project_status.updated_on AS 'status_updated_on'
             FROM tbl_project
             LEFT JOIN tbl_project_status ON tbl_project_status.id = tbl_project.status_id
-            LEFT JOIN tbl_members ON tbl_members.project_id = tbl_project.id
-            INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+            LEFT JOIN tbl_departments ON tbl_departments.id = tbl_project.department_id
         `;
     if(search && search.length > 0){
-        sql += 'AND (`tbl_project`.`id` = ? OR `tbl_project`.`name` LIKE ?)';
+        sql += 'WHERE (`tbl_project`.`id` = ? OR `tbl_project`.`name` LIKE ?)';
         values.push(search, `%${search}%`);
     }
     sql += ` GROUP BY tbl_project.id`;
@@ -195,7 +236,39 @@ const getAllProjectsNoCheck = async (search, page, perpage) => {
         sql += ' LIMIT ? OFFSET ?';
         values.push(perpage, (page - 1) * perpage);
     }
-    return await query(sql, values);
+    try {
+        return await query(sql, values);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        values = [];
+        sql = `SELECT 
+                tbl_project.id AS 'id',
+                tbl_project.name AS 'name',
+                tbl_project.description AS 'description',
+                tbl_project.created_on AS 'created_on',
+                tbl_project.updated_on AS 'updated_on',
+                tbl_project.start_date AS 'start_date',
+                tbl_project.end_date AS 'end_date',
+                tbl_project_status.id AS 'status_id',
+                tbl_project_status.title AS 'status_title',
+                tbl_project_status.description AS 'status_description',
+                tbl_project_status.created_on AS 'status_created_on',
+                tbl_project_status.updated_on AS 'status_updated_on'
+                FROM tbl_project
+                LEFT JOIN tbl_project_status ON tbl_project_status.id = tbl_project.status_id
+            `;
+        if(search && search.length > 0){
+            sql += 'WHERE (`tbl_project`.`id` = ? OR `tbl_project`.`name` LIKE ?)';
+            values.push(search, `%${search}%`);
+        }
+        sql += ` GROUP BY tbl_project.id`;
+        if(page && perpage){
+            sql += ' LIMIT ? OFFSET ?';
+            values.push(perpage, (page - 1) * perpage);
+        }
+        return await query(sql, values);
+    }
 }
 
 const getAllProjectsById = async (id) => {
@@ -207,6 +280,11 @@ const getAllProjectsById = async (id) => {
             tbl_project.updated_on AS 'updated_on',
             tbl_project.start_date AS 'start_date',
             tbl_project.end_date AS 'end_date',
+            tbl_departments.id AS 'department_id',
+            tbl_departments.name AS 'department_name',
+            tbl_departments.description AS 'department_description',
+            tbl_departments.created_on AS 'department_created_on',
+            tbl_departments.updated_on AS 'department_updated_on',
             tbl_project_status.id AS 'status_id',
             tbl_project_status.title AS 'status_title',
             tbl_project_status.description AS 'status_description',
@@ -214,9 +292,33 @@ const getAllProjectsById = async (id) => {
             tbl_project_status.updated_on AS 'status_updated_on'
             FROM tbl_project
             INNER JOIN tbl_project_status ON tbl_project_status.id = tbl_project.status_id
+            LEFT JOIN tbl_departments ON tbl_departments.id = tbl_project.department_id
             WHERE tbl_project.id = ?
         `;
-    return await query(sql, [id]);
+    try {
+        return await query(sql, [id]);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        sql = `SELECT 
+                tbl_project.id AS 'id',
+                tbl_project.name AS 'name',
+                tbl_project.description AS 'description',
+                tbl_project.created_on AS 'created_on',
+                tbl_project.updated_on AS 'updated_on',
+                tbl_project.start_date AS 'start_date',
+                tbl_project.end_date AS 'end_date',
+                tbl_project_status.id AS 'status_id',
+                tbl_project_status.title AS 'status_title',
+                tbl_project_status.description AS 'status_description',
+                tbl_project_status.created_on AS 'status_created_on',
+                tbl_project_status.updated_on AS 'status_updated_on'
+                FROM tbl_project
+                INNER JOIN tbl_project_status ON tbl_project_status.id = tbl_project.status_id
+                WHERE tbl_project.id = ?
+            `;
+        return await query(sql, [id]);
+    }
 }
 
 const getAllMembersById = async (id) => {
@@ -239,6 +341,11 @@ const getAllProjectMembers = async (projectId) => {
         tbl_users.status AS 'user_status',
         tbl_users.created_on AS 'user_created_on',
         tbl_users.updated_on AS 'user_updated_on',
+        tbl_departments.id AS 'user_department_id',
+        tbl_departments.name AS 'user_department_name',
+        tbl_departments.description AS 'user_department_description',
+        tbl_departments.created_on AS 'user_department_created_on',
+        tbl_departments.updated_on AS 'user_department_updated_on',
         tbl_roles.id AS 'user_role_id',
         tbl_roles.name AS 'user_role_name',
         tbl_roles.description AS 'user_role_description',
@@ -246,10 +353,41 @@ const getAllProjectMembers = async (projectId) => {
         tbl_roles.updated_on AS 'user_role_updated_on'
         FROM tbl_members
         INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+        LEFT JOIN tbl_departments ON tbl_departments.id = tbl_users.department_id
         INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
         WHERE tbl_members.project_id = ? GROUP BY tbl_members.id
     `;
-    return await query(sql, [projectId]);
+    try {
+        return await query(sql, [projectId]);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        const fallbackSql = `SELECT
+            tbl_members.id AS 'id',
+            tbl_members.project_id AS 'project_id',
+            tbl_members.created_on AS 'created_on',
+            tbl_users.id AS 'user_id',
+            tbl_users.first_name AS 'user_first_name',
+            tbl_users.last_name AS 'user_last_name',
+            tbl_users.dis_name AS 'user_dis_name',
+            tbl_users.email AS 'user_email',
+            tbl_users.avarta AS 'user_avarta',
+            tbl_users.description AS 'user_description',
+            tbl_users.status AS 'user_status',
+            tbl_users.created_on AS 'user_created_on',
+            tbl_users.updated_on AS 'user_updated_on',
+            tbl_roles.id AS 'user_role_id',
+            tbl_roles.name AS 'user_role_name',
+            tbl_roles.description AS 'user_role_description',
+            tbl_roles.created_on AS 'user_role_created_on',
+            tbl_roles.updated_on AS 'user_role_updated_on'
+            FROM tbl_members
+            INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+            INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+            WHERE tbl_members.project_id = ? GROUP BY tbl_members.id
+        `;
+        return await query(fallbackSql, [projectId]);
+    }
 }
 
 const getAllMembersByUserId = async (userId) => {
@@ -273,6 +411,11 @@ const getAllProjectMembersPaginate = async (search, page, perpage, projectId) =>
         tbl_users.status AS 'user_status',
         tbl_users.created_on AS 'user_created_on',
         tbl_users.updated_on AS 'user_updated_on',
+        tbl_departments.id AS 'user_department_id',
+        tbl_departments.name AS 'user_department_name',
+        tbl_departments.description AS 'user_department_description',
+        tbl_departments.created_on AS 'user_department_created_on',
+        tbl_departments.updated_on AS 'user_department_updated_on',
         tbl_roles.id AS 'user_role_id',
         tbl_roles.name AS 'user_role_name',
         tbl_roles.description AS 'user_role_description',
@@ -280,6 +423,7 @@ const getAllProjectMembersPaginate = async (search, page, perpage, projectId) =>
         tbl_roles.updated_on AS 'user_role_updated_on'
         FROM tbl_members
         INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+        LEFT JOIN tbl_departments ON tbl_departments.id = tbl_users.department_id
         INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
         WHERE tbl_members.project_id = ? 
         AND status = 1
@@ -303,7 +447,58 @@ const getAllProjectMembersPaginate = async (search, page, perpage, projectId) =>
         values.push(Number(perpage), (Number(page) - 1) * Number(perpage));
     }
 
-    return await query(sql, values);
+    try {
+        return await query(sql, values);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        values = [];
+        sql = `SELECT
+            tbl_members.id AS 'id',
+            tbl_members.project_id AS 'project_id',
+            tbl_members.created_on AS 'created_on',
+            tbl_users.id AS 'user_id',
+            tbl_users.first_name AS 'user_first_name',
+            tbl_users.last_name AS 'user_last_name',
+            tbl_users.dis_name AS 'user_dis_name',
+            tbl_users.email AS 'user_email',
+            tbl_users.avarta AS 'user_avarta',
+            tbl_users.description AS 'user_description',
+            tbl_users.status AS 'user_status',
+            tbl_users.created_on AS 'user_created_on',
+            tbl_users.updated_on AS 'user_updated_on',
+            tbl_roles.id AS 'user_role_id',
+            tbl_roles.name AS 'user_role_name',
+            tbl_roles.description AS 'user_role_description',
+            tbl_roles.created_on AS 'user_role_created_on',
+            tbl_roles.updated_on AS 'user_role_updated_on'
+            FROM tbl_members
+            INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+            INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+            WHERE tbl_members.project_id = ? 
+            AND status = 1
+        `;
+        values.push(projectId);
+
+        if (search.length > 0) {
+            sql += ` AND (
+                tbl_members.id = ? OR 
+                tbl_users.first_name LIKE ? OR 
+                tbl_users.last_name LIKE ? OR 
+                tbl_users.dis_name LIKE ? OR 
+                tbl_users.email LIKE ? OR 
+                tbl_roles.name LIKE ?
+            )`;
+            values.push(search, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
+        sql += ` GROUP BY tbl_members.id`;
+        if(perpage != 0 && page != 0) {
+            sql += ' LIMIT ? OFFSET ?';
+            values.push(Number(perpage), (Number(page) - 1) * Number(perpage));
+        }
+
+        return await query(sql, values);
+    }
 };
 
 const getAllProjectMemberbyId = async (memberId) => {
@@ -321,6 +516,11 @@ const getAllProjectMemberbyId = async (memberId) => {
         tbl_users.status AS 'user_status',
         tbl_users.created_on AS 'user_created_on',
         tbl_users.updated_on AS 'user_updated_on',
+        tbl_departments.id AS 'user_department_id',
+        tbl_departments.name AS 'user_department_name',
+        tbl_departments.description AS 'user_department_description',
+        tbl_departments.created_on AS 'user_department_created_on',
+        tbl_departments.updated_on AS 'user_department_updated_on',
         tbl_roles.id AS 'user_role_id',
         tbl_roles.name AS 'user_role_name',
         tbl_roles.description AS 'user_role_description',
@@ -328,10 +528,41 @@ const getAllProjectMemberbyId = async (memberId) => {
         tbl_roles.updated_on AS 'user_role_updated_on'
         FROM tbl_members
         INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+        LEFT JOIN tbl_departments ON tbl_departments.id = tbl_users.department_id
         INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
         WHERE tbl_members.id = ? GROUP BY tbl_members.id
     `;
-    return await query(sql, [memberId]);
+    try {
+        return await query(sql, [memberId]);
+    } catch (err) {
+        if (!isDepartmentSchemaError(err)) throw err;
+
+        const fallbackSql = `SELECT
+            tbl_members.id AS 'id',
+            tbl_members.project_id AS 'project_id',
+            tbl_members.created_on AS 'created_on',
+            tbl_users.id AS 'user_id',
+            tbl_users.first_name AS 'user_first_name',
+            tbl_users.last_name AS 'user_last_name',
+            tbl_users.dis_name AS 'user_dis_name',
+            tbl_users.email AS 'user_email',
+            tbl_users.avarta AS 'user_avarta',
+            tbl_users.description AS 'user_description',
+            tbl_users.status AS 'user_status',
+            tbl_users.created_on AS 'user_created_on',
+            tbl_users.updated_on AS 'user_updated_on',
+            tbl_roles.id AS 'user_role_id',
+            tbl_roles.name AS 'user_role_name',
+            tbl_roles.description AS 'user_role_description',
+            tbl_roles.created_on AS 'user_role_created_on',
+            tbl_roles.updated_on AS 'user_role_updated_on'
+            FROM tbl_members
+            INNER JOIN tbl_users ON tbl_users.id = tbl_members.user_id
+            INNER JOIN tbl_roles ON tbl_roles.id = tbl_users.role_id
+            WHERE tbl_members.id = ? GROUP BY tbl_members.id
+        `;
+        return await query(fallbackSql, [memberId]);
+    }
 };
 
 const getMemberIdByUserProjectId = async (userId, projectId) => {

@@ -25,17 +25,15 @@ const percentageProjectProgress = async () => {
 
         FROM tbl_project
         LEFT JOIN tbl_project_status ON tbl_project.status_id = tbl_project_status.id
-        LEFT JOIN tbl_issue_categories ON tbl_issue_categories.project_id = tbl_project.id
-        LEFT JOIN tbl_issues ON tbl_issues.category_id = tbl_issue_categories.id
+        LEFT JOIN tbl_issues ON tbl_issues.project_id = tbl_project.id
         LEFT JOIN tbl_sub_issues ON tbl_sub_issues.issue_id = tbl_issues.id
 
         LEFT JOIN (
             SELECT 
-                tbl_issue_categories.project_id,
+                tbl_issues.project_id,
                 SUM(tbl_issues.progress) AS total_progress
             FROM tbl_issues
-            LEFT JOIN tbl_issue_categories ON tbl_issues.category_id = tbl_issue_categories.id
-            GROUP BY tbl_issue_categories.project_id
+            GROUP BY tbl_issues.project_id
         ) AS issue_progress ON issue_progress.project_id = tbl_project.id
 
         GROUP BY 
@@ -70,8 +68,7 @@ const percentageProjectProgressUser = async (userId) => {
 
             FROM tbl_project
             LEFT JOIN tbl_project_status ON tbl_project.status_id = tbl_project_status.id
-            LEFT JOIN tbl_issue_categories ON tbl_issue_categories.project_id = tbl_project.id
-            LEFT JOIN tbl_issues ON tbl_issues.category_id = tbl_issue_categories.id
+            LEFT JOIN tbl_issues ON tbl_issues.project_id = tbl_project.id
             LEFT JOIN tbl_sub_issues ON tbl_sub_issues.issue_id = tbl_issues.id
 
             LEFT JOIN tbl_members ON tbl_members.project_id = tbl_project.id
@@ -79,11 +76,10 @@ const percentageProjectProgressUser = async (userId) => {
 
             LEFT JOIN (
                 SELECT 
-                    tbl_issue_categories.project_id,
+                    tbl_issues.project_id,
                     SUM(tbl_issues.progress) AS total_progress
                 FROM tbl_issues
-                LEFT JOIN tbl_issue_categories ON tbl_issues.category_id = tbl_issue_categories.id
-                GROUP BY tbl_issue_categories.project_id
+                GROUP BY tbl_issues.project_id
             ) AS issue_progress ON issue_progress.project_id = tbl_project.id
 
             WHERE tbl_members.user_id = 2
@@ -110,8 +106,7 @@ const countAllIssueInProject = async (projectId) => {
             COUNT(DISTINCT tbl_sub_issues.id) AS 'total_sub_issue'
         FROM tbl_project
         LEFT JOIN tbl_project_status ON tbl_project.status_id = tbl_project_status.id
-        LEFT JOIN tbl_issue_categories ON tbl_issue_categories.project_id = tbl_project.id
-        LEFT JOIN tbl_issues ON tbl_issues.category_id = tbl_issue_categories.id
+        LEFT JOIN tbl_issues ON tbl_issues.project_id = tbl_project.id
         LEFT JOIN tbl_sub_issues ON tbl_sub_issues.issue_id = tbl_issues.id
         WHERE tbl_project.id = ?
         GROUP BY tbl_project.id
@@ -163,28 +158,6 @@ const countIssueInPriority = async (projectId) => {
     return await query(sql, projectId);
 }
 
-const countIssueInCategory = async (projectId) => {
-    const sql = `
-        SELECT 
-            tbl_project.id AS 'id',
-            tbl_project.name AS 'name',
-            tbl_project.created_on AS 'created_on',
-            tbl_project.updated_on AS 'updated_on',
-            tbl_project_status.id AS 'status_id',
-            tbl_project_status.title AS 'status_title', 
-            COUNT(DISTINCT tbl_issues.id) AS 'total_issue',
-            tbl_issue_categories.id AS 'issue_category_id',
-            tbl_issue_categories.name AS 'issue_category_name'
-        FROM tbl_project
-        LEFT JOIN tbl_project_status ON tbl_project.status_id = tbl_project_status.id
-        LEFT JOIN tbl_issue_categories ON tbl_issue_categories.project_id = tbl_project.id
-        LEFT JOIN tbl_issues ON tbl_issues.category_id = tbl_issue_categories.id
-        WHERE tbl_project.id = ? 
-        GROUP BY tbl_project.id, tbl_issue_categories.id
-    `;
-    return await query(sql, [projectId]);
-};
-
 const countIssueByStatusInMonth = async (projectId) => {
     const sql = `
         SELECT 
@@ -228,8 +201,8 @@ const countIssueWithAssignee = async (projectId) => {
             tbl_issue_status.id AS 'issue_status_id',
             tbl_issue_status.name AS 'issue_status_name',
 
-            tbl_issue_categories.id AS 'issue_categories_id',
-            tbl_issue_categories.name AS 'issue_categories_name',
+            
+            
 
             tbl_users.id AS 'user_id',
             tbl_users.first_name AS 'user_first_name',
@@ -243,7 +216,7 @@ const countIssueWithAssignee = async (projectId) => {
         FROM tbl_users
         LEFT JOIN tbl_issues ON tbl_users.id = tbl_issues.assignee
         LEFT JOIN tbl_issue_status ON tbl_issues.status_id = tbl_issue_status.id
-        LEFT JOIN tbl_issue_categories ON tbl_issues.category_id = tbl_issue_categories.id
+        
         LEFT JOIN tbl_project ON tbl_issue_status.project_id = tbl_project.id
         LEFT JOIN tbl_roles ON tbl_users.role_id = tbl_roles.id
         
@@ -260,7 +233,6 @@ module.exports = {
     countAllIssueInProject,
     countIssueInStatus,
     countIssueInPriority,
-    countIssueInCategory,
     countIssueByStatusInMonth,
     countIssueWithAssignee,
 }

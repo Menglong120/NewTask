@@ -13,9 +13,9 @@ const router = express.Router();
 router.get('/projects', requireAuth, projectController.getAllProjects);
 router.get('/project/:id', requireProjectMember, projectController.getProject);
 router.post('/project', requireBothAdmin, projectController.createProject);
-router.put('/project/:id', requireProjectMember, projectController.editProject);
-router.put('/projectstatus/:id', requireProjectMember, projectController.editProjectStatus);
-router.delete('/project/:id', requireProjectMember, projectController.deleteProject);
+router.put('/project/:id', requireProjectMemberAdmin, projectController.editProject);
+router.put('/projectstatus/:id', requireProjectMemberAdmin, projectController.editProjectStatus);
+router.delete('/project/:id', requireProjectMemberAdmin, projectController.deleteProject);
 
 // Project Status
 router.get('/projects/status', requireAuth, projectController.getAllStatuses);

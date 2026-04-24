@@ -1,4 +1,5 @@
 const userModels = require('../models/userModel');
+const departmentModel = require('../models/departmentModel');
 const jwt = require('../utils/jwt');
 const handleResponse = require('../utils/handleResponses');
 const handleValidations = require('../utils/handleValidations');
@@ -58,11 +59,18 @@ const deleteUser = async (userId) => {
 const changeRole = async (userId, body) => {
     userId = Number(userId);
     roleId = Number(body.new_role_id);
+    const departmentId = body.department_id ? Number(body.department_id) : null;
     const roleRes = await userModels.getRoleById(roleId);
     if(roleRes.length <= 0){
         return handleResponse.errorResponse(400, "Invalid role id..!", null, []);
     }
-    await userModels.changeUserRole([roleId, userId]);
+    if (departmentId) {
+        const departmentRes = await departmentModel.getDepartmentById(departmentId);
+        if (departmentRes.length <= 0) {
+            return handleResponse.errorResponse(400, "Invalid department id..!", null, []);
+        }
+    }
+    await userModels.updateUserRoleAndDepartment([roleId, departmentId, userId]);
     return handleResponse.successResponse(200, "User profile updated.", [], null);
 }
 

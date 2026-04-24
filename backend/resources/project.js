@@ -4,6 +4,7 @@ const handleValidations = require('../utils/handleValidations');
 const helperUtils = require('../utils/helpers');
 const projectModels = require('../models/projectModel');
 const userModels = require('../models/userModel');
+const departmentModel = require('../models/departmentModel');
 const fileUpload = require('../utils/fileUpload');
 const { 
         projectValidator, statusValidator,projectStatusValidator,
@@ -80,22 +81,49 @@ const createProject = async (token, body) => {
     const validationError = handleValidations(projectValidator(body));
     if(validationError) return handleResponses.errorResponse(400, "Invalid Data", validationError, body);
     const decodedToken = await jwt.verifyToken(token);
+    const creatorRes = await userModels.getUserById(decodedToken.id);
+    if(!creatorRes || creatorRes.length <= 0) {
+        return handleResponses.errorResponse(404, "User not found.", null, []);
+    }
+
+    if (body.department_id) {
+        const departmentRes = await departmentModel.getDepartmentById(Number(body.department_id));
+        if (departmentRes.length <= 0) {
+            return handleResponses.errorResponse(400, "Invalid department id.", null, []);
+        }
+    }
+
     const projectCreated = await projectModels.createProject([
         body.name, 
         body.description || null, 
         body.status_id, 
+        body.department_id || null,
         body.start_date || null, 
         body.end_date || null
     ]);
     const projectId = projectCreated.insertId;
-    await projectModels.createProjectMember([decodedToken.id, projectId, 1]);
-    
+
+    const memberIds = new Set();
+
+    if(Number(creatorRes[0].role_id) !== 1){
+        memberIds.add(Number(decodedToken.id));
+    }
+
     if (body.members && Array.isArray(body.members)) {
         for (let userId of body.members) {
-            if (userId !== decodedToken.id) {
-                await projectModels.createProjectMember([userId, projectId, 2]);
+            const numericUserId = Number(userId);
+            if(!numericUserId) continue;
+
+            const memberUserRes = await userModels.getUserById(numericUserId);
+            if(!memberUserRes || memberUserRes.length <= 0) {
+                return handleResponses.errorResponse(400, `User ${numericUserId} not found.`, null, []);
             }
+            memberIds.add(numericUserId);
         }
+    }
+
+    for (const memberId of memberIds) {
+        await projectModels.createProjectMember([memberId, projectId]);
     }
 
     // Auto-create default items
@@ -142,16 +170,32 @@ const createProject = async (token, body) => {
     return handleResponses.successResponse(200, "Created a project successfully.", finalProjectRes, null);
 }
 
-const editProject = async (id, body) => {
+const editProject = async (token, id, body) => {
+    id = Number(id);
     const validationError = handleValidations(projectValidator(body));
     if(validationError) return handleResponses.errorResponse(400, "Invalid Data", validationError, body);
+
+    const existing = await projectModels.getProjectById(id);
+    if(!existing || existing.length <= 0) {
+        return handleResponses.errorResponse(404, "Project not found.", null, []);
+    }
+
+    if (body.department_id) {
+        const departmentRes = await departmentModel.getDepartmentById(Number(body.department_id));
+        if (departmentRes.length <= 0) {
+            return handleResponses.errorResponse(400, "Invalid department id.", null, []);
+        }
+    }
+
     await projectModels.updateProject([
         body.name, 
         body.description || null, 
+        body.department_id || null,
         body.start_date || null, 
         body.end_date || null, 
         id
     ]);
+
     return handleResponses.successResponse(200, "Project updated successfully.", [], null);
 }
 

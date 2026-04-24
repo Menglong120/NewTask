@@ -39,7 +39,8 @@ const createProject = async (req, res) => {
 
 const editProject = async (req, res) => {
     try{
-        const data = await projectResource.editProject(req.params.id, req.body);
+        const token = req.cookies.jwtToken;
+        const data = await projectResource.editProject(token, req.params.id, req.body);
         res.status(data.status).json(data.body);
     }catch(err){
         res.status(400).json(handleResponses.catchErrorResponse(err));
