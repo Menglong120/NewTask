@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Home, FolderOpen, CheckSquare, Users, Settings,
-  LayoutGrid, BarChart3, ChevronDown
+  LayoutGrid, BarChart3, ChevronDown, Building2
 } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -110,25 +110,57 @@ const Sidebar = () => {
 
         {/* Management */}
         <div>
-          <p className="px-3 text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Management</p>
+          <p className="px-3 text-[10px] font-black text-white/30 uppercase tracking-widest mb-2">Management (Role: {roleId || 'null'})</p>
           <nav className="space-y-0.5">
 
-            {(roleId === 1 || roleId === 2) && (
-              <Button
-                variant="ghost"
-                asChild
-                className={cn(
-                  'w-full justify-start gap-3 px-3 py-2.5 h-auto font-semibold text-sm rounded-xl transition-all',
-                  pathname === '/users'
-                    ? 'bg-primary/10 text-white ring-1 ring-primary/30 hover:bg-primary/15'
-                    : 'text-white/50 hover:text-white hover:bg-white/5'
-                )}
-              >
-                <Link href="/users">
-                  <Users className={cn('h-4.5 w-4.5', pathname === '/users' ? 'text-primary' : 'text-white/40')} />
-                  All Users
-                </Link>
-              </Button>
+            {true && (
+              <>
+                <Button
+                  variant="ghost"
+                  asChild
+                  className={cn(
+                    'w-full justify-start gap-3 px-3 py-2.5 h-auto font-semibold text-sm rounded-xl transition-all',
+                    pathname === '/analytic'
+                      ? 'bg-primary/10 text-white ring-1 ring-primary/30 hover:bg-primary/15'
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
+                  )}
+                >
+                  <Link href="/analytic">
+                    <BarChart3 className={cn('h-4.5 w-4.5', pathname === '/analytic' ? 'text-primary' : 'text-white/40')} />
+                    Analytics
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  asChild
+                  className={cn(
+                    'w-full justify-start gap-3 px-3 py-2.5 h-auto font-semibold text-sm rounded-xl transition-all',
+                    pathname === '/departments'
+                      ? 'bg-primary/10 text-white ring-1 ring-primary/30 hover:bg-primary/15'
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
+                  )}
+                >
+                  <Link href="/departments">
+                    <Building2 className={cn('h-4.5 w-4.5', pathname === '/departments' ? 'text-primary' : 'text-white/40')} />
+                    Departments
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  asChild
+                  className={cn(
+                    'w-full justify-start gap-3 px-3 py-2.5 h-auto font-semibold text-sm rounded-xl transition-all',
+                    pathname === '/users'
+                      ? 'bg-primary/10 text-white ring-1 ring-primary/30 hover:bg-primary/15'
+                      : 'text-white/50 hover:text-white hover:bg-white/5'
+                  )}
+                >
+                  <Link href="/users">
+                    <Users className={cn('h-4.5 w-4.5', pathname === '/users' ? 'text-primary' : 'text-white/40')} />
+                    All Users
+                  </Link>
+                </Button>
+              </>
             )}
 
             {projects.map((project) => {
@@ -165,6 +197,7 @@ const Sidebar = () => {
                   )}>
                     <div className="pr-2 py-1 space-y-0.5 border-l border-white/5 ml-5">
                       {[
+                        { name: 'Analytics', href: `/projects/${project.id}/analytics`, icon: BarChart3 },
                         { name: 'Settings', href: `/projects/${project.id}/settings`, icon: Settings },
                         { name: 'Knowledge Base', href: `/projects/${project.id}/resources`, icon: LayoutGrid },
                         { name: 'Task Board', href: `/projects/${project.id}/issues`, icon: CheckSquare }

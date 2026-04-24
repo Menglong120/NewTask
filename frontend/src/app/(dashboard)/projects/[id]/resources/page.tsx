@@ -417,18 +417,18 @@ const ProjectResourcesPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-               <div className="p-2 bg-primary/10 rounded-lg text-primary mr-2">
-                  {activeModal === 'create' && <Plus className="h-5 w-5" />}
-                  {activeModal === 'edit' && <Edit2 className="h-5 w-5" />}
-                  {(activeModal === 'upload' || activeModal === 'updateFile') && <UploadCloud className="h-5 w-5" />}
-               </div>
-               {activeModal === 'create' && "New Resource"}
-               {activeModal === 'edit' && "Rename Resource"}
-               {activeModal === 'upload' && "Upload Asset"}
-               {activeModal === 'updateFile' && "Replace Asset Content"}
+              <div className="p-2 bg-primary/10 rounded-lg text-primary mr-2">
+                {activeModal === 'create' && <Plus className="h-5 w-5" />}
+                {activeModal === 'edit' && <Edit2 className="h-5 w-5" />}
+                {(activeModal === 'upload' || activeModal === 'updateFile') && <UploadCloud className="h-5 w-5" />}
+              </div>
+              {activeModal === 'create' && "New Resource"}
+              {activeModal === 'edit' && "Rename Resource"}
+              {activeModal === 'upload' && "Upload Asset"}
+              {activeModal === 'updateFile' && "Replace Asset Content"}
             </DialogTitle>
           </DialogHeader>
- 
+
           <div className="py-4 space-y-4">
             {(activeModal === 'create' || activeModal === 'edit') && (
               <div className="space-y-2">
@@ -443,7 +443,7 @@ const ProjectResourcesPage = () => {
                 />
               </div>
             )}
- 
+
             {(activeModal === 'upload' || activeModal === 'updateFile') && (
               <div className="space-y-4">
                 {activeModal === 'updateFile' && (
@@ -463,10 +463,10 @@ const ProjectResourcesPage = () => {
               </div>
             )}
           </div>
- 
+
           <DialogFooter className="gap-2">
             <DialogClose asChild>
-               <Button variant="ghost">Cancel</Button>
+              <Button variant="ghost">Cancel</Button>
             </DialogClose>
             <Button
               onClick={() => {

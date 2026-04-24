@@ -45,7 +45,7 @@ const StatusPage = () => {
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(true);
   const [roleId, setRoleId] = useState<number | null>(null);
-  
+
   const [activeModal, setActiveModal] = useState<'create' | 'edit' | null>(null);
   const [formInput, setFormInput] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<Status | null>(null);
@@ -200,7 +200,7 @@ const StatusPage = () => {
                 <p className="text-2xl font-bold mt-0.5">{m.value}</p>
               </div>
               <div className={cn("p-2.5 rounded-lg", m.bg, m.color)}>
-                 <m.icon className="h-5 w-5" />
+                <m.icon className="h-5 w-5" />
               </div>
             </CardContent>
           </Card>
@@ -210,53 +210,53 @@ const StatusPage = () => {
       {/* Main List */}
       <div className="grid gap-4">
         {loading ? (
-           Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="h-16 bg-muted/40 animate-pulse rounded-xl border border-dashed" />
           ))
         ) : statuses.length > 0 ? (
           <div className="space-y-3">
-             <div className="px-6 flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
-                <span>Stage Configuration</span>
-                <span>Actions</span>
-             </div>
-             {statuses.map((status, index) => (
+            <div className="px-6 flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-60">
+              <span>Stage Configuration</span>
+              <span>Actions</span>
+            </div>
+            {statuses.map((status, index) => (
               <Card key={status.id} className="shadow-sm group hover:border-primary/30 transition-all">
                 <CardContent className="p-4 flex justify-between items-center bg-card">
-                   <div className="flex items-center gap-6">
-                      <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center font-bold text-xs text-muted-foreground/60 border border-border/50">
-                         {index + 1}
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-base leading-none group-hover:text-primary transition-colors">{status.title}</p>
-                        <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-tighter">System ID: #{status.id}</p>
-                      </div>
-                   </div>
+                  <div className="flex items-center gap-6">
+                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center font-bold text-xs text-muted-foreground/60 border border-border/50">
+                      {index + 1}
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="font-bold text-base leading-none group-hover:text-primary transition-colors">{status.title}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-tighter">System ID: #{status.id}</p>
+                    </div>
+                  </div>
 
-                   <div className="flex items-center gap-1.5">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => openEditModal(status)}
-                        className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/5"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Separator orientation="vertical" className="h-4 mx-1" />
-                      <Button
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => canDelete(status) && deletestatus(status.id)}
-                        disabled={!canDelete(status)}
-                        className={cn(
-                          "h-9 w-9",
-                          canDelete(status) 
-                            ? "text-muted-foreground hover:text-destructive hover:bg-destructive/5" 
-                            : "opacity-20 cursor-not-allowed"
-                        )}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                   </div>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditModal(status)}
+                      className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Separator orientation="vertical" className="h-4 mx-1" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => canDelete(status) && deletestatus(status.id)}
+                      disabled={!canDelete(status)}
+                      className={cn(
+                        "h-9 w-9",
+                        canDelete(status)
+                          ? "text-muted-foreground hover:text-destructive hover:bg-destructive/5"
+                          : "opacity-20 cursor-not-allowed"
+                      )}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -264,25 +264,25 @@ const StatusPage = () => {
         ) : (
           <Card className="border-dashed py-20 flex flex-col items-center justify-center text-center bg-muted/20">
             <div className="p-4 bg-background rounded-full border mb-4 shadow-sm opacity-50">
-               <Zap className="h-8 w-8 text-muted-foreground" />
+              <Zap className="h-8 w-8 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-bold mb-1">No lifecycle stages defined</h3>
             <p className="text-sm text-muted-foreground max-w-sm mb-8">Establish your project workflow by defining the first issue state.</p>
             <Button onClick={() => { setFormInput(''); setActiveModal('create'); }} size="lg" className="px-8 font-bold">
-               <Plus className="h-4 w-4 mr-2" /> Create First Stage
+              <Plus className="h-4 w-4 mr-2" /> Create First Stage
             </Button>
           </Card>
         )}
 
         {/* Workflow alert */}
         {!loading && statuses.length <= 4 && (
-           <div className="p-4 bg-muted/30 border border-dashed rounded-xl flex items-start gap-4">
-              <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Workflow Integrity Active</p>
-                 <p className="text-xs text-muted-foreground font-medium italic">Fundamental lifecycle stages are essential for workspace stability. Removal is restricted to ensure every issue maintains a valid state.</p>
-              </div>
-           </div>
+          <div className="p-4 bg-muted/30 border border-dashed rounded-xl flex items-start gap-4">
+            <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Workflow Integrity Active</p>
+              <p className="text-xs text-muted-foreground font-medium italic">Fundamental lifecycle stages are essential for workspace stability. Removal is restricted to ensure every issue maintains a valid state.</p>
+            </div>
+          </div>
         )}
       </div>
 
@@ -291,32 +291,32 @@ const StatusPage = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-               <div className="p-2 bg-primary/10 rounded-lg text-primary mr-2">
-                  {activeModal === 'create' ? <Plus className="h-5 w-5" /> : <Edit className="h-5 w-5" />}
-               </div>
-               {activeModal === 'create' ? "New Lifecycle Stage" : "Update Lifecycle Stage"}
+              <div className="p-2 bg-primary/10 rounded-lg text-primary mr-2">
+                {activeModal === 'create' ? <Plus className="h-5 w-5" /> : <Edit className="h-5 w-5" />}
+              </div>
+              {activeModal === 'create' ? "New Lifecycle Stage" : "Update Lifecycle Stage"}
             </DialogTitle>
           </DialogHeader>
 
           <div className="py-4 space-y-4">
-             <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Stage Title</Label>
-                <Input
-                  placeholder="e.g. In Progress, Quality Control, Ready for Deploy"
-                  className="h-10 font-semibold"
-                  value={formInput}
-                  onChange={(e) => setFormInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (activeModal === 'edit' ? handleUpdateStatus() : handleCreateStatus())}
-                  autoFocus
-                />
-             </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Stage Title</Label>
+              <Input
+                placeholder="e.g. In Progress, Quality Control, Ready for Deploy"
+                className="h-10 font-semibold"
+                value={formInput}
+                onChange={(e) => setFormInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && (activeModal === 'edit' ? handleUpdateStatus() : handleCreateStatus())}
+                autoFocus
+              />
+            </div>
           </div>
 
           <DialogFooter className="gap-2 pt-4">
-             <DialogClose asChild>
-                <Button variant="ghost">Cancel</Button>
-             </DialogClose>
-             <Button
+            <DialogClose asChild>
+              <Button variant="ghost">Cancel</Button>
+            </DialogClose>
+            <Button
               onClick={activeModal === 'edit' ? handleUpdateStatus : handleCreateStatus}
               disabled={isSaving || !formInput.trim()}
               className="px-8 font-bold"
