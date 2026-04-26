@@ -29,6 +29,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ConfirmActionDialog } from "@/components/confirm-action-dialog";
 
 interface UserData {
   id: string;
@@ -64,6 +65,7 @@ const UsersPage = () => {
   const [editDepartmentId, setEditDepartmentId] = useState<string>('none');
   const [changePw, setChangePw] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [pendingDeleteUserId, setPendingDeleteUserId] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
     firstname: '', lastname: '', username: '', email: '', password: '', roleId: 3
@@ -117,18 +119,12 @@ const UsersPage = () => {
   };
 
   const handleDeleteUser = async (id: string) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?', text: 'You want to delete this user!', icon: 'warning',
-      showCancelButton: true, confirmButtonColor: '#EF4444', cancelButtonColor: '#333',
-      confirmButtonText: 'Yes, delete it!'
-    });
-    if (result.isConfirmed) {
-      try {
-        await fetchApi(`/api/user/${id}`, { method: 'DELETE' });
-        fetchUsers(paginate?.page ?? 1);
-        Swal.fire({ title: 'Deleted!', text: 'User removed', icon: 'success', timer: 2000, showConfirmButton: false });
-      } catch { }
-    }
+    try {
+      await fetchApi(`/api/user/${id}`, { method: 'DELETE' });
+      fetchUsers(paginate?.page ?? 1);
+      Swal.fire({ title: 'Deleted!', text: 'User removed', icon: 'success', timer: 2000, showConfirmButton: false });
+    } catch { }
+    finally { setPendingDeleteUserId(null); }
   };
 
   const handleEditSave = async () => {
@@ -356,10 +352,10 @@ const UsersPage = () => {
                               )}
                               {canDelete && (canPw || canEdit) && <DropdownMenuSeparator />}
                               {canDelete && (
-                                <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} variant="destructive">
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete User
-                                </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setPendingDeleteUserId(user.id)} variant="destructive">
+                                <Trash2 className="h-4 w-4" />
+                                Delete User
+                              </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -599,6 +595,18 @@ const UsersPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={pendingDeleteUserId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteUserId(null)}
+        title="Delete user?"
+        description="This user will be permanently removed from the workspace."
+        confirmLabel="Delete user"
+        onConfirm={() => {
+          if (!pendingDeleteUserId) return
+          return handleDeleteUser(pendingDeleteUserId)
+        }}
+      />
 
     </div>
   );

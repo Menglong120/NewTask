@@ -26,6 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 interface ActivityItem {
   id: string;
@@ -52,6 +53,7 @@ const ActivityPage = () => {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteActivityId, setPendingDeleteActivityId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,7 +107,6 @@ const ActivityPage = () => {
   }, [activities]);
 
   const handleDelete = async (activityId: string) => {
-    if (!confirm('Are you sure you want to delete this activity log?')) return;
     try {
       const res = await fetchApi(`/api/projects/activity/${activityId}`, { method: 'DELETE' });
       if (res.result) {
@@ -113,6 +114,8 @@ const ActivityPage = () => {
       }
     } catch (error) {
       console.error('Error deleting activity:', error);
+    } finally {
+      setPendingDeleteActivityId(null);
     }
   };
 
@@ -208,7 +211,7 @@ const ActivityPage = () => {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-40">
-                                <DropdownMenuItem onClick={() => handleDelete(item.id)} variant="destructive">
+                                <DropdownMenuItem onClick={() => setPendingDeleteActivityId(item.id)} variant="destructive">
                                   <Trash2 className="h-4 w-4" />
                                   Delete Entry
                                 </DropdownMenuItem>
@@ -233,6 +236,17 @@ const ActivityPage = () => {
           )}
         </CardContent>
       </Card>
+      <ConfirmActionDialog
+        open={pendingDeleteActivityId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteActivityId(null)}
+        title="Delete activity entry?"
+        description="This record will be permanently removed from the project activity log."
+        confirmLabel="Delete entry"
+        onConfirm={() => {
+          if (!pendingDeleteActivityId) return
+          return handleDelete(pendingDeleteActivityId)
+        }}
+      />
     </div>
   );
 };

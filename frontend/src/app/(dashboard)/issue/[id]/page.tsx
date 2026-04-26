@@ -42,6 +42,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -119,6 +120,7 @@ const IssueDetailPage = () => {
     name: '', description: '', status_id: '', priority_id: '',
     tracker_id: '', label_id: '', assignee: '',
   });
+  const [pendingDeleteSubIssueId, setPendingDeleteSubIssueId] = useState<number | null>(null);
 
   // ─── Data Fetching ──────────────────────────────────────────────────────────
 
@@ -287,19 +289,14 @@ const IssueDetailPage = () => {
 
   /** Delete a sub-issue with confirmation */
   const handleDeleteSubIssue = async (subId: number) => {
-    const confirmed = await Swal.fire({
-      title: 'Delete sub-issue?', icon: 'warning', showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-    });
-    if (confirmed.isConfirmed) {
-      try {
-        const res = await fetchApi(`/api/sub/issue/${subId}`, { method: 'DELETE' });
-        if (res.result) {
-          fetchFullData();
-          Swal.fire({ icon: 'success', title: 'Deleted', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
-        }
-      } catch (e) { console.error(e); }
-    }
+    try {
+      const res = await fetchApi(`/api/sub/issue/${subId}`, { method: 'DELETE' });
+      if (res.result) {
+        fetchFullData();
+        Swal.fire({ icon: 'success', title: 'Deleted', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false });
+      }
+    } catch (e) { console.error(e); }
+    finally { setPendingDeleteSubIssueId(null); }
   };
 
   // ─── Render ─────────────────────────────────────────────────────────────────
@@ -326,6 +323,7 @@ const IssueDetailPage = () => {
   }
 
   return (
+    <>
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
 
       {/* Page Header */}
@@ -608,7 +606,7 @@ const IssueDetailPage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleDeleteSubIssue(sub.id)} className="text-destructive gap-2 text-xs font-bold uppercase">
+                            <DropdownMenuItem onClick={() => setPendingDeleteSubIssueId(sub.id)} className="text-destructive gap-2 text-xs font-bold uppercase">
                               <Trash2 className="h-3.5 w-3.5" /> Purge Protocol
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -865,6 +863,18 @@ const IssueDetailPage = () => {
         </div>
       </div>
     </div>
+      <ConfirmActionDialog
+        open={pendingDeleteSubIssueId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteSubIssueId(null)}
+        title="Delete sub-issue?"
+        description="This sub-issue will be permanently removed from the issue breakdown."
+        confirmLabel="Delete sub-issue"
+        onConfirm={() => {
+          if (pendingDeleteSubIssueId === null) return
+          return handleDeleteSubIssue(pendingDeleteSubIssueId)
+        }}
+      />
+    </>
   );
 };
 

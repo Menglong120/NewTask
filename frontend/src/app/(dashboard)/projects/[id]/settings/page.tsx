@@ -44,6 +44,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 interface Member {
   id: number;
@@ -104,6 +105,8 @@ const ProjectSettingsPage = () => {
   // Available users for member add
   const [availableUsers, setAvailableUsers] = useState<AvailableUser[]>([]);
   const [selectedNewMembers, setSelectedNewMembers] = useState<string[]>([]);
+  const [pendingDeleteItem, setPendingDeleteItem] = useState<{ id: number; type: string } | null>(null);
+  const [pendingDeleteMemberId, setPendingDeleteMemberId] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -249,57 +252,31 @@ const ProjectSettingsPage = () => {
   };
 
   const handleDeleteItem = async (id: number, type: string) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: `This will permanently delete this ${type}.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ff3e1d',
-      cancelButtonColor: '#8592a3',
-      confirmButtonText: 'Yes, delete it!',
-      background: '#121212',
-      color: '#fff'
-    });
+    let endpoint = '';
+    if (type === 'status') endpoint = `/api/issue/status/${id}`;
+    else if (type === 'label') endpoint = `/api/label/${id}`;
+    else if (type === 'priority') endpoint = `/api/priority/${id}`;
+    else if (type === 'tracker') endpoint = `/api/issue/tracker/${id}`;
 
-    if (result.isConfirmed) {
-      let endpoint = '';
-      if (type === 'status') endpoint = `/api/issue/status/${id}`;
-      else if (type === 'label') endpoint = `/api/label/${id}`;
-      else if (type === 'priority') endpoint = `/api/priority/${id}`;
-      else if (type === 'tracker') endpoint = `/api/issue/tracker/${id}`;
-
-
-      try {
-        const res = await fetchApi(endpoint, { method: 'DELETE' });
-        if (res.result) {
-          Swal.fire({ icon: 'success', title: 'Deleted successfully', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
-          fetchData();
-        }
-      } catch { }
-    }
+    try {
+      const res = await fetchApi(endpoint, { method: 'DELETE' });
+      if (res.result) {
+        Swal.fire({ icon: 'success', title: 'Deleted successfully', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
+        fetchData();
+      }
+    } catch { }
+    finally { setPendingDeleteItem(null); }
   };
 
   const handleDeleteMember = async (memberId: number) => {
-    const result = await Swal.fire({
-      title: 'Remove Member?',
-      text: "They will lose access to this project.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ff3e1d',
-      confirmButtonText: 'Yes, remove',
-      background: '#121212',
-      color: '#fff'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const res = await fetchApi(`/api/projects/member/${memberId}`, { method: 'DELETE' });
-        if (res.result) {
-          Swal.fire({ icon: 'success', title: 'Member removed', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
-          fetchData();
-        }
-      } catch { }
-    }
+    try {
+      const res = await fetchApi(`/api/projects/member/${memberId}`, { method: 'DELETE' });
+      if (res.result) {
+        Swal.fire({ icon: 'success', title: 'Member removed', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
+        fetchData();
+      }
+    } catch { }
+    finally { setPendingDeleteMemberId(null); }
   };
 
   const tabs = [
@@ -354,7 +331,7 @@ const ProjectSettingsPage = () => {
                       <DropdownMenuItem onClick={() => handleEditItem(item, type)} className="cursor-pointer">
                         <Edit2 className="h-3.5 w-3.5 mr-2" /> Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDeleteItem(item.id, type)} className="cursor-pointer text-destructive focus:text-destructive">
+                      <DropdownMenuItem onClick={() => setPendingDeleteItem({ id: item.id, type })} className="cursor-pointer text-destructive focus:text-destructive">
                         <Trash2 className="h-3.5 w-3.5 mr-2" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -494,7 +471,7 @@ const ProjectSettingsPage = () => {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDeleteMember(mem.id)}
+                              onClick={() => setPendingDeleteMemberId(mem.id)}
                               className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -613,6 +590,28 @@ const ProjectSettingsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmActionDialog
+        open={pendingDeleteItem !== null}
+        onOpenChange={(open) => !open && setPendingDeleteItem(null)}
+        title="Delete item?"
+        description={pendingDeleteItem ? `This will permanently delete this ${pendingDeleteItem.type}.` : 'This action is permanent.'}
+        confirmLabel="Delete item"
+        onConfirm={() => {
+          if (!pendingDeleteItem) return
+          return handleDeleteItem(pendingDeleteItem.id, pendingDeleteItem.type)
+        }}
+      />
+      <ConfirmActionDialog
+        open={pendingDeleteMemberId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteMemberId(null)}
+        title="Remove member?"
+        description="They will lose access to this project."
+        confirmLabel="Remove member"
+        onConfirm={() => {
+          if (pendingDeleteMemberId === null) return
+          return handleDeleteMember(pendingDeleteMemberId)
+        }}
+      />
     </div>
   );
 };

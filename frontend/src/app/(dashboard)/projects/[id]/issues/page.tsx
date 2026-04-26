@@ -35,6 +35,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import IssueKanbanBoard from '@/components/IssueKanbanBoard';
 import IssueDetailDrawer from '@/components/IssueDetailDrawer';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 interface SubIssue {
   id: number;
@@ -79,6 +80,7 @@ const ProjectIssuesPage = () => {
   const [projectId, setProjectId] = useState<number | null>(null);
   const [selectedIssueId, setSelectedIssueId] = useState<number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [pendingDeleteIssueId, setPendingDeleteIssueId] = useState<number | null>(null);
 
   // Dropdown data options
   const [statuses, setStatuses] = useState<any[]>([]);
@@ -201,29 +203,16 @@ const ProjectIssuesPage = () => {
   };
 
   const handleDeleteIssue = async (issueId: number) => {
-    const result = await Swal.fire({
-      title: 'Delete Issue?',
-      text: "Permanent action. Record cannot be recoverred.",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#333333',
-      confirmButtonText: 'Yes, delete it!',
-      background: '#121212',
-      color: '#fff'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const res = await fetchApi(`/api/issue/${issueId}`, { method: 'DELETE' });
-        if (res.result) {
-          Swal.fire({ icon: 'success', title: 'Deleted!', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
-          refreshData();
-        } else {
-          Swal.fire({ icon: 'error', title: 'Failed', text: res.msg || 'Delete failed', background: '#121212', color: '#fff' });
-        }
-      } catch (e) { }
-    }
+    try {
+      const res = await fetchApi(`/api/issue/${issueId}`, { method: 'DELETE' });
+      if (res.result) {
+        Swal.fire({ icon: 'success', title: 'Deleted!', toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, background: '#121212', color: '#fff' });
+        refreshData();
+      } else {
+        Swal.fire({ icon: 'error', title: 'Failed', text: res.msg || 'Delete failed', background: '#121212', color: '#fff' });
+      }
+    } catch (e) { }
+    finally { setPendingDeleteIssueId(null); }
   };
 
   const handleCreateIssue = async () => {
@@ -336,7 +325,7 @@ const ProjectIssuesPage = () => {
             statuses={statuses}
             priorities={priorities}
             onUpdateIssue={handleUpdateIssueField}
-            onDelete={handleDeleteIssue}
+            onDelete={(issueId) => setPendingDeleteIssueId(issueId)}
             onViewDetail={(issueId) => router.push(`/issue/${issueId}`)}
           />
         ) : (
@@ -478,7 +467,7 @@ const ProjectIssuesPage = () => {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDeleteIssue(issue.id)}
+                        onClick={() => setPendingDeleteIssueId(issue.id)}
                         className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors ml-2"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -683,6 +672,17 @@ const ProjectIssuesPage = () => {
         priorities={priorities}
         trackers={trackers}
         labels={labels}
+      />
+      <ConfirmActionDialog
+        open={pendingDeleteIssueId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteIssueId(null)}
+        title="Delete issue?"
+        description="Permanent action. This issue record cannot be recovered."
+        confirmLabel="Delete issue"
+        onConfirm={() => {
+          if (pendingDeleteIssueId === null) return
+          return handleDeleteIssue(pendingDeleteIssueId)
+        }}
       />
     </div>
   );

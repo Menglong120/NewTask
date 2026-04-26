@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
   ssr: false,
@@ -72,6 +73,8 @@ const ProjectResourcesPage = () => {
   const [fileInput, setFileInput] = useState<File | null>(null);
   const [editFileId, setEditFileId] = useState<number>(0);
   const [editFileNameShow, setEditFileNameShow] = useState('');
+  const [pendingDeleteResourceId, setPendingDeleteResourceId] = useState<number | null>(null);
+  const [pendingDeleteFileId, setPendingDeleteFileId] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -170,25 +173,14 @@ const ProjectResourcesPage = () => {
     } catch (err) { } finally { setIsSaving(false); }
   };
 
-  const handleDeleteResource = async (resId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const result = await Swal.fire({
-      title: "Delete resource?",
-      text: "Permanent action. All associated notes and file links will be lost.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      confirmButtonText: "Yes, delete",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        await fetchApi(`/api/projects/resource/${resId}`, { method: 'DELETE' });
-        fetchData();
-        if (selectedResource && selectedResource.id === resId) setSelectedResource(null);
-        Swal.fire({ title: "Deleted", icon: "success", timer: 2000, showConfirmButton: false });
-      } catch (err) { }
-    }
+  const handleDeleteResource = async (resId: number) => {
+    try {
+      await fetchApi(`/api/projects/resource/${resId}`, { method: 'DELETE' });
+      fetchData();
+      if (selectedResource && selectedResource.id === resId) setSelectedResource(null);
+      Swal.fire({ title: "Deleted", icon: "success", timer: 2000, showConfirmButton: false });
+    } catch (err) { }
+    finally { setPendingDeleteResourceId(null); }
   };
 
   const handleUploadFile = async () => {
@@ -224,20 +216,12 @@ const ProjectResourcesPage = () => {
   };
 
   const handleDeleteFile = async (fId: number) => {
-    const result = await Swal.fire({
-      title: "Remove file?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      confirmButtonText: "Yes, remove",
-    });
-    if (result.isConfirmed) {
-      try {
-        await fetchApi(`/api/projects/resources/file/${fId}`, { method: 'DELETE' });
-        if (selectedResource) fetchFiles(selectedResource.id);
-        Swal.fire({ title: "Removed", icon: "success", timer: 2000, showConfirmButton: false });
-      } catch (err) { }
-    }
+    try {
+      await fetchApi(`/api/projects/resources/file/${fId}`, { method: 'DELETE' });
+      if (selectedResource) fetchFiles(selectedResource.id);
+      Swal.fire({ title: "Removed", icon: "success", timer: 2000, showConfirmButton: false });
+    } catch (err) { }
+    finally { setPendingDeleteFileId(null); }
   };
 
   return (
@@ -330,7 +314,7 @@ const ProjectResourcesPage = () => {
                           Rename Resource
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={(e) => handleDeleteResource(res.id, e)} variant="destructive">
+                        <DropdownMenuItem onClick={() => setPendingDeleteResourceId(res.id)} variant="destructive">
                           <Trash2 className="h-4 w-4" />
                           Delete Resource
                         </DropdownMenuItem>
@@ -422,7 +406,7 @@ const ProjectResourcesPage = () => {
                                     Replace File
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => handleDeleteFile(f.id)} variant="destructive">
+                                  <DropdownMenuItem onClick={() => setPendingDeleteFileId(f.id)} variant="destructive">
                                     <Trash2 className="h-4 w-4" />
                                     Delete File
                                   </DropdownMenuItem>
@@ -523,6 +507,30 @@ const ProjectResourcesPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={pendingDeleteResourceId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteResourceId(null)}
+        title="Delete resource?"
+        description="Permanent action. All associated notes and file links will be lost."
+        confirmLabel="Delete resource"
+        onConfirm={() => {
+          if (pendingDeleteResourceId === null) return
+          return handleDeleteResource(pendingDeleteResourceId)
+        }}
+      />
+
+      <ConfirmActionDialog
+        open={pendingDeleteFileId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteFileId(null)}
+        title="Remove file?"
+        description="This file will be permanently removed from the selected resource."
+        confirmLabel="Remove file"
+        onConfirm={() => {
+          if (pendingDeleteFileId === null) return
+          return handleDeleteFile(pendingDeleteFileId)
+        }}
+      />
 
       <style dangerouslySetInnerHTML={{
         __html: `

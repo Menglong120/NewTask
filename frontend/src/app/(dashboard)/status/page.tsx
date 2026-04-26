@@ -41,6 +41,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 interface Status {
   id: number;
@@ -56,6 +57,7 @@ const StatusPage = () => {
   const [formInput, setFormInput] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<Status | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingDeleteStatus, setPendingDeleteStatus] = useState<Status | null>(null);
 
   const fetchStatuses = async () => {
     try {
@@ -141,31 +143,21 @@ const StatusPage = () => {
   };
 
   const deletestatus = async (id: number) => {
-    const result = await Swal.fire({
-      title: "Remove stage?",
-      text: "Permanent action. Ensure no active issues are utilizing this state.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      confirmButtonText: "Yes, remove",
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const res = await fetchApi(`/api/projects/status/${id}`, { method: 'DELETE' });
-        if (res.result) {
-          fetchStatuses();
-          Swal.fire({ title: "Removed", icon: "success", timer: 2000, showConfirmButton: false });
-        } else {
-          let errorMessage = res.msg || "Operation failed";
-          if (res.data && res.data.length > 0) {
-            const projectNames = res.data.map((p: any) => p.name).join(', ');
-            errorMessage += `<br><br><strong>In use by:</strong> ${projectNames}`;
-          }
-          Swal.fire({ title: "Restricted", html: errorMessage, icon: "error" });
+    try {
+      const res = await fetchApi(`/api/projects/status/${id}`, { method: 'DELETE' });
+      if (res.result) {
+        fetchStatuses();
+        Swal.fire({ title: "Removed", icon: "success", timer: 2000, showConfirmButton: false });
+      } else {
+        let errorMessage = res.msg || "Operation failed";
+        if (res.data && res.data.length > 0) {
+          const projectNames = res.data.map((p: any) => p.name).join(', ');
+          errorMessage += `<br><br><strong>In use by:</strong> ${projectNames}`;
         }
-      } catch (error) { }
-    }
+        Swal.fire({ title: "Restricted", html: errorMessage, icon: "error" });
+      }
+    } catch (error) { }
+    finally { setPendingDeleteStatus(null); }
   };
 
   return (
@@ -255,7 +247,7 @@ const StatusPage = () => {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => canDelete(status) && deletestatus(status.id)}
+                        onClick={() => canDelete(status) && setPendingDeleteStatus(status)}
                         variant="destructive"
                         disabled={!canDelete(status)}
                       >
@@ -334,6 +326,17 @@ const StatusPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmActionDialog
+        open={pendingDeleteStatus !== null}
+        onOpenChange={(open) => !open && setPendingDeleteStatus(null)}
+        title="Remove stage?"
+        description="Permanent action. Ensure no active issues are utilizing this state."
+        confirmLabel="Remove stage"
+        onConfirm={() => {
+          if (!pendingDeleteStatus) return
+          return deletestatus(pendingDeleteStatus.id)
+        }}
+      />
 
     </div>
   );

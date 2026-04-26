@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 interface Activity {
   id: string;
@@ -38,6 +39,7 @@ const ActivityPage = () => {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingDeleteActivityId, setPendingDeleteActivityId] = useState<string | null>(null);
 
   useEffect(() => {
     const id = localStorage.getItem('projectID');
@@ -60,23 +62,14 @@ const ActivityPage = () => {
   useEffect(() => { loadActivities(); }, [projectId]);
 
   const handleDelete = async (id: string) => {
-    const result = await Swal.fire({
-      title: "Delete activity entry?",
-      text: "This record will be permanently removed from the audit trail.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      confirmButtonText: "Yes, delete",
-    });
-    if (result.isConfirmed) {
-      try {
-        const response = await fetchApi(`/api/projects/activity/${id}`, { method: 'DELETE' });
-        if (response.result) {
-          await loadActivities();
-          Swal.fire({ title: "Deleted", icon: "success", toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
-        }
-      } catch (error) { console.error(error); }
-    }
+    try {
+      const response = await fetchApi(`/api/projects/activity/${id}`, { method: 'DELETE' });
+      if (response.result) {
+        await loadActivities();
+        Swal.fire({ title: "Deleted", icon: "success", toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+      }
+    } catch (error) { console.error(error); }
+    finally { setPendingDeleteActivityId(null); }
   };
 
   const renderActivities = () => {
@@ -183,7 +176,7 @@ const ActivityPage = () => {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-40">
-                                  <DropdownMenuItem onClick={() => handleDelete(acti.id)} variant="destructive">
+                                  <DropdownMenuItem onClick={() => setPendingDeleteActivityId(acti.id)} variant="destructive">
                                     <Trash2 className="h-4 w-4" />
                                     Delete Entry
                                   </DropdownMenuItem>
@@ -239,6 +232,18 @@ const ActivityPage = () => {
       <div className="bg-background border rounded-2xl shadow-sm min-h-[600px] p-6 md:p-12 relative overflow-hidden">
         {renderActivities()}
       </div>
+
+      <ConfirmActionDialog
+        open={pendingDeleteActivityId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteActivityId(null)}
+        title="Delete activity entry?"
+        description="This record will be permanently removed from the audit trail."
+        confirmLabel="Delete entry"
+        onConfirm={() => {
+          if (!pendingDeleteActivityId) return
+          return handleDelete(pendingDeleteActivityId)
+        }}
+      />
 
     </div>
   );

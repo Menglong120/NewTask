@@ -20,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Building2, FolderOpen, Loader2, MoreVertical, Pencil, Plus, Search, Trash2, Users } from 'lucide-react';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 interface Department {
   id: number;
@@ -40,6 +41,7 @@ export default function DepartmentsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [pendingDeleteDepartment, setPendingDeleteDepartment] = useState<Department | null>(null);
 
   const fetchDepartments = useCallback(async () => {
     try {
@@ -126,17 +128,6 @@ export default function DepartmentsPage() {
   };
 
   const handleDelete = async (department: Department) => {
-    const result = await Swal.fire({
-      icon: 'warning',
-      title: `Delete ${department.name}?`,
-      text: 'This only works if no users or projects are assigned to this department.',
-      showCancelButton: true,
-      confirmButtonText: 'Delete',
-      confirmButtonColor: '#dc2626',
-    });
-
-    if (!result.isConfirmed) return;
-
     try {
       const res = await fetchApi(`/api/department/${department.id}`, { method: 'DELETE' });
       if (res.result) {
@@ -153,6 +144,8 @@ export default function DepartmentsPage() {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to delete department';
       Swal.fire({ icon: 'error', title: 'Delete failed', text: message });
+    } finally {
+      setPendingDeleteDepartment(null);
     }
   };
 
@@ -271,10 +264,10 @@ export default function DepartmentsPage() {
                               Edit Department
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleDelete(department)} variant="destructive">
-                              <Trash2 className="h-4 w-4" />
-                              Delete Department
-                            </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setPendingDeleteDepartment(department)} variant="destructive">
+                            <Trash2 className="h-4 w-4" />
+                            Delete Department
+                          </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -316,6 +309,17 @@ export default function DepartmentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmActionDialog
+        open={pendingDeleteDepartment !== null}
+        onOpenChange={(open) => !open && setPendingDeleteDepartment(null)}
+        title={pendingDeleteDepartment ? `Delete ${pendingDeleteDepartment.name}?` : 'Delete department?'}
+        description="This only works if no users or projects are assigned to this department."
+        confirmLabel="Delete department"
+        onConfirm={() => {
+          if (!pendingDeleteDepartment) return
+          return handleDelete(pendingDeleteDepartment)
+        }}
+      />
     </div>
   );
 }

@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { fetchApi } from '@/lib/api';
 import ProjectKanbanBoard from '@/components/ProjectKanbanBoard';
 import Swal from 'sweetalert2';
+import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 
 interface Project {
   id: number;
@@ -104,6 +105,7 @@ export default function ProjectsPage() {
     end_date: undefined as Date | undefined
   });
   const [statusForm, setStatusForm] = useState({ status_id: '' });
+  const [pendingDeleteProjectId, setPendingDeleteProjectId] = useState<number | null>(null);
 
   const fetchData = async () => {
     try {
@@ -207,32 +209,20 @@ export default function ProjectsPage() {
   };
 
   const handleDeleteProject = async (id: number) => {
-    const result = await Swal.fire({
-      title: 'Delete Project?',
-      text: "You won't be able to revert this action!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#EF4444',
-      cancelButtonColor: '#333333',
-      confirmButtonText: 'Yes, delete it!',
-      background: '#121212',
-      color: '#fff'
-    });
-
-    if (result.isConfirmed) {
-      try {
-        const res = await fetchApi(`/api/project/${id}`, { method: 'DELETE' });
-        if (res.result) {
-          fetchData();
-          window.dispatchEvent(new Event('projectUpdate'));
-          Swal.fire({ icon: 'success', title: 'Deleted!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
-        } else {
-          Swal.fire({ title: 'Error', text: res.msg || 'Failed to delete project', icon: 'error', background: '#121212', color: '#fff' });
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to delete project';
-        Swal.fire({ title: 'System Error', text: message, icon: 'error', background: '#121212', color: '#fff' });
+    try {
+      const res = await fetchApi(`/api/project/${id}`, { method: 'DELETE' });
+      if (res.result) {
+        fetchData();
+        window.dispatchEvent(new Event('projectUpdate'));
+        Swal.fire({ icon: 'success', title: 'Deleted!', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false, background: '#121212', color: '#fff' });
+      } else {
+        Swal.fire({ title: 'Error', text: res.msg || 'Failed to delete project', icon: 'error', background: '#121212', color: '#fff' });
       }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete project';
+      Swal.fire({ title: 'System Error', text: message, icon: 'error', background: '#121212', color: '#fff' });
+    } finally {
+      setPendingDeleteProjectId(null);
     }
   };
 
@@ -380,7 +370,7 @@ export default function ProjectsPage() {
           onEdit={openEditModal}
           onUpdateStatus={openUpdateStatusModal}
           onStatusChange={handleDirectUpdateStatus}
-          onDelete={handleDeleteProject}
+          onDelete={(projectId) => setPendingDeleteProjectId(projectId)}
           onAddProject={(statusId) => openCreateModal(statusId)}
         />
       )}
@@ -538,6 +528,17 @@ export default function ProjectsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmActionDialog
+        open={pendingDeleteProjectId !== null}
+        onOpenChange={(open) => !open && setPendingDeleteProjectId(null)}
+        title="Delete project?"
+        description="This action is permanent and cannot be undone."
+        confirmLabel="Delete project"
+        onConfirm={() => {
+          if (pendingDeleteProjectId === null) return
+          return handleDeleteProject(pendingDeleteProjectId)
+        }}
+      />
     </div>
   );
 }
