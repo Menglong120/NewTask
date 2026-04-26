@@ -125,10 +125,6 @@ const Sidebar = () => {
                       : 'text-white/50 hover:text-white hover:bg-white/5'
                   )}
                 >
-                  <Link href="/analytic">
-                    <BarChart3 className={cn('h-4.5 w-4.5', pathname === '/analytic' ? 'text-primary' : 'text-white/40')} />
-                    Analytics
-                  </Link>
                 </Button>
                 <Button
                   variant="ghost"

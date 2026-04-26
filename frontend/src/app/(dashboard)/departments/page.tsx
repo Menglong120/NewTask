@@ -6,13 +6,20 @@ import { fetchApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Building2, FolderOpen, Loader2, Pencil, Plus, Search, Trash2, Users } from 'lucide-react';
+import { Building2, FolderOpen, Loader2, MoreVertical, Pencil, Plus, Search, Trash2, Users } from 'lucide-react';
 
 interface Department {
   id: number;
@@ -199,67 +206,84 @@ export default function DepartmentsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Projects</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
+          <div className="border rounded-lg overflow-hidden">
+            <ScrollArea className="w-full">
+              <Table>
+                <TableHeader className="bg-muted/50">
                   <TableRow>
-                    <TableCell colSpan={6} className="h-40 text-center">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
-                      <span className="text-sm text-muted-foreground">Loading departments...</span>
-                    </TableCell>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Department</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Description</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Users</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Projects</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Created</TableHead>
+                    <TableHead className="text-right py-3"></TableHead>
                   </TableRow>
-                ) : departments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
-                      No departments found.
-                    </TableCell>
-                  </TableRow>
-                ) : departments.map((department) => (
-                  <TableRow key={department.id}>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <span className="font-semibold">{department.name}</span>
-                        <span className="text-xs text-muted-foreground">ID #{department.id}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[320px]">
-                      <span className="text-sm text-muted-foreground line-clamp-2">
-                        {department.description || 'No description'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{department.total_users}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{department.total_projects}</Badge>
-                    </TableCell>
-                    <TableCell>{new Date(department.created_on).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(department)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(department)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-40 text-center">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                        <span className="text-sm text-muted-foreground">Loading departments...</span>
+                      </TableCell>
+                    </TableRow>
+                  ) : departments.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
+                        No departments found.
+                      </TableCell>
+                    </TableRow>
+                  ) : departments.map((department) => (
+                    <TableRow key={department.id} className="group">
+                      <TableCell>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-sm tracking-tight truncate">{department.name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[320px]">
+                        <span className="text-[10px] text-muted-foreground font-medium line-clamp-2">
+                          {department.description || 'No description'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="text-[9px] font-bold uppercase tracking-wide px-2 h-5">
+                          {department.total_users}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wide px-2 h-5">
+                          {department.total_projects}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-[10px] font-medium text-muted-foreground">
+                        {new Date(department.created_on).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right pr-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem onClick={() => openEdit(department)}>
+                              <Pencil className="h-4 w-4" />
+                              Edit Department
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleDelete(department)} variant="destructive">
+                              <Trash2 className="h-4 w-4" />
+                              Delete Department
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
         </CardContent>
       </Card>
 

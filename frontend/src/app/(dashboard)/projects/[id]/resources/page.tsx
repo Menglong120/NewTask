@@ -9,6 +9,7 @@ import 'react-quill-new/dist/quill.snow.css';
 import {
   Plus, Edit2, Trash2, FolderOpen, FileText, Download,
   UploadCloud, Save, Folder, AppWindow, Loader2, X, FileEdit, ChevronRight,
+  MoreVertical,
   File, NotebookTabs, History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,13 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 const ReactQuill = dynamic(() => import('react-quill-new'), {
@@ -298,20 +306,36 @@ const ProjectResourcesPage = () => {
                       <span className="text-sm font-semibold truncate">{res.title}</span>
                     </div>
 
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      <Button
-                        variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary"
-                        onClick={(e) => { e.stopPropagation(); setSelectedResource(res); setModalInputText(res.title); setActiveModal('edit'); }}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => handleDeleteResource(res.id, e)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedResource(res);
+                            setModalInputText(res.title);
+                            setActiveModal('edit');
+                          }}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                          Rename Resource
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={(e) => handleDeleteResource(res.id, e)} variant="destructive">
+                          <Trash2 className="h-4 w-4" />
+                          Delete Resource
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 ))}
               </div>
@@ -379,16 +403,31 @@ const ProjectResourcesPage = () => {
                               </div>
                               <span className="text-sm font-bold truncate pr-2">{f.file_name_show}</span>
                             </div>
-                            <div className="flex items-center justify-end gap-1.5 pt-3 border-t">
-                              <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                                <a href={`/storage/${f.file_name}`} download={f.file_name}><Download className="h-4 w-4" /></a>
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => { setEditFileId(f.id); setEditFileNameShow(f.file_name_show); setFileInput(null); setActiveModal('updateFile'); }}>
-                                <FileEdit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteFile(f.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                            <div className="flex items-center justify-end pt-3 border-t">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  <DropdownMenuItem asChild>
+                                    <a href={`/storage/${f.file_name}`} download={f.file_name}>
+                                      <Download className="h-4 w-4" />
+                                      Download File
+                                    </a>
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => { setEditFileId(f.id); setEditFileNameShow(f.file_name_show); setFileInput(null); setActiveModal('updateFile'); }}>
+                                    <FileEdit className="h-4 w-4" />
+                                    Replace File
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => handleDeleteFile(f.id)} variant="destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete File
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                         ))}

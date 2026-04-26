@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 import {
   Search, UserPlus, Eye, KeyRound, Edit2, Trash2, Filter,
   ChevronLeft, ChevronRight, ShieldAlert, Mail,
-  User, Shield, Briefcase, Loader2
+  User, Shield, Briefcase, Loader2, MoreVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +14,19 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Card, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -109,8 +116,7 @@ const UsersPage = () => {
     return names.join(', ');
   };
 
-  const handleDeleteUser = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteUser = async (id: string) => {
     const result = await Swal.fire({
       title: 'Are you sure?', text: 'You want to delete this user!', icon: 'warning',
       showCancelButton: true, confirmButtonColor: '#EF4444', cancelButtonColor: '#333',
@@ -232,123 +238,141 @@ const UsersPage = () => {
       </Card>
 
       {/* Table */}
-      <Card className="shadow-sm border overflow-hidden">
-        <ScrollArea className="w-full">
-          <Table>
-            <TableHeader className="bg-muted/30">
-              <TableRow>
-                <TableHead className="w-16">Profile</TableHead>
-                <TableHead>User Details</TableHead>
-                <TableHead className="hidden md:table-cell">Contact</TableHead>
-                <TableHead className="hidden lg:table-cell">Department</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="hidden lg:table-cell">Active Projects</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-40 text-center">
-                    <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-primary" />
-                    <span className="text-sm text-muted-foreground font-medium">Loading user data...</span>
-                  </TableCell>
-                </TableRow>
-              ) : users.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-40 text-center">
-                    <div className="flex flex-col items-center justify-center opacity-40">
-                      <User className="h-10 w-10 mb-2" />
-                      <p className="text-sm font-bold">No users matches found</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : users.map((user) => {
-                const isSA = user.role.id === 1;
-                const isAdmin = user.role.id === 2;
-                const isUser = user.role.id === 3;
-                const canDelete = !((currentUserRole === 2 && (isSA || isAdmin)) || (currentUserRole !== 2 && isSA));
-                const canEdit = !((currentUserRole === 2 && (isSA || isAdmin)) || (currentUserRole !== 2 && isSA));
-                const canPw = !((currentUserRole === 2 && (isSA || isAdmin || isUser)) || (currentUserRole !== 2 && isSA));
-
-                return (
-                  <TableRow key={user.id} className="group">
-                    <TableCell>
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={`/upload/${user.avarta}`} onError={(e) => { (e.target as HTMLImageElement).src = '/img/default-avatar.png'; }} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
-                          {user.first_name?.[0]}{user.last_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-sm group-hover:text-primary transition-colors">{user.first_name} {user.last_name}</span>
-                        <span className="text-xs text-muted-foreground">@{user.display_name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3" /> {user.email}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <Badge variant="outline" className="text-[10px]">
-                        {user.department?.name || 'Unassigned'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={roleVariant(user.role.id)} className="text-[10px] tracking-wide h-5">
-                        {isSA ? <ShieldAlert className="h-3 w-3 mr-1" /> : <Shield className="h-3 w-3 mr-1" />}
-                        {user.role.name}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell max-w-[200px]">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Briefcase className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{getUserProjects(user.id)}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-primary"
-                          onClick={() => { setSelectedUser(user); setActiveModal('view'); }}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {canPw && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-emerald-500"
-                            onClick={() => { setSelectedUser(user); setActiveModal('password'); setChangePw(''); }}>
-                            <KeyRound className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canEdit && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-indigo-500"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setEditRoleId(user.role.id);
-                              setEditDepartmentId(user.department ? String(user.department.id) : 'none');
-                              setActiveModal('edit');
-                            }}>
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive"
-                            onClick={(e) => handleDeleteUser(user.id, e)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
+      <Card>
+        <CardHeader className="gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle>User Table</CardTitle>
+            <CardDescription>Review members, roles, departments, and active projects.</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-lg overflow-hidden">
+            <ScrollArea className="w-full">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">User</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Contact</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Department</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Role</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Active Projects</TableHead>
+                    <TableHead className="text-right py-3"></TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </ScrollArea>
+                </TableHeader>
+                <TableBody>
+                  {loading && users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-40 text-center">
+                        <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-primary" />
+                        <span className="text-sm text-muted-foreground font-medium">Loading user data...</span>
+                      </TableCell>
+                    </TableRow>
+                  ) : users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-40 text-center">
+                        <div className="flex flex-col items-center justify-center opacity-40">
+                          <User className="h-10 w-10 mb-2" />
+                          <p className="text-sm font-bold">No users matches found</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : users.map((user) => {
+                    const isSA = user.role.id === 1;
+                    const isAdmin = user.role.id === 2;
+                    const isUser = user.role.id === 3;
+                    const canDelete = !((currentUserRole === 2 && (isSA || isAdmin)) || (currentUserRole !== 2 && isSA));
+                    const canEdit = !((currentUserRole === 2 && (isSA || isAdmin)) || (currentUserRole !== 2 && isSA));
+                    const canPw = !((currentUserRole === 2 && (isSA || isAdmin || isUser)) || (currentUserRole !== 2 && isSA));
 
-        {/* Pagination */}
-        <div className="p-4 flex flex-col md:flex-row items-center justify-between gap-4 border-t bg-muted/20">
+                    return (
+                      <TableRow key={user.id} className="group">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-9 w-9 border">
+                              <AvatarImage src={`/upload/${user.avarta}`} onError={(e) => { (e.target as HTMLImageElement).src = '/img/default-avatar.png'; }} />
+                              <AvatarFallback className="bg-muted text-xs font-bold">
+                                {user.first_name?.[0]}{user.last_name?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-bold text-sm tracking-tight truncate">{user.first_name} {user.last_name}</span>
+                              <span className="text-[10px] text-muted-foreground font-medium truncate italic">@{user.display_name}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Mail className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{user.email}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-wide px-2 h-5">
+                            {user.department?.name || 'Unassigned'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={roleVariant(user.role.id)} className="text-[9px] font-bold uppercase tracking-wide px-2 h-5">
+                            {isSA ? <ShieldAlert className="h-3 w-3 mr-1" /> : <Shield className="h-3 w-3 mr-1" />}
+                            {user.role.name}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[240px]">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Briefcase className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{getUserProjects(user.id)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right pr-4">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => { setSelectedUser(user); setActiveModal('view'); }}>
+                                <Eye className="h-4 w-4" />
+                                View User
+                              </DropdownMenuItem>
+                              {canPw && (
+                                <DropdownMenuItem onClick={() => { setSelectedUser(user); setActiveModal('password'); setChangePw(''); }}>
+                                  <KeyRound className="h-4 w-4" />
+                                  Reset Password
+                                </DropdownMenuItem>
+                              )}
+                              {canEdit && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedUser(user);
+                                    setEditRoleId(user.role.id);
+                                    setEditDepartmentId(user.department ? String(user.department.id) : 'none');
+                                    setActiveModal('edit');
+                                  }}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                  Edit Access
+                                </DropdownMenuItem>
+                              )}
+                              {canDelete && (canPw || canEdit) && <DropdownMenuSeparator />}
+                              {canDelete && (
+                                <DropdownMenuItem onClick={() => handleDeleteUser(user.id)} variant="destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete User
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </div>
+
+          <div className="mt-4 flex flex-col items-center justify-between gap-4 border-t pt-4 md:flex-row">
           {paginate && (
             <span className="text-xs text-muted-foreground">
               Showing <span className="font-bold text-foreground">{paginate.total === 0 ? 0 : (paginate.page - 1) * paginate.perpage + 1}</span> to{' '}
@@ -380,7 +404,8 @@ const UsersPage = () => {
               </Button>
             </div>
           )}
-        </div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* ─── DIALOGS ─── */}

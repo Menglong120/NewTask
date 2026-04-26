@@ -24,6 +24,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -34,7 +41,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 
 interface Status {
   id: number;
@@ -232,31 +238,32 @@ const StatusPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditModal(status)}
-                      className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/5"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Separator orientation="vertical" className="h-4 mx-1" />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => canDelete(status) && deletestatus(status.id)}
-                      disabled={!canDelete(status)}
-                      className={cn(
-                        "h-9 w-9",
-                        canDelete(status)
-                          ? "text-muted-foreground hover:text-destructive hover:bg-destructive/5"
-                          : "opacity-20 cursor-not-allowed"
-                      )}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-primary/5"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem onClick={() => openEditModal(status)}>
+                        <Edit className="h-4 w-4" />
+                        Edit Stage
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => canDelete(status) && deletestatus(status.id)}
+                        variant="destructive"
+                        disabled={!canDelete(status)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete Stage
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </CardContent>
               </Card>
             ))}

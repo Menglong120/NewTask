@@ -4,12 +4,17 @@ import React, { useEffect, useState } from 'react';
 import { fetchApi } from '@/lib/api';
 import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
-import { Activity as ActivityIcon, Trash2, Clock, UserCircle, MapPin, Loader2, History, Shield, Briefcase, ChevronRight } from 'lucide-react';
+import { Activity as ActivityIcon, Trash2, Clock, UserCircle, MapPin, Loader2, History, Shield, Briefcase, ChevronRight, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
@@ -167,13 +172,23 @@ const ActivityPage = () => {
                                   </div>
                                 </div>
                               </div>
-                              <Button
-                                variant="ghost" size="icon"
-                                onClick={() => handleDelete(acti.id)}
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                  >
+                                    <MoreVertical className="h-3.5 w-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                  <DropdownMenuItem onClick={() => handleDelete(acti.id)} variant="destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete Entry
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground/60 pl-12 uppercase tracking-widest">
                                {timeStr}

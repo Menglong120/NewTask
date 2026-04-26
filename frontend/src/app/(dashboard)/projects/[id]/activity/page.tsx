@@ -7,6 +7,7 @@ import {
   Activity as ActivityIcon,
   User,
   Trash2,
+  MoreVertical,
   ChevronRight,
   Clock,
   Briefcase,
@@ -18,6 +19,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 interface ActivityItem {
@@ -190,13 +197,23 @@ const ActivityPage = () => {
                               <Clock className="h-3.5 w-3.5 opacity-50" />
                               {new Date(item.acted_on).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
-                            <Button
-                              variant="ghost" size="icon"
-                              onClick={() => handleDelete(item.id)}
-                              className="h-8 w-8 text-muted-foreground hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-all"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => handleDelete(item.id)} variant="destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete Entry
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </div>

@@ -19,6 +19,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -175,15 +176,19 @@ const ProjectKanbanBoard: React.FC<ProjectKanbanBoardProps> = ({
                                               <MoreVertical className="h-4 w-4" />
                                             </Button>
                                           </DropdownMenuTrigger>
-                                          <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(project); }} className="gap-2">
-                                              <Edit2 className="h-3.5 w-3.5 text-muted-foreground" /> Edit Project
+                                          <DropdownMenuContent align="end" className="w-44">
+                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(project); }}>
+                                              <Edit2 className="h-4 w-4" />
+                                              Edit Project
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(project); }} className="gap-2">
-                                              <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" /> Update Status
+                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onUpdateStatus(project); }}>
+                                              <CheckCircle2 className="h-4 w-4" />
+                                              Update Status
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(project.id); }} className="gap-2 text-destructive focus:bg-destructive/10">
-                                              <Trash2 className="h-3.5 w-3.5" /> Delete
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(project.id); }} variant="destructive">
+                                              <Trash2 className="h-4 w-4" />
+                                              Delete Project
                                             </DropdownMenuItem>
                                           </DropdownMenuContent>
                                         </DropdownMenu>
