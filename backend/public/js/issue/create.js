@@ -13,8 +13,8 @@ const createIssueNote = async function (issueId, note){
     return datas;
 }
 
-const createIssue = async function (cateId, data){
-    const res = await fetch(`${baseApiUrl}/api/category/issue/${cateId}`,{
+const createIssue = async function (projectId, data){
+    const res = await fetch(`${baseApiUrl}/api/projects/issue/${projectId}`,{
         method: 'POST',
         headers: {
             'Accept': 'application/json',

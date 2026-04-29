@@ -49,15 +49,6 @@ const countIssueInPriority = async (req, res) => {
     }
 }
 
-const countIssueInCategory = async (req, res) => {
-    try{
-        const data = await analystResource.countIssueInCategory(req.params.id);
-        res.status(data.status).json(data.body);
-    } catch(err) {
-        res.status(400).json(handleResponses.catchErrorResponse(err));
-    }
-}
-
 const countIssueByStatusInMonth = async (req, res) => {
     try{
         const data = await analystResource.countIssueByStatusInMonth(req.params.id);
@@ -82,7 +73,6 @@ module.exports = {
     totalDataInProject,
     countIssueInStatus,
     countIssueInPriority,
-    countIssueInCategory,
     countIssueByStatusInMonth,
     countIssueWithAssignee
 }

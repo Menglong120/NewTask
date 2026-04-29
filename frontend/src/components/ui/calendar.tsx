@@ -105,6 +105,7 @@ function Calendar({
           )
         },
       }}
+      navLayout="around"
       startMonth={props.startMonth || new Date(new Date().getFullYear() - 100, 0)}
       endMonth={props.endMonth || new Date(new Date().getFullYear() + 100, 11)}
       {...props}

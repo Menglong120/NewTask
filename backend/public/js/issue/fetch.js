@@ -1,6 +1,6 @@
 
-const fetchAllIssues = async function (cateId, search, page, perpage){
-    const res = await fetch(`${baseApiUrl}/api/category/issues/${cateId}?search=${search}&page=${page}&perpage=${perpage}`,{
+const fetchAllIssues = async function (projectId, search, page, perpage){
+    const res = await fetch(`${baseApiUrl}/api/projects/issues/${projectId}?search=${search}&page=${page}&perpage=${perpage}`,{
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -10,6 +10,22 @@ const fetchAllIssues = async function (cateId, search, page, perpage){
     const datas = await res.json();
     if(datas.result){
         return datas.data.issues;
+    } else {
+        return null;
+    }
+}
+
+const fetchDetailProject = async function (projectId){
+    const res = await fetch(`${baseApiUrl}/api/project/${projectId}`,{
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        }
+    });
+    const datas = await res.json();
+    if(datas.result){
+        return datas.data;
     } else {
         return null;
     }
@@ -203,22 +219,4 @@ const fetchAllIssueActivity = async function (issueId){
     }
 }
 
-const fetchDetailACategory = async function (cateId){
-    const res = await fetch(`${baseApiUrl}/api/category/${cateId}`,{
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        }
-    });
-    if(res){
-        const datas = await res.json();
-        if(datas.result){
-            return datas.data;
-        } else {
-            return [];
-        }
-    } else {
-        return [];
-    }
-}
+// category support has been removed from issue flows.

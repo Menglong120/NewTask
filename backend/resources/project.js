@@ -152,12 +152,6 @@ const createProject = async (token, body) => {
     for (let tracker of trackers) {
         await issueModels.createTracker([projectId, tracker, `Default ${tracker}`]);
     }
-    
-    // Default Categories
-    const categories = ['UI/UX', 'API', 'Database'];
-    for (let category of categories) {
-        await issueModels.createCategory([projectId, category, `Default ${category} category`]);
-    }
     const projectRes = await projectModels.getAllProjectsById(projectId);
     for( i = 0; i < projectRes.length; i++ ){
         let projectMember = [];

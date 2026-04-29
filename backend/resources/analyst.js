@@ -128,33 +128,6 @@ const countIssueInPriority = async (projectId) => {
     return handleResponses.successResponse(200, "Get elements of issue in each priority successfully.", result, null);
 }
 
-const countIssueInCategory = async (projectId) => {
-    const res = await analystModel.countIssueInCategory([projectId]);
-    if(res.length <= 0) return handleResponses.errorResponse(200, "No issues in this project.", null, res);
-    let resData = [];
-    res.forEach((element) => {
-        resData.push({
-            id : element.issue_category_id,
-            name : element.issue_category_name,
-            total_issues : element.total_issue
-        });
-    })
-    const result = {
-        project : {
-            id : res[0].id,
-            name : res[0].name,
-            status : {
-                id : res[0].status_id,
-                title : res[0].status_id
-            },
-            created_on : res[0].created_on,
-            updated_on : res[0].updated_on
-        },
-        issue_category : resData
-    }
-    return handleResponses.successResponse(200, "Get elements of issue in each category successfully.", result, null);
-}
-
 const countIssueByStatusInMonth = async (projectId) => {
     const res = await analystModel.countIssueByStatusInMonth([projectId]);
     if ( res.length <= 0 ) return handleResponses.successResponse(200, "No issue in this project.", [], null);
@@ -214,7 +187,6 @@ module.exports = {
     totalDataInProject,
     countIssueInStatus,
     countIssueInPriority,
-    countIssueInCategory,
     countIssueByStatusInMonth,
     countIssueWithAssignee,
 }

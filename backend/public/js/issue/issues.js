@@ -1,9 +1,9 @@
 // const { emit } = require("nodemon");
 
 (async function () {
-    const cateId = localStorage.getItem('categoryID');
+    const projectId = getProjectID();
     await getAllIssues();
-    await createIssueModal(cateId);
+    await createIssueModal(projectId);
     
 })();
 
@@ -163,23 +163,18 @@ function applyBootstrapToQuillImages() {
     });
 }
 
-async function createIssueModal(cateId){
-    const resCategory = await fetchDetailCategory(cateId);
-    if(resCategory === null){
+async function createIssueModal(projectId){
+    const resProject = await fetchDetailProject(projectId);
+    if(resProject === null){
         document.getElementById('modal-main-compo').innerHTML = "";
     } else {
         document.getElementById('modal-main-compo').innerHTML = `
-            <span class=" py-2 px-3 rounded-2" style="background-color:rgb(202, 229, 250) ;">
+            <span id="createIssueProjectId" class=" py-2 px-3 rounded-2" data-id="${resProject.id}" style="background-color:rgb(202, 229, 250) ;">
                 <i class='bx bx-box fs-5 me-1'></i>
-                ${resCategory.project.name}
-            </span>
-            <span class=" py-2 px-3 rounded-2 ms-2" id="createIssueCateId" data-id="${resCategory.category.id}" style="background-color:rgb(202, 229, 250) ;">
-                <i class='bx bx-customize fs-5 me-1'></i>
-                ${resCategory.category.name}
+                ${resProject.name}
             </span>
         `;
 
-        const projectId = resCategory.project.id;
         const resStatus = await fetchAllIssueStatus(projectId);
         const resPriority = await fetchAllPriority(projectId);
         const resTracker = await fetchAllTracker(projectId);
@@ -214,7 +209,7 @@ async function createIssueModal(cateId){
                     <i class='bx bx-loader-alt'></i> <span class="ps-1" id="createIssueStatusProp" data-value="${resStatus[0].id}">${resStatus[0].name}</span>
                 </button>
                 <ul class="dropdown-menu modal-dropdown-menu">
-                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${cateId}')"></li>
+                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${projectId}')"></li>
                     ${statusElement}
                 </ul>
             </div>
@@ -226,7 +221,7 @@ async function createIssueModal(cateId){
                     <i class='bx bx-flag'></i> <span class="ps-1" id="createIssuePriorityProp" data-value="${resPriority[0].id}">${resPriority[0].name}</span>
                 </button>
                 <ul class="dropdown-menu modal-dropdown-menu">
-                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${cateId}')"></li>
+                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${projectId}')"></li>
                     ${priorityElement}
                 </ul>
             </div>
@@ -238,7 +233,7 @@ async function createIssueModal(cateId){
                     <i class='bx bx-target-lock'></i> <span class="ps-1" id="createIssueTrackerProp" data-value="${resTracker[0].id}">${resTracker[0].name}</span>
                 </button>
                 <ul class="dropdown-menu modal-dropdown-menu">
-                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${cateId}')"></li>
+                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${projectId}')"></li>
                     ${trackerElement}
                 </ul>
             </div>
@@ -250,7 +245,7 @@ async function createIssueModal(cateId){
                     <i class='bx bx-label'></i> <span class="ps-1" id="createIssueLabelProp" data-value="${resLabel[0].id}">${resLabel[0].name}</span>
                 </button>
                 <ul class="dropdown-menu modal-dropdown-menu">
-                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${cateId}')"></li>
+                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${projectId}')"></li>
                     ${labelElement}
                 </ul>
             </div>
@@ -281,7 +276,7 @@ async function createIssueModal(cateId){
                     <span class="ps-1" id="createIssueAssigneeProp" data-value="0">Assignee</span>
                 </button>
                 <ul class="dropdown-menu modal-dropdown-menu">
-                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${cateId}')"></li>
+                    <li><input type="text" class="form-control mb-2 search-input" placeholder="Search" onkeyup="filterDropdown(this, '${projectId}')"></li>
                     ${memberElement}
                 </ul>
             </div>
@@ -333,9 +328,9 @@ async function updateIssueModal(issueId){
                 <i class='bx bx-box fs-5 me-1'></i>
                 ${resIssue.project.name}
             </span>
-            <span class=" py-2 px-3 rounded-2 ms-2" id="updateIssueCateId" data-id="${resIssue.issues.category.id}" data-issue="${resIssue.issues.id}" style="background-color:rgb(202, 229, 250) ;">
-                <i class='bx bx-customize fs-5 me-1'></i>
-                ${resIssue.issues.category.name}
+            <span class=" py-2 px-3 rounded-2 ms-2" id="updateIssueCateId" data-issue="${resIssue.issues.id}" style="background-color:rgb(202, 229, 250) ;">
+                <i class='bx bx-task fs-5 me-1'></i>
+                ${resIssue.issues.name}
             </span>
         `;
         document.getElementById('updateIssueName').value = resIssue.issues.name;
@@ -525,7 +520,7 @@ function onInputRequireString(inputId, validateId, validateLength, massage){
 
 async function createIssueClicked() {
     startLoading('btn-create-issue', 'btn-create-issue-text', 'btn-create-issue-spinner');
-    const cateId = document.getElementById('createIssueCateId').dataset.id;
+    const projectId = document.getElementById('createIssueProjectId').dataset.id;
     const startDate = $('#createIssueStartDate').datepicker('getFormattedDate');
     const dueDate = $('#createIssueDueDate').datepicker('getFormattedDate');
     const assignee = document.getElementById('createIssueAssigneeProp').dataset.value == 0 ? "" : document.getElementById('createIssueAssigneeProp').dataset.value;
@@ -567,10 +562,10 @@ async function createIssueClicked() {
         label_id: document.getElementById('createIssueLabelProp').dataset.value,
         assignee: assignee,
     }
-    const res = await createIssue(cateId, createIssueData);
+    const res = await createIssue(projectId, createIssueData);
     if(res.result){
         getAllIssues();
-        createIssueModal(cateId);
+        createIssueModal(projectId);
         Swal.fire({
             icon: "success",
             title: "Created an issue successfully!",
@@ -685,8 +680,7 @@ async function getAllIssues() {
         </div>
     `;
 
-    const projectId = localStorage.getItem('projectID');
-    const cateId = localStorage.getItem('categoryID');
+    const projectId = getProjectID();
     const search = '';
     const page = 1;
     const perpage = 0;
@@ -699,20 +693,13 @@ async function getAllIssues() {
         return;
     }
 
-    if(cateId === null){
-        window.location.href = '/pages/home';
-        return;
-    } else if (!cateId) {
-        window.location.href = '/pages/home';
-        return;
-    }
-
     try {
 
-        const detailACategory = await fetchDetailACategory(cateId);
-        if(detailACategory !== null){
-            document.getElementById('project-standon').innerHTML = detailACategory.project.name;
-            document.getElementById('cate-standon').innerHTML = detailACategory.category.name;
+        const projectDetails = await fetchDetailProject(projectId);
+        if(projectDetails !== null){
+            document.getElementById('project-standon').innerHTML = projectDetails.name;
+            const cateStandon = document.getElementById('cate-standon');
+            if(cateStandon) cateStandon.innerHTML = '';
         }
 
         // Fetch all required data
@@ -721,7 +708,7 @@ async function getAllIssues() {
         const resTracker = await fetchAllTracker(projectId);
         const resLabel = await fetchAllLabel(projectId);
         const resMember = await fetchAllMember(projectId, '', '', '');
-        const resIssues = await fetchAllIssues(cateId, search, page, perpage);
+        const resIssues = await fetchAllIssues(projectId, search, page, perpage);
         
 
         const issueContent = document.getElementById('issue-content');
@@ -1341,10 +1328,6 @@ async function openEditIssueNoteModal(issueNoteId){
                     <i class='bx bx-box fs-5 me-1'></i>
                     ${resIssue.project.name}
                 </span>
-                <span class=" py-2 px-3 rounded-2 ms-2" style="background-color:rgb(202, 229, 250) ;">
-                    <i class='bx bx-customize fs-5 me-1'></i>
-                    ${resIssue.issues.category.name}
-                </span>
                 <span class=" py-2 px-3 rounded-2 ms-2" id="editIssueNote" data-note="${resNote.id}" style="background-color:rgb(202, 229, 250) ;">
                     <i class='bx bx-task fs-5 me-1'></i>
                     ${resIssue.issues.name}
@@ -1601,7 +1584,7 @@ async function getDetailIssueOffcanvas(issueId) {
     if(resIssue !== null){
         issueIdForAct = issueId;
         const issueData = resIssue.issues, projectData = resIssue.project;
-        document.getElementById('issue-category').innerHTML = issueData.category.name;
+        document.getElementById('issue-category').innerHTML = projectData.name;
         document.getElementById('issue-name').innerHTML = issueData.name;
         document.getElementById('issue-des').innerHTML = `<p>${issueData.description}</p>`;
 
@@ -2375,10 +2358,6 @@ async function updateSubIssueModal(subIssueId){
                 <i class='bx bx-box fs-5 me-1'></i>
                 ${resDetailIssue.project.name}
             </span>
-            <span class=" py-2 px-3 rounded-2 ms-2" style="background-color:rgb(202, 229, 250) ;">
-                <i class='bx bx-customize fs-5 me-1'></i>
-                ${resDetailIssue.issues.category.name}
-            </span>
             <span class=" py-2 px-3 rounded-2 ms-2" id="updateSubIssue-subIssue" data-issue="${resDetailSubIssue.issue.id}" data-subissue="${resDetailSubIssue.sub_issues.id}" style="background-color:rgb(202, 229, 250) ;">
                 <i class='bx bx-task fs-5 me-1'></i>
                 ${resDetailSubIssue.issue.name}
@@ -2550,10 +2529,6 @@ async function createSubIssueModal(issueId){
             <span class=" py-2 px-3 rounded-2" style="background-color:rgb(202, 229, 250) ;">
                 <i class='bx bx-box fs-5 me-1'></i>
                 ${resDetailIssue.project.name}
-            </span>
-            <span class=" py-2 px-3 rounded-2 ms-2" style="background-color:rgb(202, 229, 250) ;">
-                <i class='bx bx-customize fs-5 me-1'></i>
-                ${resDetailIssue.issues.category.name}
             </span>
             <span class=" py-2 px-3 rounded-2 ms-2" id="createSubIssue-issue" data-subissue="${resDetailIssue.issues.id}" style="background-color:rgb(202, 229, 250) ;">
                 <i class='bx bx-task fs-5 me-1'></i>

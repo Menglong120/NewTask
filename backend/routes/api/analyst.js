@@ -9,7 +9,6 @@ router.get('/analyst/dashboard/allprogress', requireAuth, analystController.perc
 router.get('/analyst/project/total/:id', requireAuth, analystController.totalDataInProject);
 router.get('/analyst/project/issue/status/:id', requireAuth, analystController.countIssueInStatus);
 router.get('/analyst/project/issue/priority/:id', requireAuth, analystController.countIssueInPriority);
-router.get('/analyst/project/issue/category/:id', requireAuth, analystController.countIssueInCategory);
 router.get('/analyst/project/issue/month/:id', requireAuth, analystController.countIssueByStatusInMonth);
 router.get('/analyst/project/issue/assignee/:id', requireAuth, analystController.countIssueWithAssignee);
 
