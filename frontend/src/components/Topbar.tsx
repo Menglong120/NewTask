@@ -23,8 +23,11 @@ const Topbar = () => {
     const fetchProfile = async () => {
       try {
         const res = await fetchApi('/api/profile');
-        if (res.result && res.data.length > 0) setProfile(res.data[0]);
-      } catch (error) { console.error(error); }
+        if (res.result && res.data) {
+          const user = Array.isArray(res.data) ? res.data[0] : res.data;
+          if (user) setProfile(user);
+        }
+      } catch (error) { console.error('Topbar fetch error:', error); }
     };
     fetchProfile();
   }, []);

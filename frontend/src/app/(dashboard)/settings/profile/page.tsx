@@ -12,19 +12,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-
-interface UserProfile {
-  first_name: string;
-  last_name: string;
-  display_name?: string;
-  dis_name?: string;
-  email: string;
-  description: string;
-  avarta: string;
-  role: { name: string; id: number };
-}
+import { UserProfile } from '@/types/user';
+import { ProfileDialog } from './dialog/dialog';
 
 const ProfileSettingsPage = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -364,30 +354,14 @@ const ProfileSettingsPage = () => {
         </Card>
       </div>
 
-      {/* Upload Dialog */}
-      <Dialog open={showCropperModal} onOpenChange={setShowCropperModal}>
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ImageIcon className="h-5 w-5 text-primary mr-2" /> Adjust Profile Framing
-            </DialogTitle>
-          </DialogHeader>
+      <ProfileDialog
+        showCropperModal={showCropperModal}
+        setShowCropperModal={setShowCropperModal}
+        imageElement={imageElement}
+        changeProfileImage={changeProfileImage}
+        isUploadingImage={isUploadingImage}
+      />
 
-          <div className="bg-muted/50 rounded-xl border p-4 flex justify-center items-center min-h-[400px] overflow-hidden">
-            <img id="cropperImage" ref={imageElement} className="max-h-[400px] max-w-full rounded-lg" alt="Crop Area" />
-          </div>
-
-          <DialogFooter className="gap-2 pt-4">
-            <DialogClose asChild>
-               <Button variant="ghost">Cancel</Button>
-            </DialogClose>
-            <Button onClick={changeProfileImage} disabled={isUploadingImage} className="px-8 font-bold">
-              {isUploadingImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-              {isUploadingImage ? 'Applying...' : 'Set New Photo'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

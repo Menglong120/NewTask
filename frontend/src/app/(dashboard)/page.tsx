@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Briefcase, Users, UserCheck, LayoutPanelLeft, Cloud, Droplets, Gauge, Loader2, Sparkles, TrendingUp, Calendar } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { 
+  Briefcase, Users, LayoutPanelLeft, UserCheck, 
+  TrendingUp, Sparkles, Cloud, Droplets, Gauge,
+  Loader2
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -63,11 +67,13 @@ const Dashboard = () => {
           setStats(prev => prev.map(s => s.label === 'Total Admin' ? { ...s, value: String(adminCount || 1) } : s));
         }
 
-        if (issuesRes.result && Array.isArray(issuesRes.data)) {
-          const labels = issuesRes.data.map((item: any) => item.issue_status_name);
-          const series = issuesRes.data.map((item: any) => item.total_issue);
-          const total = series.reduce((a: number, b: number) => a + b, 0);
-          setIssueSummary({ labels, series, total });
+        if (issuesRes.result) {
+          const issues = issuesRes.data;
+          setIssueSummary({
+            labels: issues.map((i: any) => i.status_name),
+            series: issues.map((i: any) => i.count),
+            total: issues.reduce((acc: number, curr: any) => acc + curr.count, 0)
+          });
         }
 
         if (progressRes.result) {
@@ -145,8 +151,8 @@ const Dashboard = () => {
           <h1 className="text-3xl font-bold tracking-tight">Good {greeting}, Commander</h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening across your projects today.</p>
         </div>
-        <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-lg border">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-3 px-4 py-2 bg-muted/50 rounded-2xl ring-1 ring-border">
+          <Sparkles className="h-4 w-4 text-primary animate-pulse" />
           <span className="text-sm font-medium">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
         </div>
       </div>

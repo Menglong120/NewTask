@@ -5,15 +5,14 @@ import { useParams } from 'next/navigation';
 import { fetchApi } from '@/lib/api';
 import Swal from 'sweetalert2';
 import {
-  Users, Loader2, Tag, Flag, Target, LayoutGrid,
+  Users, Loader2, Tag, Flag, Target,
   Search, Plus, MoreVertical, Trash2, Edit2,
-  Mail, Settings, ChevronRight, Check
+  Mail, Settings, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Tabs,
   TabsContent,
@@ -34,52 +33,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
+import { Member, ProjectSummary, ItemState, AvailableUser } from '@/types/project';
+import { SettingsDialog } from './dialog/dialog';
 
-interface Member {
-  id: number;
-  user: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    dis_name: string;
-    display_name?: string;
-    email: string;
-    avarta: string;
-    role: { name: string; id: number };
-  };
-  created_on: string;
-}
-
-interface ProjectSummary {
-  id: number;
-  name: string;
-}
-
-interface ItemState {
-  id: number;
-  name: string;
-  description?: string;
-}
-interface AvailableUser {
-  id: number;
-  first_name: string;
-  last_name: string;
-  display_name?: string;
-  dis_name: string;
-  avarta: string;
-  role: { id: number; name: string };
-}
 type TabIcon = React.ComponentType<{ className?: string }>;
 
 const ProjectSettingsPage = () => {
@@ -92,7 +51,6 @@ const ProjectSettingsPage = () => {
   const [labels, setLabels] = useState<ItemState[]>([]);
   const [priorities, setPriorities] = useState<ItemState[]>([]);
   const [trackers, setTrackers] = useState<ItemState[]>([]);
-  const [categories, setCategories] = useState<ItemState[]>([]);
   const [projectName, setProjectName] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchInput, setSearchInput] = useState('');
@@ -323,7 +281,7 @@ const ProjectSettingsPage = () => {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -429,7 +387,7 @@ const ProjectSettingsPage = () => {
                         <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Contact</TableHead>
                         <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Role</TableHead>
                         <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Joined</TableHead>
-                        <TableHead className="text-right py-3"></TableHead>
+                        <TableHead className="text-right py-3">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -444,12 +402,16 @@ const ProjectSettingsPage = () => {
                               <Avatar className="h-9 w-9 border">
                                 <AvatarImage src={`/upload/${mem.user.avarta}`} className="object-cover" />
                                 <AvatarFallback className="bg-muted text-xs font-bold">
-                                  {mem.user.first_name?.[0]}{mem.user.last_name?.[0]}
+                                  {mem.user.first_name?.[0] || mem.user.dis_name?.[0] || mem.user.display_name?.[0] || '?'}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex flex-col min-w-0">
-                                <span className="font-bold text-sm tracking-tight truncate">{mem.user.first_name} {mem.user.last_name}</span>
-                                <span className="text-[10px] text-muted-foreground font-medium truncate italic">@{mem.user.dis_name || mem.user.display_name}</span>
+                                <span className="font-bold text-sm tracking-tight truncate">
+                                  {mem.user.first_name || mem.user.last_name 
+                                    ? `${mem.user.first_name || ''} ${mem.user.last_name || ''}`.trim() 
+                                    : (mem.user.dis_name || mem.user.display_name || 'Unknown Member')}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground font-medium truncate italic">@{mem.user.dis_name || mem.user.display_name || 'user'}</span>
                               </div>
                             </div>
                           </TableCell>
@@ -472,7 +434,7 @@ const ProjectSettingsPage = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => setPendingDeleteMemberId(mem.id)}
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -495,101 +457,19 @@ const ProjectSettingsPage = () => {
         </Tabs>
       </main>
 
-      {/* Configuration Dialog */}
-      <Dialog open={!!activeModal} onOpenChange={(open) => !open && setActiveModal(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                {activeModal === 'member' ? <Users className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
-              </div>
-              <span>{activeModal === 'member' ? 'Add Project Personnel' : `New ${activeModal}`}</span>
-            </DialogTitle>
-          </DialogHeader>
+      <SettingsDialog
+        activeModal={activeModal}
+        setActiveModal={setActiveModal}
+        modalInput={modalInput}
+        setModalInput={setModalInput}
+        availableUsers={availableUsers}
+        selectedNewMembers={selectedNewMembers}
+        setSelectedNewMembers={setSelectedNewMembers}
+        isSaving={isSaving}
+        handleCreateItem={handleCreateItem}
+        handleAddMember={handleAddMember}
+      />
 
-          <div className="py-4">
-            {activeModal === 'member' ? (
-              <div className="space-y-4">
-                <p className="text-xs text-muted-foreground">Select one or more users to add to this project framework.</p>
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Available Personnel</Label>
-                  <ScrollArea className="h-[300px] border rounded-lg p-2 bg-muted/20">
-                    <div className="space-y-1">
-                      {availableUsers.map(user => {
-                        const idStr = user.id.toString();
-                        const isSelected = selectedNewMembers.includes(idStr);
-                        return (
-                          <div
-                            key={user.id}
-                            className={cn(
-                              "flex items-center gap-3 p-2.5 rounded-lg transition-all cursor-pointer border border-transparent",
-                              isSelected ? "bg-primary/10 border-primary/20" : "hover:bg-muted/50"
-                            )}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedNewMembers(selectedNewMembers.filter(id => id !== idStr));
-                              } else {
-                                setSelectedNewMembers([...selectedNewMembers, idStr]);
-                              }
-                            }}
-                          >
-                            <div className={cn(
-                              "w-4 h-4 rounded border flex items-center justify-center transition-all",
-                              isSelected ? "bg-primary border-primary" : "bg-background"
-                            )}>
-                              {isSelected && <Check className="h-3 w-3 text-white stroke-[3px]" />}
-                            </div>
-                            <Avatar className="h-8 w-8 border">
-                              <AvatarImage src={`/upload/${user.avarta}`} className="object-cover" />
-                              <AvatarFallback className="text-[10px] font-bold">
-                                {user.display_name?.[0] || user.first_name?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <span className="text-sm font-semibold truncate transition-colors">
-                                {user.display_name || user.first_name + ' ' + user.last_name}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground uppercase font-bold">{user.role?.name || 'User'}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      {availableUsers.length === 0 && (
-                        <div className="text-center py-12 text-sm text-muted-foreground">
-                          No available personnel found.
-                        </div>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold capitalize">{activeModal} Name</Label>
-                <Input
-                  className="h-10"
-                  placeholder={`Enter ${activeModal} name...`}
-                  value={modalInput}
-                  onChange={e => setModalInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleCreateItem()}
-                  autoFocus
-                />
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button variant="ghost" onClick={() => setActiveModal(null)}>Cancel</Button>
-            <Button
-              onClick={activeModal === 'member' ? handleAddMember : handleCreateItem}
-              disabled={isSaving}
-              className="px-6"
-            >
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Selection'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       <ConfirmActionDialog
         open={pendingDeleteItem !== null}
         onOpenChange={(open) => !open && setPendingDeleteItem(null)}

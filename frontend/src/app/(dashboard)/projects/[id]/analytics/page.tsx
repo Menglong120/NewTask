@@ -33,21 +33,12 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { AnalyticsData } from '@/types/analytics';
 
 const Chart = dynamic(() => import('react-apexcharts'), {
   ssr: false,
   loading: () => <div className="h-[300px] w-full flex items-center justify-center bg-white/5 rounded-xl border border-white/5"><Loader2 className="h-6 w-6 animate-spin text-primary opacity-20" /></div>
 });
-
-interface AnalyticsData {
-  total: { issue: number; sub_issue: number };
-  members: number;
-  resources: number;
-  statusData: any[];
-  priorityData: any[];
-  assigneeData: any[];
-  monthlyData: any[];
-}
 
 const ProjectAnalyticsPage = () => {
   const { id } = useParams();

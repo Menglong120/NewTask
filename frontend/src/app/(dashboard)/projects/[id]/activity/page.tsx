@@ -27,25 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
-
-interface ActivityItem {
-  id: string;
-  activity: string;
-  title: string;
-  acted_on: string;
-  actor: {
-    user: {
-      first_name: string;
-      last_name: string;
-      role: { name: string };
-    }
-  };
-  project: { name: string };
-}
-
-interface GroupedActivities {
-  [date: string]: ActivityItem[];
-}
+import { ActivityItem, GroupedActivities } from '@/types/activity';
 
 const ActivityPage = () => {
   const { id } = useParams();

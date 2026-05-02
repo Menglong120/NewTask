@@ -33,7 +33,7 @@ const io = new Server(server);
 app.set('view engine', 'ejs');
 
 app.use(cors({
-    origin: ["http://127.0.0.1:5501", "http://localhost:3000", "http://localhost:3001"],
+    origin: ["http://127.0.0.1:5501", "http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"],
     credentials: true
 }));
 app.use(fileUpload());

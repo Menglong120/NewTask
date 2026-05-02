@@ -25,23 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-
-interface NotificationRequest {
-  id: string;
-  description: string;
-  status: number;
-  created_on: string;
-  user: { first_name: string; last_name: string; avarta: string; };
-}
-
-interface ActivityNotification {
-  id: string;
-  activity: string;
-  title: string;
-  acted_on: string;
-  actor: { user: { first_name: string; last_name: string; avarta: string; } };
-  project: { name: string };
-}
+import { NotificationRequest, ActivityNotification } from '@/types/notification';
 
 const formatTimeDifference = (dateString: string) => {
   const diff = Date.now() - new Date(dateString).getTime();

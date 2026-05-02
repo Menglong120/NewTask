@@ -27,22 +27,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  start_date?: string;
-  end_date?: string;
-  department?: { id: number; name: string; } | null;
-  status: { id: number; title: string; };
-  members: Array<{ user: { id: string; display_name?: string; dis_name?: string; avarta: string; }; }>;
-}
-
-interface ProjectProgress { id: number; progress: number; issue: { total: string }; }
-interface Status {
-  id: number;
-  title: string;
-}
+import { Project, ProjectProgress, StatusOption as Status } from '@/types/project';
 
 interface ProjectKanbanBoardProps {
   projects: Project[];

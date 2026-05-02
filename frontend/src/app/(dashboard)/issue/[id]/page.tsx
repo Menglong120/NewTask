@@ -25,15 +25,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import {
   DropdownMenu,
@@ -43,50 +34,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
+import { Issue, Activity, Note, NewSubIssue } from '@/types/issue';
+import { ItemState, Member } from '@/types/project';
+import { AddSubIssueDialog } from './dialog/dialog';
 
-// ─── Interfaces ──────────────────────────────────────────────────────────────
 
-interface Issue {
-  id: number;
-  name: string;
-  description: string;
-  start_date: string;
-  due_date: string;
-  progress: number;
-  status: { id: number; name: string };
-  priority: { id: number; name: string };
-  tracker: { id: number; name: string };
-  label: { id: number; name: string };
-  category: { id: number; name: string; project?: { id: number; name: string } };
-  assignee: { id: string; email: string; dis_name: string; avarta: string };
-}
-
-interface Activity {
-  id: number;
-  title: string;
-  activity: string;
-  created_on: string;
-  actor: { dis_name: string; avarta: string };
-}
-
-interface Note {
-  id: number;
-  notes: string;
-  created_on: string;
-  noter: { id: string; disname: string; avarta: string; email: string };
-}
-
-interface NewSubIssue {
-  name: string;
-  description: string;
-  status_id: string;
-  priority_id: string;
-  tracker_id: string;
-  label_id: string;
-  assignee: string;
-  start_date?: Date;
-  due_date?: Date;
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -98,7 +50,7 @@ const IssueDetailPage = () => {
   const [issue, setIssue] = useState<Issue | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [subIssues, setSubIssues] = useState<any[]>([]);
+  const [subIssues, setSubIssues] = useState<Issue[]>([]);
 
   // UI state
   const [loading, setLoading] = useState(true);
@@ -108,11 +60,11 @@ const IssueDetailPage = () => {
   const [editedDesc, setEditedDesc] = useState('');
 
   // Project metadata (populated after issue load)
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [priorities, setPriorities] = useState<any[]>([]);
-  const [trackers, setTrackers] = useState<any[]>([]);
-  const [labels, setLabels] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState<ItemState[]>([]);
+  const [priorities, setPriorities] = useState<ItemState[]>([]);
+  const [trackers, setTrackers] = useState<ItemState[]>([]);
+  const [labels, setLabels] = useState<ItemState[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
 
   // Sub-issue creation modal
   const [isAddSubIssueOpen, setIsAddSubIssueOpen] = useState(false);
@@ -356,120 +308,23 @@ const IssueDetailPage = () => {
           <Button variant="outline" size="sm" onClick={() => setIsEditingDesc(true)} className="gap-2 h-9 border">
             <Edit3 className="h-4 w-4" /> Describe
           </Button>
-          <Dialog open={isAddSubIssueOpen} onOpenChange={setIsAddSubIssueOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2 h-9 shadow-sm">
-                <Plus className="h-4 w-4" /> Add Sub-Issue
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                    <Plus className="h-5 w-5" />
-                  </div>
-                  <span>Initialize Sub-Issue</span>
-                </DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 py-4 overflow-y-auto max-h-[60vh] px-1">
-                <div className="col-span-2 space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Subject Identifier</Label>
-                  <Input
-                    placeholder="Brief objective title..."
-                    value={newSubIssue.name}
-                    onChange={(e) => setNewSubIssue({ ...newSubIssue, name: e.target.value })}
-                  />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Tactical Briefing</Label>
-                  <Textarea
-                    placeholder="Define execution steps..."
-                    className="min-h-[120px] resize-none"
-                    value={newSubIssue.description}
-                    onChange={(e) => setNewSubIssue({ ...newSubIssue, description: e.target.value })}
-                  />
-                </div>
+          <AddSubIssueDialog
+            open={isAddSubIssueOpen}
+            onOpenChange={setIsAddSubIssueOpen}
+            newSubIssue={newSubIssue}
+            setNewSubIssue={setNewSubIssue}
+            handleAddSubIssue={handleAddSubIssue}
+            submitting={submitting}
+            statuses={statuses}
+            priorities={priorities}
+            labels={labels}
+            trackers={trackers}
+            members={members}
+          />
+          <Button size="sm" className="gap-2 h-9 shadow-sm" onClick={() => setIsAddSubIssueOpen(true)}>
+            <Plus className="h-4 w-4" /> Add Sub-Issue
+          </Button>
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Mission State</Label>
-                  <Select onValueChange={(v) => setNewSubIssue({ ...newSubIssue, status_id: v })}>
-                    <SelectTrigger className="text-xs font-bold uppercase"><SelectValue placeholder="Status" /></SelectTrigger>
-                    <SelectContent>
-                      {statuses.map(s => <SelectItem key={s.id} value={String(s.id)} className="text-[10px] font-bold uppercase">{s.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Impact Level</Label>
-                  <Select onValueChange={(v) => setNewSubIssue({ ...newSubIssue, priority_id: v })}>
-                    <SelectTrigger className="text-xs font-bold uppercase"><SelectValue placeholder="Priority" /></SelectTrigger>
-                    <SelectContent>
-                      {priorities.map(p => <SelectItem key={p.id} value={String(p.id)} className="text-[10px] font-bold uppercase">{p.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Directive Tag</Label>
-                  <Select onValueChange={(v) => setNewSubIssue({ ...newSubIssue, label_id: v })}>
-                    <SelectTrigger className="text-xs font-bold uppercase"><SelectValue placeholder="Label" /></SelectTrigger>
-                    <SelectContent>
-                      {labels.map(l => <SelectItem key={l.id} value={String(l.id)} className="text-[10px] font-bold uppercase">{l.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Execution Model</Label>
-                  <Select onValueChange={(v) => setNewSubIssue({ ...newSubIssue, tracker_id: v })}>
-                    <SelectTrigger className="text-xs font-bold uppercase"><SelectValue placeholder="Tracker" /></SelectTrigger>
-                    <SelectContent>
-                      {trackers.map(t => <SelectItem key={t.id} value={String(t.id)} className="text-[10px] font-bold uppercase">{t.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Start Window</Label>
-                  <DatePicker
-                    selected={newSubIssue.start_date}
-                    onSelect={(value) => setNewSubIssue({ ...newSubIssue, start_date: value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Target Deadline</Label>
-                  <DatePicker
-                    selected={newSubIssue.due_date}
-                    onSelect={(value) => setNewSubIssue({ ...newSubIssue, due_date: value })}
-                  />
-                </div>
-                
-                <div className="col-span-2 space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Assigned Operational Specialist</Label>
-                  <Select onValueChange={(v) => setNewSubIssue({ ...newSubIssue, assignee: v })}>
-                    <SelectTrigger className="text-xs font-bold uppercase"><SelectValue placeholder="Select Agent" /></SelectTrigger>
-                    <SelectContent>
-                      {members.map(m => (
-                        <SelectItem key={m.id} value={String(m.user?.id || m.id)} className="text-[10px] font-bold uppercase">
-                          {m.user?.dis_name || m.user?.email || m.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter className="pt-4 border-t">
-                <DialogClose asChild>
-                  <Button variant="ghost">Cancel</Button>
-                </DialogClose>
-                <Button onClick={handleAddSubIssue} disabled={submitting} className="px-8 shadow-md">
-                  {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Confirm Initialization'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

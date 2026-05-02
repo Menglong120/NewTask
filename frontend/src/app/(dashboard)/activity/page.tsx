@@ -18,26 +18,12 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
-
-interface Activity {
-  id: string;
-  activity: string;
-  title: string;
-  acted_on: string;
-  actor: {
-    user: {
-      first_name: string;
-      last_name: string;
-      role: { name: string; };
-    };
-  };
-  project: { name: string; };
-}
+import { ActivityItem } from '@/types/activity';
 
 const ActivityPage = () => {
   const router = useRouter();
   const [projectId, setProjectId] = useState<string | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingDeleteActivityId, setPendingDeleteActivityId] = useState<string | null>(null);
 
@@ -53,7 +39,7 @@ const ActivityPage = () => {
       setLoading(true);
       const response = await fetchApi(`/api/projects/activities/${projectId}?search&page=&perpage=`);
       if (response.result && response.data && Array.isArray(response.data.datas)) {
-        setActivities(response.data.datas.sort((a: any, b: any) => new Date(b.acted_on).getTime() - new Date(a.acted_on).getTime()));
+        setActivities(response.data.datas.sort((a: ActivityItem, b: ActivityItem) => new Date(b.acted_on).getTime() - new Date(a.acted_on).getTime()));
       } else { setActivities([]); }
     } catch (error) { console.error(error); setActivities([]); }
     finally { setLoading(false); }
@@ -94,7 +80,7 @@ const ActivityPage = () => {
       );
     }
 
-    const activitiesByDate = activities.reduce((acc: any, acti) => {
+    const activitiesByDate = activities.reduce((acc: Record<string, ActivityItem[]>, acti) => {
       const date = new Date(acti.acted_on).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
       if (!acc[date]) acc[date] = [];
       acc[date].push(acti);
@@ -121,7 +107,7 @@ const ActivityPage = () => {
               </div>
 
               <div className="space-y-6">
-                {(acts as Activity[]).map((acti, idx) => {
+                {(acts as ActivityItem[]).map((acti, idx) => {
                   const timeStr = new Date(acti.acted_on).toLocaleString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
                   const isEven = idx % 2 === 0;
                   return (

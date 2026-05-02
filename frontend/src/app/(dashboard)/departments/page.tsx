@@ -5,7 +5,6 @@ import Swal from 'sweetalert2';
 import { fetchApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,22 +13,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Building2, FolderOpen, Loader2, MoreVertical, Pencil, Plus, Search, Trash2, Users } from 'lucide-react';
-import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
+import { DepartmentDialog } from './dialog/dialog';
+import { Department } from '@/types/department';
 
-interface Department {
-  id: number;
-  name: string;
-  description: string | null;
-  total_users: number | string;
-  total_projects: number | string;
-  created_on: string;
-}
 
 const emptyForm = { name: '', description: '' };
 
@@ -209,7 +199,7 @@ export default function DepartmentsPage() {
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Users</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Projects</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest py-3">Created</TableHead>
-                    <TableHead className="text-right py-3"></TableHead>
+                    <TableHead className="text-right py-3">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -254,7 +244,7 @@ export default function DepartmentsPage() {
                       <TableCell className="text-right pr-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="icon" className="ml-auto h-8 w-8 text-muted-foreground">
                               <MoreVertical className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -264,10 +254,10 @@ export default function DepartmentsPage() {
                               Edit Department
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setPendingDeleteDepartment(department)} variant="destructive">
-                            <Trash2 className="h-4 w-4" />
-                            Delete Department
-                          </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setPendingDeleteDepartment(department)} variant="destructive">
+                              <Trash2 className="h-4 w-4" />
+                              Delete Department
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -280,46 +270,19 @@ export default function DepartmentsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingDepartment ? 'Edit Department' : 'Create Department'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Department Name</Label>
-              <Input value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Engineering" />
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea
-                value={form.description}
-                onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-                placeholder="Short description for this department"
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDialogOpen(false)} disabled={submitting}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {editingDepartment ? 'Save Changes' : 'Create Department'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <ConfirmActionDialog
-        open={pendingDeleteDepartment !== null}
-        onOpenChange={(open) => !open && setPendingDeleteDepartment(null)}
-        title={pendingDeleteDepartment ? `Delete ${pendingDeleteDepartment.name}?` : 'Delete department?'}
-        description="This only works if no users or projects are assigned to this department."
-        confirmLabel="Delete department"
-        onConfirm={() => {
-          if (!pendingDeleteDepartment) return
-          return handleDelete(pendingDeleteDepartment)
-        }}
+      <DepartmentDialog
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        editingDepartment={editingDepartment}
+        form={form}
+        setForm={setForm}
+        submitting={submitting}
+        handleSubmit={handleSubmit}
+        pendingDeleteDepartment={pendingDeleteDepartment}
+        setPendingDeleteDepartment={setPendingDeleteDepartment}
+        handleDelete={handleDelete}
       />
     </div>
+
   );
 }

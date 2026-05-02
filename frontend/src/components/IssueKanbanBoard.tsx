@@ -26,25 +26,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 
-interface Issue {
-  id: number;
-  name: string;
-  description: string;
-  start_date: string;
-  due_date: string;
-  progress: number;
-  status: { id: number; name: string; title?: string };
-  priority: { id: number; name: string; title?: string };
-  tracker: { id: number; name: string; title?: string };
-  label: { id: number; name: string; title?: string };
-  assignee: {
-    id: string;
-    email: string;
-    dis_name: string;
-    status: number;
-    user?: { id: string; display_name: string; avarta: string; email: string; }
-  };
-}
+import { Issue } from '@/types/issue';
 
 interface IssueKanbanBoardProps {
   issues: Issue[];

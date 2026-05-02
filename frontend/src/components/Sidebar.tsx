@@ -26,10 +26,15 @@ const Sidebar = () => {
     const fetchData = async () => {
       try {
         const profileRes = await fetchApi('/api/profile');
-        if (profileRes.result && profileRes.data.length > 0) setRoleId(profileRes.data[0].role.id);
+        if (profileRes.result && profileRes.data) {
+          const user = Array.isArray(profileRes.data) ? profileRes.data[0] : profileRes.data;
+          if (user?.role?.id) setRoleId(user.role.id);
+        }
         const projectRes = await fetchApi('/api/projects');
-        if (projectRes.result) setProjects(projectRes.data.datas);
-      } catch (error) { console.error(error); }
+        if (projectRes.result && projectRes.data?.datas) {
+          setProjects(projectRes.data.datas);
+        }
+      } catch (error) { console.error('Sidebar fetch error:', error); }
     };
     fetchData();
 

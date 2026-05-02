@@ -36,37 +36,9 @@ import { cn } from '@/lib/utils';
 import IssueKanbanBoard from '@/components/IssueKanbanBoard';
 import IssueDetailDrawer from '@/components/IssueDetailDrawer';
 import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
-
-interface SubIssue {
-  id: number;
-  name: string;
-  description: string;
-  progress: number;
-  status: { id: number; name: string };
-}
-
-interface Issue {
-  id: number;
-  name: string;
-  description: string;
-  start_date: string;
-  due_date: string;
-  estimated_date: string;
-  progress: number;
-  status: { id: number; name: string; title?: string };
-  priority: { id: number; name: string; title?: string };
-  tracker: { id: number; name: string; title?: string };
-  label: { id: number; name: string; title?: string };
-  assignee: {
-    id: string;
-    email: string;
-    dis_name: string;
-    status: number;
-    avarta?: string;
-    user?: { id: string; display_name: string; avarta: string; email: string; }
-  };
-  subIssues?: SubIssue[];
-}
+import { Issue, SubIssue } from '@/types/issue';
+import { ItemState, Member } from '@/types/project';
+import { IssueDialog } from './dialog/dialog';
 
 const ProjectIssuesPage = () => {
   const { id } = useParams();
@@ -83,11 +55,11 @@ const ProjectIssuesPage = () => {
   const [pendingDeleteIssueId, setPendingDeleteIssueId] = useState<number | null>(null);
 
   // Dropdown data options
-  const [statuses, setStatuses] = useState<any[]>([]);
-  const [priorities, setPriorities] = useState<any[]>([]);
-  const [trackers, setTrackers] = useState<any[]>([]);
-  const [labels, setLabels] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState<ItemState[]>([]);
+  const [priorities, setPriorities] = useState<ItemState[]>([]);
+  const [trackers, setTrackers] = useState<ItemState[]>([]);
+  const [labels, setLabels] = useState<ItemState[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   // Modals
@@ -443,7 +415,7 @@ const ProjectIssuesPage = () => {
                       <Avatar className="h-8 w-8 border shadow-sm shrink-0">
                         <AvatarImage src={`/upload/${issue.assignee?.user?.avarta || issue.assignee?.avarta}`} />
                         <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary">
-                          {(issue.assignee?.user?.display_name || issue.assignee?.dis_name || 'U')[0]}
+                          {(issue.assignee?.user?.first_name || issue.assignee?.user?.dis_name || issue.assignee?.user?.display_name || issue.assignee?.dis_name || 'U')[0]}
                         </AvatarFallback>
                       </Avatar>
 
@@ -516,152 +488,20 @@ const ProjectIssuesPage = () => {
         )}
       </div>
 
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                <Plus className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-muted-foreground  tracking-widest leading-none mb-1">Issue Directory</p>
-                <p>Initialize New Issue</p>
-              </div>
-            </DialogTitle>
-          </DialogHeader>
+      <IssueDialog
+        isCreateModalOpen={isCreateModalOpen}
+        setIsCreateModalOpen={setIsCreateModalOpen}
+        newIssue={newIssue}
+        setNewIssue={setNewIssue}
+        trackers={trackers}
+        statuses={statuses}
+        priorities={priorities}
+        labels={labels}
+        members={members}
+        submitting={submitting}
+        handleCreateIssue={handleCreateIssue}
+      />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 py-4 overflow-y-auto max-h-[60vh] px-1">
-            <div className="space-y-2 md:col-span-2">
-              <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Title</Label>
-              <Input
-                placeholder="Brief objective title..."
-                value={newIssue.name}
-                onChange={(e) => setNewIssue({ ...newIssue, name: e.target.value })}
-                className="h-10 font-medium"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 md:col-span-2">
-              <div className="space-y-2">
-                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Tracker</Label>
-                <Select value={newIssue.tracker_id} onValueChange={(v) => setNewIssue({ ...newIssue, tracker_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold w-full">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {trackers.map(t => <SelectItem key={t.id} value={String(t.id)} className="text-[10px] font-bold ">{t.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Status</Label>
-                <Select value={newIssue.status_id} onValueChange={(v) => setNewIssue({ ...newIssue, status_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold w-full">
-                    <SelectValue placeholder="Select State" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statuses.map(s => <SelectItem key={s.id} value={String(s.id)} className="text-[10px] font-bold ">{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Priority</Label>
-                <Select value={newIssue.priority_id} onValueChange={(v) => setNewIssue({ ...newIssue, priority_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold w-full">
-                    <SelectValue placeholder="Select Impact" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorities.map(p => <SelectItem key={p.id} value={String(p.id)} className="text-[10px] font-bold ">{p.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Label</Label>
-                <Select value={newIssue.label_id} onValueChange={(v) => setNewIssue({ ...newIssue, label_id: v })}>
-                  <SelectTrigger className="h-10 text-xs font-bold w-full">
-                    <SelectValue placeholder="Select Tag" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {labels.map(l => <SelectItem key={l.id} value={String(l.id)} className="text-[10px] font-bold ">{l.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 md:col-span-2">
-              <div className="space-y-2">
-                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Start Date</Label>
-                <DatePicker
-                  selected={newIssue.start_date}
-                  onSelect={(v) => setNewIssue({ ...newIssue, start_date: v })}
-                  placeholder="Initiation"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Due Date</Label>
-                <DatePicker
-                  selected={newIssue.due_date}
-                  onSelect={(v) => setNewIssue({ ...newIssue, due_date: v })}
-                  placeholder="Target"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Assigned Team Member</Label>
-              <div className="max-h-[150px] overflow-y-auto border rounded-xl divide-y">
-                {members.map((m) => {
-                  const isSelected = String(m.id) === newIssue.assignee_id;
-                  const name = m.user?.display_name || m.dis_name || m.email || 'User';
-                  return (
-                    <div
-                      key={m.id}
-                      className={cn(
-                        "flex items-center gap-3 p-2 cursor-pointer transition-colors",
-                        isSelected ? "bg-primary/5" : "hover:bg-muted/50"
-                      )}
-                      onClick={() => setNewIssue({ ...newIssue, assignee_id: String(m.id) })}
-                    >
-                      <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center shrink-0", isSelected ? "border-primary bg-primary" : "border-muted-foreground/30")}>
-                        {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                      </div>
-                      <Avatar className="h-7 w-7 border">
-                        <AvatarImage src={`/upload/${m.user?.avarta || m.avarta}`} />
-                        <AvatarFallback className="text-[8px] font-bold">{name[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-[11px] font-bold truncate ">{name}</p>
-                        <p className="text-[9px] text-muted-foreground truncate">{m.email}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label className="text-xs font-bold  tracking-widest text-muted-foreground">Description</Label>
-              <Textarea
-                placeholder="Tactical objectives and requirements..."
-                rows={3}
-                className="font-medium resize-none shadow-none"
-                value={newIssue.description}
-                onChange={(e) => setNewIssue({ ...newIssue, description: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="mt-2 pt-4 border-t">
-            <Button variant="ghost" onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateIssue} disabled={submitting}>
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Create Issue'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <IssueDetailDrawer
         issueId={selectedIssueId}
