@@ -33,7 +33,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ConfirmActionDialog } from '@/components/confirm-action-dialog';
 import { StatusOption as Status } from '@/types/project';
-import { StatusDialog } from './dialog/dialog';
+import { StatusDialog } from './components/dialog';
 
 const StatusPage = () => {
   const [statuses, setStatuses] = useState<Status[]>([]);

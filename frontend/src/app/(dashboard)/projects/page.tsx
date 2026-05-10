@@ -18,7 +18,7 @@ import {
   ChevronsUpDown,
   Users as UsersIcon
 } from 'lucide-react';
-import { ProjectDialogs } from './dialog/dialog';
+import { ProjectDialogs } from './components/dialog';
 
 import {
   Select,
@@ -153,10 +153,10 @@ export default function ProjectsPage() {
         start_date: newProject.start_date?.toISOString(),
         end_date: newProject.end_date?.toISOString()
       };
-      
+
       // 1. Create the project
       const projectRes = await fetchApi('/api/project', { method: 'POST', body: JSON.stringify(projectPayload) });
-      
+
       if (projectRes.result) {
         const createdProject = Array.isArray(projectRes.data) ? projectRes.data[0] : projectRes.data;
         const projectId = createdProject?.id;

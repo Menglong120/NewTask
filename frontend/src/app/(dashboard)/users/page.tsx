@@ -24,7 +24,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { UserData, ProjectData, Paginate, DepartmentData, RoleData } from '@/types/user';
-import { UserDialogs } from './dialog/dialog';
+import { UserDialogs } from './components/dialog';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

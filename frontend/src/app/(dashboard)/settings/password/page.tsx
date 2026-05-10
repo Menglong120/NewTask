@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { PasswordDialog } from './dialog/dialog';
+import { PasswordDialog } from './components/dialog';
 
 const ChangePasswordPage = () => {
   const [showOldPass, setShowOldPass] = useState(false);
@@ -69,10 +69,10 @@ const ChangePasswordPage = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-background border px-6 py-4 rounded-xl shadow-sm">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-primary/10 text-primary rounded-xl">
-             <ShieldCheck className="h-6 w-6" />
+            <ShieldCheck className="h-6 w-6" />
           </div>
           <div className="space-y-0.5">
-             <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
               <span>Security</span>
               <X className="h-3 w-3 opacity-30" />
               <span className="text-foreground">Authentication Control</span>
@@ -81,7 +81,7 @@ const ChangePasswordPage = () => {
           </div>
         </div>
         <Badge variant="outline" className="h-8 px-3 font-semibold text-xs gap-2 border">
-            <Lock className="h-3.5 w-3.5 text-primary" /> Active Encryption
+          <Lock className="h-3.5 w-3.5 text-primary" /> Active Encryption
         </Badge>
       </div>
 
@@ -180,25 +180,25 @@ const ChangePasswordPage = () => {
                 </div>
               </div>
 
-               <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-xl flex items-start gap-4">
-               <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
-               <div className="space-y-1">
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-xl flex items-start gap-4">
+                <ShieldAlert className="h-5 w-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+                <div className="space-y-1">
                   <p className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-widest">Verification required</p>
                   <p className="text-xs text-amber-700/80 dark:text-amber-400/60 font-medium italic">Rotating your security key will invalidate all active sessions immediately except for the current terminal.</p>
-               </div>
-            </div>
+                </div>
+              </div>
             </div>
           </CardContent>
 
           <CardFooter className="p-8 pt-0 flex flex-col sm:flex-row items-center justify-between gap-6">
-             <Button
-                variant="link"
-                type="button"
-                onClick={() => setShowForgotModal(true)}
-                className="text-xs font-bold opacity-60 hover:opacity-100 p-0 h-auto underline transition-opacity"
-              >
-                Request help from administrator?
-              </Button>
+            <Button
+              variant="link"
+              type="button"
+              onClick={() => setShowForgotModal(true)}
+              className="text-xs font-bold opacity-60 hover:opacity-100 p-0 h-auto underline transition-opacity"
+            >
+              Request help from administrator?
+            </Button>
 
             <Button
               type="submit"

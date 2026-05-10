@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Building2, FolderOpen, Loader2, MoreVertical, Pencil, Plus, Search, Trash2, Users } from 'lucide-react';
-import { DepartmentDialog } from './dialog/dialog';
+import { DepartmentDialog } from './components/dialog';
 import { Department } from '@/types/department';
 
 

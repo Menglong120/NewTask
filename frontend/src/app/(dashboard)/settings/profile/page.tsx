@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { UserProfile } from '@/types/user';
-import { ProfileDialog } from './dialog/dialog';
+import { ProfileDialog } from './components/dialog';
 
 const ProfileSettingsPage = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -208,7 +208,7 @@ const ProfileSettingsPage = () => {
             <User className="h-6 w-6" />
           </div>
           <div className="space-y-0.5">
-             <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
               <span>Settings</span>
               <X className="h-3 w-3 opacity-30" />
               <span className="text-foreground">Profile Overview</span>
@@ -269,10 +269,10 @@ const ProfileSettingsPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                   First name
+                  First name
                 </Label>
                 <div className="relative group">
-                   <Input
+                  <Input
                     name="firstname"
                     className="h-11 font-semibold pl-10"
                     value={formData.firstname}
@@ -284,7 +284,7 @@ const ProfileSettingsPage = () => {
 
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                   Last name
+                  Last name
                 </Label>
                 <div className="relative group">
                   <Input
@@ -311,7 +311,7 @@ const ProfileSettingsPage = () => {
 
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                   Communication Channel
+                  Communication Channel
                 </Label>
                 <div className="relative group">
                   <Input
@@ -327,7 +327,7 @@ const ProfileSettingsPage = () => {
 
               <div className="md:col-span-2 space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                   Professional bio
+                  Professional bio
                 </Label>
                 <div className="relative group">
                   <Textarea
@@ -338,17 +338,17 @@ const ProfileSettingsPage = () => {
                     onChange={handleInputChange}
                     placeholder="Describe your role and expertise..."
                   />
-                   <AlignLeft className="absolute left-3.5 top-4 h-4 w-4 text-muted-foreground opacity-50 group-focus-within:text-primary transition-colors" />
+                  <AlignLeft className="absolute left-3.5 top-4 h-4 w-4 text-muted-foreground opacity-50 group-focus-within:text-primary transition-colors" />
                 </div>
               </div>
             </div>
-            
+
             <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 flex items-start gap-4">
-               <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-               <div className="space-y-1">
-                  <p className="text-xs font-bold text-primary uppercase tracking-widest">Global visibility</p>
-                  <p className="text-xs text-muted-foreground font-medium italic">Changes to your name and bio will be updated across all project histories and activity logs instantly.</p>
-               </div>
+              <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-primary uppercase tracking-widest">Global visibility</p>
+                <p className="text-xs text-muted-foreground font-medium italic">Changes to your name and bio will be updated across all project histories and activity logs instantly.</p>
+              </div>
             </div>
           </CardContent>
         </Card>
